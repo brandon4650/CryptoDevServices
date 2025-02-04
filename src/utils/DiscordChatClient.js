@@ -38,19 +38,22 @@ class DiscordChatClient {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create ticket');
+        console.error('Server response:', data);
+        throw new Error(data.error || 'Failed to create ticket');
       }
 
-      const result = await response.json();
-      
+      if (!data.success) {
+        console.error('Operation failed:', data);
+        throw new Error(data.error || 'Failed to create ticket');
+      }
+
       // Store the channel info
-      if (result.success) {
-        this.ticketChannels.set(orderInfo.orderNumber, result.channelId);
-      }
+      this.ticketChannels.set(orderInfo.orderNumber, data.channelId);
 
-      return result;
+      return data;
     } catch (error) {
       console.error('Error creating ticket channel:', error);
       throw error;
