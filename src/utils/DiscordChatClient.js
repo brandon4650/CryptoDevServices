@@ -155,6 +155,72 @@ class DiscordChatClient {
     return false;
   }
 
+  async findOrCreateTicketChannel(orderInfo) {
+    try {
+      // First, try to get the channel ID from our Map
+      const channelId = this.ticketChannels.get(orderInfo.orderNumber);
+      if (channelId) {
+        return { channelId, orderNumber: orderInfo.orderNumber };
+      }
+
+      // If not found, create a new channel
+      const response = await fetch('/api/discord', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderInfo: {
+            ...orderInfo,
+            type: orderInfo.type || 'SUPPORT'
+          }
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to create ticket');
+      }
+
+      // Store the channel info
+      this.ticketChannels.set(orderInfo.orderNumber, data.channelId);
+      
+      return data;
+    } catch (error) {
+      console.error('Error creating or finding ticket channel:', error);
+      throw error;
+    }
+  }
+
+  async validateTicket(ticketId) {
+    try {
+      const response = await fetch('/api/discord/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ticketId: ticketId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to validate ticket');
+      }
+
+      const data = await response.json();
+      if (data.valid && data.channelId) {
+        this.ticketChannels.set(ticketId, data.channelId);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error validating ticket:', error);
+      return false;
+    }
+  }
+
   unsubscribeFromTicket(ticketId) {
     const channelId = this.ticketChannels.get(ticketId);
     if (channelId) {
@@ -230,6 +296,8 @@ class DiscordChatClient {
       return [];
     }
   }
+
+  
 
   async sendTicketMessage(ticketId, content) {
     const channelId = this.ticketChannels.get(ticketId);
