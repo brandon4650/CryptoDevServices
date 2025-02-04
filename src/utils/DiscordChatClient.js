@@ -163,6 +163,38 @@ class DiscordChatClient {
     }
     return false;
   }
+    async findTicketChannel(channelName) {
+    try {
+      const response = await fetch('/api/discord/channels', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          guildId: DISCORD_CONFIG.GUILD_ID,
+          categoryId: DISCORD_CONFIG.CATEGORY_ID
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch channels');
+      }
+
+      const data = await response.json();
+      const channel = data.channels.find(ch => ch.name === channelName);
+      
+      if (channel) {
+        // Store the channel ID for future use
+        this.ticketChannels.set(channelName.replace('ticket-', '').toUpperCase(), channel.id);
+        return channel.id;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding ticket channel:', error);
+      return null;
+    }
+  }
 
   async getTicketHistory(ticketId) {
     const channelId = this.ticketChannels.get(ticketId);
