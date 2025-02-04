@@ -2,6 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
 import { chatClient } from '../utils/DiscordChatClient';
 
+const DEFAULT_WELCOME_MESSAGE = {
+  id: 'welcome',
+  sender: 'CryptoWeb Assistant',
+  avatar: 'https://i.imgur.com/AfFp7pu.png',
+  content: 'Welcome to live support! How can I assist you today?',
+  timestamp: new Date()
+};
+
 const LiveChat = ({ orderId, initialOpen = false }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -22,55 +30,48 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (!orderId && !chatConnected) {
+      setMessages([DEFAULT_WELCOME_MESSAGE]);
+      setChatConnected(true);
+    }
+  }, []);
+
   // Connect to Discord thread
   const connectToThread = async (threadId) => {
     setIsLoading(true);
     try {
       console.log('Connecting to thread:', threadId);
       
-      // Convert to lowercase for channel lookup since Discord channels are lowercase
-      const channelLookupId = `ticket-${threadId.toLowerCase()}`;
-      console.log('Looking up channel:', channelLookupId);
+      // Clean and normalize the ticket number
+      const cleanTicketId = threadId.toUpperCase().trim();
+      const channelName = `ticket-${cleanTicketId.toLowerCase()}`;
+      console.log('Looking up channel:', channelName);
 
-      // Try to get channel ID from local storage first
-      let channelId = localStorage.getItem(channelLookupId);
+      // Try to get channel ID
+      let channelId = await chatClient.findTicketChannel(channelName);
       
       if (!channelId) {
-        // If not in localStorage, try to get from Discord client
-        channelId = chatClient.getTicketInfo(threadId);
-      }
-
-      if (!channelId) {
-        console.log('No channel found for ticket:', threadId);
         throw new Error('Invalid ticket number');
       }
 
-      // Store channel ID in localStorage for persistence
-      localStorage.setItem(channelLookupId, channelId);
-      
       // Set up message subscription
-      chatClient.subscribeToTicket(threadId, (message) => {
+      chatClient.subscribeToTicket(cleanTicketId, (message) => {
         console.log('Received new message:', message);
         setMessages(prev => [...prev, message]);
       });
 
-      // Add welcome message
-      setMessages([{
-        id: 'welcome',
-        sender: 'CryptoWeb Assistant',
-        avatar: 'https://i.imgur.com/AfFp7pu.png',
-        content: 'Welcome to live support! How can I assist you today?',
-        timestamp: new Date()
-      }]);
-
       try {
-        // Try to load message history
-        const history = await chatClient.getTicketHistory(threadId);
+        // Load message history
+        const history = await chatClient.getTicketHistory(cleanTicketId);
         if (history && history.length > 0) {
-          setMessages(prev => [...history]);
+          setMessages([DEFAULT_WELCOME_MESSAGE, ...history]);
+        } else {
+          setMessages([DEFAULT_WELCOME_MESSAGE]);
         }
       } catch (error) {
         console.error('Error loading history:', error);
+        setMessages([DEFAULT_WELCOME_MESSAGE]);
       }
 
       setChatConnected(true);
@@ -116,18 +117,17 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     setNewMessage('');
 
     try {
-      await chatClient.sendTicketMessage(orderNumber, newMessage);
+      if (orderNumber) {
+        await chatClient.sendTicketMessage(orderNumber, newMessage);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [
-        ...prev.filter(m => m.id !== tempId),
-        {
-          id: 'error',
-          sender: 'System',
-          content: 'Failed to send message. Please try again.',
-          timestamp: new Date()
-        }
-      ]);
+      setMessages(prev => [...prev, {
+        id: 'error',
+        sender: 'System',
+        content: 'Failed to send message. Please try again.',
+        timestamp: new Date()
+      }]);
     }
   };
 
@@ -207,7 +207,7 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
       )}
 
       {/* Chat Messages */}
-      {chatConnected && (
+      {(chatConnected || messages.length > 0) && (
         <>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((message) => (
