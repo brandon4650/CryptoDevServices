@@ -45,13 +45,11 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
       
       // Clean and normalize the ticket number
       const cleanTicketId = threadId.toUpperCase().trim();
-      const channelName = `ticket-${cleanTicketId.toLowerCase()}`;
-      console.log('Looking up channel:', channelName);
-
-      // Try to get channel ID
-      let channelId = await chatClient.findTicketChannel(channelName);
       
-      if (!channelId) {
+      // Validate the ticket
+      const isValid = await chatClient.validateTicket(cleanTicketId);
+      
+      if (!isValid) {
         throw new Error('Invalid ticket number');
       }
 
@@ -84,6 +82,7 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
         content: 'Error connecting to support ticket. Please verify your order number and try again.',
         timestamp: new Date()
       }]);
+      setChatConnected(false);
     }
     setIsLoading(false);
   };
