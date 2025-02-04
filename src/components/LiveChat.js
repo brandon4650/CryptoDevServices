@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Search, ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
+import { chatClient } from '../utils/DiscordChatClient';
 
 const LiveChat = ({ orderId, initialOpen = false }) => {
   const [messages, setMessages] = useState([]);
@@ -21,25 +22,58 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     }
   }, [messages]);
 
-  // Connect to Discord thread
-  const connectToThread = async (threadId) => {
-    setIsLoading(true);
+  // Load message history when connecting to a ticket
+  const loadMessageHistory = async (ticketId) => {
     try {
-      // Here we'll add the Discord bot connection logic
-      setChatConnected(true);
-      setShowOrderInput(false);
-      // Add initial message
-      setMessages([
-        {
+      const history = await chatClient.getTicketHistory(ticketId);
+      if (history && history.length > 0) {
+        setMessages(history);
+      } else {
+        // Add welcome message if no history exists
+        setMessages([{
           id: 'welcome',
           sender: 'CryptoWeb Assistant',
           avatar: 'https://i.imgur.com/AfFp7pu.png',
           content: 'Welcome to live support! How can I assist you today?',
           timestamp: new Date()
-        }
-      ]);
+        }]);
+      }
+    } catch (error) {
+      console.error('Error loading message history:', error);
+      // Add error message to chat
+      setMessages([{
+        id: 'error',
+        sender: 'System',
+        content: 'Failed to load message history. Please try again.',
+        timestamp: new Date()
+      }]);
+    }
+  };
+
+  // Connect to Discord thread
+  const connectToThread = async (threadId) => {
+    setIsLoading(true);
+    try {
+      // Subscribe to new messages
+      const subscribed = chatClient.subscribeToTicket(threadId, (message) => {
+        setMessages(prev => [...prev, message]);
+      });
+
+      if (subscribed) {
+        await loadMessageHistory(threadId);
+        setChatConnected(true);
+        setShowOrderInput(false);
+      } else {
+        throw new Error('Failed to connect to support ticket');
+      }
     } catch (error) {
       console.error('Error connecting to thread:', error);
+      setMessages([{
+        id: 'error',
+        sender: 'System',
+        content: 'Error connecting to support ticket. Please verify your order number and try again.',
+        timestamp: new Date()
+      }]);
     }
     setIsLoading(false);
   };
@@ -48,14 +82,22 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     if (orderId) {
       connectToThread(orderId);
     }
+
+    // Cleanup subscription when component unmounts
+    return () => {
+      if (orderId) {
+        chatClient.unsubscribeFromTicket(orderId);
+      }
+    };
   }, [orderId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
+    const tempId = Date.now();
     const userMessage = {
-      id: Date.now(),
+      id: tempId,
       sender: 'You',
       content: newMessage,
       timestamp: new Date()
@@ -64,7 +106,22 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     setMessages(prev => [...prev, userMessage]);
     setNewMessage('');
 
-    // Here we'll add the logic to send message to Discord
+    try {
+      // Send message to Discord
+      await chatClient.sendTicketMessage(orderNumber, newMessage);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Add error message and remove the temporary message
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== tempId),
+        {
+          id: 'error',
+          sender: 'System',
+          content: 'Failed to send message. Please try again.',
+          timestamp: new Date()
+        }
+      ]);
+    }
   };
 
   const handleOrderSubmit = (e) => {
