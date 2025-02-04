@@ -11,11 +11,8 @@ export const sendToDiscord = async (formData, type) => {
       projectName: formData.projectName,
       email: formData.email,
       details: formData.details,
-      guildId: '1129935594986942464', // Your server ID
-      socialLinks: {
-        twitter: formData.twitterLink,
-        telegram: formData.telegramLink
-      },
+      twitterLink: formData.twitterLink,
+      telegramLink: formData.telegramLink,
       additionalInfo: formData.additionalInfo
     });
 
