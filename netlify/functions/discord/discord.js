@@ -1,3 +1,11 @@
+// netlify/functions/discord/discord.js
+
+const DISCORD_CONFIG = {
+  CATEGORY_ID: '1336065020907229184',
+  GUILD_ID: '1129935594986942464',
+  SUPPORT_ROLE_ID: '1129935594999529715',
+};
+
 exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return {
