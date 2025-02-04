@@ -28,38 +28,49 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     try {
       console.log('Connecting to thread:', threadId);
       
-      // First, validate if this is a valid ticket
-      const channelId = chatClient.getTicketInfo(threadId);
+      // Convert to lowercase for channel lookup since Discord channels are lowercase
+      const channelLookupId = `ticket-${threadId.toLowerCase()}`;
+      console.log('Looking up channel:', channelLookupId);
+
+      // Try to get channel ID from local storage first
+      let channelId = localStorage.getItem(channelLookupId);
+      
+      if (!channelId) {
+        // If not in localStorage, try to get from Discord client
+        channelId = chatClient.getTicketInfo(threadId);
+      }
+
       if (!channelId) {
         console.log('No channel found for ticket:', threadId);
         throw new Error('Invalid ticket number');
       }
 
+      // Store channel ID in localStorage for persistence
+      localStorage.setItem(channelLookupId, channelId);
+      
       // Set up message subscription
       chatClient.subscribeToTicket(threadId, (message) => {
         console.log('Received new message:', message);
         setMessages(prev => [...prev, message]);
       });
 
+      // Add welcome message
+      setMessages([{
+        id: 'welcome',
+        sender: 'CryptoWeb Assistant',
+        avatar: 'https://i.imgur.com/AfFp7pu.png',
+        content: 'Welcome to live support! How can I assist you today?',
+        timestamp: new Date()
+      }]);
+
       try {
         // Try to load message history
         const history = await chatClient.getTicketHistory(threadId);
         if (history && history.length > 0) {
-          setMessages(history);
+          setMessages(prev => [...history]);
         }
       } catch (error) {
         console.error('Error loading history:', error);
-      }
-
-      // Always add welcome message if no messages exist
-      if (messages.length === 0) {
-        setMessages([{
-          id: 'welcome',
-          sender: 'CryptoWeb Assistant',
-          avatar: 'https://i.imgur.com/AfFp7pu.png',
-          content: 'Welcome to live support! How can I assist you today?',
-          timestamp: new Date()
-        }]);
       }
 
       setChatConnected(true);
@@ -139,7 +150,7 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-gradient-to-b from-blue-950 to-black rounded-lg shadow-xl flex flex-col overflow-hidden">
+    <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-gradient-to-b from-blue-950 to-black rounded-lg shadow-xl flex flex-col overflow-hidden z-50">
       {/* Header */}
       <div className="p-4 bg-blue-900/20 border-b border-blue-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -210,7 +221,7 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
                   <img
                     src={message.avatar}
                     alt={message.sender}
-                    className="w-8 h-8 rounded-full"
+                    className="w-8 h-8 rounded-full bg-blue-900/40"
                   />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
