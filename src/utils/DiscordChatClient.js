@@ -1,4 +1,5 @@
 // DiscordChatClient.js
+
 const DISCORD_CONFIG = {
   CATEGORY_ID: '1336065020907229184',
   GUILD_ID: '1129935594986942464',
@@ -7,12 +8,10 @@ const DISCORD_CONFIG = {
 
 class DiscordChatClient {
   constructor() {
+    this.ticketChannels = new Map();
+    this.messageCallbacks = new Map();
     this.ws = null;
     this.heartbeatInterval = null;
-    this.messageCallbacks = new Map();
-    this.ticketChannels = new Map();
-    this.connectionAttempts = 0;
-    this.maxRetries = 5;
     console.log('DiscordChatClient initialized');
   }
 
@@ -25,10 +24,8 @@ class DiscordChatClient {
 
         this.ws.onopen = () => {
           console.log('WebSocket connection opened');
-          setTimeout(() => {
-            this.identify();
-            resolve();
-          }, 1000);
+          this.identify();
+          resolve();
         };
 
         this.ws.onmessage = (event) => {
@@ -48,12 +45,7 @@ class DiscordChatClient {
         this.ws.onclose = () => {
           console.log('WebSocket connection closed');
           clearInterval(this.heartbeatInterval);
-          
-          if (this.connectionAttempts < this.maxRetries) {
-            this.connectionAttempts++;
-            console.log(`Reconnection attempt ${this.connectionAttempts}/${this.maxRetries}`);
-            setTimeout(() => this.connect(), 5000);
-          }
+          setTimeout(() => this.connect(), 5000);
         };
       });
     } catch (error) {
@@ -63,13 +55,13 @@ class DiscordChatClient {
   }
 
   identify() {
-    if (this.ws.readyState !== WebSocket.OPEN) return;
-
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    
     const payload = {
       op: 2,
       d: {
         token: process.env.REACT_APP_DISCORD_BOT_TOKEN,
-        intents: 513, // Add necessary intents
+        intents: 513,
         properties: {
           $os: 'browser',
           $browser: 'cryptoweb',
@@ -91,27 +83,10 @@ class DiscordChatClient {
           this.handleMessage(payload.d);
         }
         break;
-      case 11: // Heartbeat ACK
-        break;
     }
   }
 
-  startHeartbeat(interval) {
-    clearInterval(this.heartbeatInterval);
-    
-    this.heartbeatInterval = setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ op: 1, d: null }));
-      } else {
-        clearInterval(this.heartbeatInterval);
-      }
-    }, interval);
-  }
-
   async createTicketChannel(orderInfo) {
-    console.log('Creating ticket channel for order:', orderInfo);
-    const channelName = `ticket-${orderInfo.orderNumber.toLowerCase()}`;
-
     try {
       const response = await fetch('/api/discord', {
         method: 'POST',
@@ -121,7 +96,6 @@ class DiscordChatClient {
         body: JSON.stringify({
           orderInfo: {
             ...orderInfo,
-            channelName,
             categoryId: DISCORD_CONFIG.CATEGORY_ID,
             guildId: DISCORD_CONFIG.GUILD_ID,
             supportRoleId: DISCORD_CONFIG.SUPPORT_ROLE_ID
@@ -130,12 +104,15 @@ class DiscordChatClient {
       });
 
       const data = await response.json();
-
+      
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Failed to create ticket');
       }
 
+      // Store the channel info immediately
       this.ticketChannels.set(orderInfo.orderNumber, data.channelId);
+      console.log('Stored ticket channel:', orderInfo.orderNumber, data.channelId);
+      
       return data;
     } catch (error) {
       console.error('Error creating ticket channel:', error);
@@ -143,9 +120,7 @@ class DiscordChatClient {
     }
   }
 
-  // Handle incoming Discord messages
   handleMessage(message) {
-    // Find the corresponding callback for this channel
     const callback = this.messageCallbacks.get(message.channel_id);
     if (callback) {
       callback({
@@ -160,7 +135,35 @@ class DiscordChatClient {
     }
   }
 
-  // Get message history for a ticket
+  startHeartbeat(interval) {
+    clearInterval(this.heartbeatInterval);
+    
+    this.heartbeatInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ op: 1, d: null }));
+      }
+    }, interval);
+  }
+
+  subscribeToTicket(ticketId, callback) {
+    console.log('Subscribing to ticket:', ticketId);
+    const channelId = this.ticketChannels.get(ticketId);
+    if (channelId) {
+      this.messageCallbacks.set(channelId, callback);
+      return true;
+    }
+    return false;
+  }
+
+  unsubscribeFromTicket(ticketId) {
+    const channelId = this.ticketChannels.get(ticketId);
+    if (channelId) {
+      this.messageCallbacks.delete(channelId);
+      return true;
+    }
+    return false;
+  }
+
   async getTicketHistory(ticketId) {
     const channelId = this.ticketChannels.get(ticketId);
     if (!channelId) {
@@ -173,17 +176,14 @@ class DiscordChatClient {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          channelId,
-          limit: 100 // Adjust as needed
-        })
+        body: JSON.stringify({ channelId })
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch messages');
+        throw new Error('Failed to fetch messages');
       }
 
+      const data = await response.json();
       return data.messages.map(msg => ({
         id: msg.id,
         sender: msg.author.username,
@@ -195,31 +195,10 @@ class DiscordChatClient {
       }));
     } catch (error) {
       console.error('Error fetching message history:', error);
-      throw error;
+      return [];
     }
   }
 
-  // Subscribe to messages for a specific ticket
-  subscribeToTicket(ticketId, callback) {
-    const channelId = this.ticketChannels.get(ticketId);
-    if (channelId) {
-      this.messageCallbacks.set(channelId, callback);
-      return true;
-    }
-    return false;
-  }
-
-  // Unsubscribe from messages
-  unsubscribeFromTicket(ticketId) {
-    const channelId = this.ticketChannels.get(ticketId);
-    if (channelId) {
-      this.messageCallbacks.delete(channelId);
-      return true;
-    }
-    return false;
-  }
-
-  // Send a message to a ticket channel
   async sendTicketMessage(ticketId, content) {
     const channelId = this.ticketChannels.get(ticketId);
     if (!channelId) {
@@ -232,22 +211,22 @@ class DiscordChatClient {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          channelId,
-          content
-        })
+        body: JSON.stringify({ channelId, content })
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send message');
+        throw new Error('Failed to send message');
       }
 
-      return data;
+      return await response.json();
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
     }
+  }
+
+  getTicketInfo(ticketId) {
+    return this.ticketChannels.get(ticketId);
   }
 }
 
