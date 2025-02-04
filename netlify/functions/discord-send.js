@@ -11,21 +11,16 @@ exports.handler = async (event, context) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
   try {
-    const { channelId, content } = JSON.parse(event.body);
+    const { channelId, content, userName } = JSON.parse(event.body);
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!botToken) {
       throw new Error('Discord bot token not configured');
     }
+
+    // Format the message with the username
+    const messageContent = userName ? `${userName}: ${content}` : content;
 
     const response = await fetch(
       `https://discord.com/api/v10/channels/${channelId}/messages`,
@@ -35,13 +30,14 @@ exports.handler = async (event, context) => {
           'Authorization': `Bot ${botToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content: messageContent })
       }
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Discord API error: ${error}`);
+      const errorText = await response.text();
+      console.error('Discord API Error:', errorText);
+      throw new Error('Failed to send message');
     }
 
     const message = await response.json();
@@ -49,7 +45,15 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ message })
+      body: JSON.stringify({
+        success: true,
+        message: {
+          id: message.id,
+          sender: userName || 'System',
+          content: content,
+          timestamp: message.timestamp
+        }
+      })
     };
   } catch (error) {
     console.error('Function error:', error);
