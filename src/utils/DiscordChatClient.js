@@ -10,144 +10,52 @@ class DiscordChatClient {
   constructor() {
     this.ticketChannels = new Map();
     this.messageCallbacks = new Map();
-    this.ws = null;
-    this.heartbeatInterval = null;
     console.log('DiscordChatClient initialized');
   }
 
-  async connect() {
+  async validateTicket(ticketId) {
     try {
-      console.log('Connecting to Discord gateway...');
+      console.log('Validating ticket:', ticketId);
       
-      return new Promise((resolve, reject) => {
-        this.ws = new WebSocket('wss://gateway.discord.gg/?v=10&encoding=json');
-
-        this.ws.onopen = () => {
-          console.log('WebSocket connection opened');
-          this.identify();
-          resolve();
-        };
-
-        this.ws.onmessage = (event) => {
-          try {
-            const payload = JSON.parse(event.data);
-            this.handlePayload(payload);
-          } catch (error) {
-            console.error('Error processing message:', error);
-          }
-        };
-
-        this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          reject(error);
-        };
-
-        this.ws.onclose = () => {
-          console.log('WebSocket connection closed');
-          clearInterval(this.heartbeatInterval);
-          setTimeout(() => this.connect(), 5000);
-        };
-      });
-    } catch (error) {
-      console.error('Connection error:', error);
-      throw error;
-    }
-  }
-
-  identify() {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    
-    const payload = {
-      op: 2,
-      d: {
-        token: process.env.REACT_APP_DISCORD_BOT_TOKEN,
-        intents: 513,
-        properties: {
-          $os: 'browser',
-          $browser: 'cryptoweb',
-          $device: 'cryptoweb'
-        }
-      }
-    };
-
-    this.ws.send(JSON.stringify(payload));
-  }
-
-  handlePayload(payload) {
-    switch (payload.op) {
-      case 10: // Hello
-        this.startHeartbeat(payload.d.heartbeat_interval);
-        break;
-      case 0: // Dispatch
-        if (payload.t === 'MESSAGE_CREATE') {
-          this.handleMessage(payload.d);
-        }
-        break;
-    }
-  }
-
-  async createTicketChannel(orderInfo) {
-    try {
-      const response = await fetch('/api/discord', {
+      const response = await fetch(`/.netlify/functions/discord-validate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          orderInfo: {
-            ...orderInfo,
-            categoryId: DISCORD_CONFIG.CATEGORY_ID,
-            guildId: DISCORD_CONFIG.GUILD_ID,
-            supportRoleId: DISCORD_CONFIG.SUPPORT_ROLE_ID
-          }
+          ticketId: ticketId.toLowerCase()
         })
       });
 
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create ticket');
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Validation error:', error);
+        throw new Error(error.error || 'Failed to validate ticket');
       }
 
-      // Store the channel info immediately
-      this.ticketChannels.set(orderInfo.orderNumber, data.channelId);
-      console.log('Stored ticket channel:', orderInfo.orderNumber, data.channelId);
-      
-      return data;
+      const data = await response.json();
+      console.log('Validation response:', data);
+
+      if (data.valid && data.channelId) {
+        // Store channel info for future use
+        this.ticketChannels.set(ticketId.toLowerCase(), data.channelId);
+        return {
+          valid: true,
+          channelId: data.channelId,
+          messages: data.messages || []
+        };
+      }
+
+      return { valid: false };
     } catch (error) {
-      console.error('Error creating ticket channel:', error);
+      console.error('Error validating ticket:', error);
       throw error;
     }
   }
 
-  handleMessage(message) {
-    const callback = this.messageCallbacks.get(message.channel_id);
-    if (callback) {
-      callback({
-        id: message.id,
-        sender: message.author.username,
-        content: message.content,
-        avatar: message.author.avatar 
-          ? `https://cdn.discordapp.com/avatars/${message.author.id}/${message.author.avatar}.png`
-          : null,
-        timestamp: new Date(message.timestamp)
-      });
-    }
-  }
-
-  startHeartbeat(interval) {
-    clearInterval(this.heartbeatInterval);
-    
-    this.heartbeatInterval = setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ op: 1, d: null }));
-      }
-    }, interval);
-  }
-
   subscribeToTicket(ticketId, callback) {
     console.log('Subscribing to ticket:', ticketId);
-    const channelId = this.ticketChannels.get(ticketId);
+    const channelId = this.ticketChannels.get(ticketId.toLowerCase());
     if (channelId) {
       this.messageCallbacks.set(channelId, callback);
       return true;
@@ -155,121 +63,25 @@ class DiscordChatClient {
     return false;
   }
 
-  async findOrCreateTicketChannel(orderInfo) {
-    try {
-      // First, try to get the channel ID from our Map
-      const channelId = this.ticketChannels.get(orderInfo.orderNumber);
-      if (channelId) {
-        return { channelId, orderNumber: orderInfo.orderNumber };
-      }
-
-      // If not found, create a new channel
-      const response = await fetch('/api/discord', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderInfo: {
-            ...orderInfo,
-            type: orderInfo.type || 'SUPPORT'
-          }
-        })
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create ticket');
-      }
-
-      // Store the channel info
-      this.ticketChannels.set(orderInfo.orderNumber, data.channelId);
-      
-      return data;
-    } catch (error) {
-      console.error('Error creating or finding ticket channel:', error);
-      throw error;
-    }
-  }
-
-  async validateTicket(ticketId) {
-    try {
-      const response = await fetch('/api/discord/validate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ticketId: ticketId
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to validate ticket');
-      }
-
-      const data = await response.json();
-      if (data.valid && data.channelId) {
-        this.ticketChannels.set(ticketId, data.channelId);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Error validating ticket:', error);
-      return false;
-    }
-  }
-
   unsubscribeFromTicket(ticketId) {
-    const channelId = this.ticketChannels.get(ticketId);
+    const channelId = this.ticketChannels.get(ticketId.toLowerCase());
     if (channelId) {
       this.messageCallbacks.delete(channelId);
       return true;
     }
     return false;
   }
-    async findTicketChannel(channelName) {
-    try {
-      const response = await fetch('/api/discord/channels', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          guildId: DISCORD_CONFIG.GUILD_ID,
-          categoryId: DISCORD_CONFIG.CATEGORY_ID
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch channels');
-      }
-
-      const data = await response.json();
-      const channel = data.channels.find(ch => ch.name === channelName);
-      
-      if (channel) {
-        // Store the channel ID for future use
-        this.ticketChannels.set(channelName.replace('ticket-', '').toUpperCase(), channel.id);
-        return channel.id;
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error finding ticket channel:', error);
-      return null;
-    }
-  }
 
   async getTicketHistory(ticketId) {
-    const channelId = this.ticketChannels.get(ticketId);
-    if (!channelId) {
-      throw new Error('Ticket not found');
-    }
-
     try {
-      const response = await fetch('/api/discord/messages', {
+      console.log('Getting history for ticket:', ticketId);
+      const channelId = this.ticketChannels.get(ticketId.toLowerCase());
+      
+      if (!channelId) {
+        throw new Error('Channel not found');
+      }
+
+      const response = await fetch(`/.netlify/functions/discord-messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -282,40 +94,37 @@ class DiscordChatClient {
       }
 
       const data = await response.json();
-      return data.messages.map(msg => ({
-        id: msg.id,
-        sender: msg.author.username,
-        content: msg.content,
-        avatar: msg.author.avatar 
-          ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-          : null,
-        timestamp: new Date(msg.timestamp)
-      }));
+      return data.messages || [];
     } catch (error) {
       console.error('Error fetching message history:', error);
       return [];
     }
   }
 
-  
-
   async sendTicketMessage(ticketId, content) {
-    const channelId = this.ticketChannels.get(ticketId);
-    if (!channelId) {
-      throw new Error('Ticket channel not found');
-    }
-
     try {
-      const response = await fetch('/api/discord/send', {
+      console.log('Sending message to ticket:', ticketId);
+      const channelId = this.ticketChannels.get(ticketId.toLowerCase());
+      
+      if (!channelId) {
+        throw new Error('Ticket channel not found');
+      }
+
+      const response = await fetch(`/.netlify/functions/discord-send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ channelId, content })
+        body: JSON.stringify({
+          channelId,
+          content,
+          userName: 'You'
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send message');
       }
 
       return await response.json();
@@ -324,21 +133,12 @@ class DiscordChatClient {
       throw error;
     }
   }
-
-  getTicketInfo(ticketId) {
-    return this.ticketChannels.get(ticketId);
-  }
 }
 
 const chatClient = new DiscordChatClient();
 
 export const initializeChat = async () => {
-  await chatClient.connect();
   return chatClient;
 };
 
 export { chatClient };
-
-export const getChatClient = () => {
-  return chatClient;
-};
