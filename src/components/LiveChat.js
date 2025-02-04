@@ -22,14 +22,37 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     }
   }, [messages]);
 
-  // Load message history when connecting to a ticket
-  const loadMessageHistory = async (ticketId) => {
+  // Connect to Discord thread
+  const connectToThread = async (threadId) => {
+    setIsLoading(true);
     try {
-      const history = await chatClient.getTicketHistory(ticketId);
-      if (history && history.length > 0) {
-        setMessages(history);
-      } else {
-        // Add welcome message if no history exists
+      console.log('Connecting to thread:', threadId);
+      
+      // First, validate if this is a valid ticket
+      const channelId = chatClient.getTicketInfo(threadId);
+      if (!channelId) {
+        console.log('No channel found for ticket:', threadId);
+        throw new Error('Invalid ticket number');
+      }
+
+      // Set up message subscription
+      chatClient.subscribeToTicket(threadId, (message) => {
+        console.log('Received new message:', message);
+        setMessages(prev => [...prev, message]);
+      });
+
+      try {
+        // Try to load message history
+        const history = await chatClient.getTicketHistory(threadId);
+        if (history && history.length > 0) {
+          setMessages(history);
+        }
+      } catch (error) {
+        console.error('Error loading history:', error);
+      }
+
+      // Always add welcome message if no messages exist
+      if (messages.length === 0) {
         setMessages([{
           id: 'welcome',
           sender: 'CryptoWeb Assistant',
@@ -38,34 +61,9 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
           timestamp: new Date()
         }]);
       }
-    } catch (error) {
-      console.error('Error loading message history:', error);
-      // Add error message to chat
-      setMessages([{
-        id: 'error',
-        sender: 'System',
-        content: 'Failed to load message history. Please try again.',
-        timestamp: new Date()
-      }]);
-    }
-  };
 
-  // Connect to Discord thread
-  const connectToThread = async (threadId) => {
-    setIsLoading(true);
-    try {
-      // Subscribe to new messages
-      const subscribed = chatClient.subscribeToTicket(threadId, (message) => {
-        setMessages(prev => [...prev, message]);
-      });
-
-      if (subscribed) {
-        await loadMessageHistory(threadId);
-        setChatConnected(true);
-        setShowOrderInput(false);
-      } else {
-        throw new Error('Failed to connect to support ticket');
-      }
+      setChatConnected(true);
+      setShowOrderInput(false);
     } catch (error) {
       console.error('Error connecting to thread:', error);
       setMessages([{
@@ -80,10 +78,10 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
 
   useEffect(() => {
     if (orderId) {
+      console.log('OrderID provided:', orderId);
       connectToThread(orderId);
     }
 
-    // Cleanup subscription when component unmounts
     return () => {
       if (orderId) {
         chatClient.unsubscribeFromTicket(orderId);
@@ -107,11 +105,9 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     setNewMessage('');
 
     try {
-      // Send message to Discord
       await chatClient.sendTicketMessage(orderNumber, newMessage);
     } catch (error) {
       console.error('Error sending message:', error);
-      // Add error message and remove the temporary message
       setMessages(prev => [
         ...prev.filter(m => m.id !== tempId),
         {
