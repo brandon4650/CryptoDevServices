@@ -1,12 +1,19 @@
-// netlify/functions/discord/discord.js
-
-const DISCORD_CONFIG = {
-  CATEGORY_ID: '1336065020907229184',
-  GUILD_ID: '1129935594986942464',
-  SUPPORT_ROLE_ID: '1129935594999529715',
-};
+const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
+  // Enable CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -19,8 +26,11 @@ exports.handler = async (event, context) => {
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!botToken) {
+      console.error('Bot token not found');
       throw new Error('Discord bot token not configured');
     }
+
+    console.log('Creating channel for order:', orderInfo);
 
     // Create channel
     const channelResponse = await fetch(`https://discord.com/api/v10/guilds/${orderInfo.guildId}/channels`, {
@@ -52,10 +62,11 @@ exports.handler = async (event, context) => {
     if (!channelResponse.ok) {
       const errorText = await channelResponse.text();
       console.error('Discord API Error:', errorText);
-      throw new Error(`Failed to create channel: ${channelResponse.status}`);
+      throw new Error(`Failed to create channel: ${errorText}`);
     }
 
     const channel = await channelResponse.json();
+    console.log('Channel created:', channel);
 
     // Send initial message
     const embedResponse = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, {
@@ -101,6 +112,9 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({
         success: true,
         channelId: channel.id,
@@ -112,6 +126,9 @@ exports.handler = async (event, context) => {
     console.error('Function error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({
         success: false,
         error: error.message
