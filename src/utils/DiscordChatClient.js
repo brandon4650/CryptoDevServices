@@ -1,36 +1,27 @@
 // DiscordChatClient.js
-
-const DISCORD_CONFIG = {
-  CATEGORY_ID: '1336065020907229184',
-  GUILD_ID: '1129935594986942464',
-  SUPPORT_ROLE_ID: '1129935594999529715'
-};
-
 class DiscordChatClient {
   constructor() {
-    this.ticketChannels = new Map();
+    this.channels = new Map();
     this.messageCallbacks = new Map();
     console.log('DiscordChatClient initialized');
   }
 
-  async validateTicket(ticketId) {
+  async validateChannel(channelId) {
     try {
-      console.log('Validating ticket:', ticketId);
+      console.log('Validating channel:', channelId);
       
-      const response = await fetch(`/.netlify/functions/discord-validate`, {
+      const response = await fetch('/.netlify/functions/discord-validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ticketId: ticketId.toLowerCase()
-        })
+        body: JSON.stringify({ channelId })
       });
 
       if (!response.ok) {
         const error = await response.json();
         console.error('Validation error:', error);
-        throw new Error(error.error || 'Failed to validate ticket');
+        throw new Error(error.error || 'Failed to validate channel');
       }
 
       const data = await response.json();
@@ -38,7 +29,7 @@ class DiscordChatClient {
 
       if (data.valid && data.channelId) {
         // Store channel info for future use
-        this.ticketChannels.set(ticketId.toLowerCase(), data.channelId);
+        this.channels.set(channelId, data.channelId);
         return {
           valid: true,
           channelId: data.channelId,
@@ -48,40 +39,36 @@ class DiscordChatClient {
 
       return { valid: false };
     } catch (error) {
-      console.error('Error validating ticket:', error);
+      console.error('Error validating channel:', error);
       throw error;
     }
   }
 
-  subscribeToTicket(ticketId, callback) {
-    console.log('Subscribing to ticket:', ticketId);
-    const channelId = this.ticketChannels.get(ticketId.toLowerCase());
-    if (channelId) {
+  subscribeToChannel(channelId, callback) {
+    console.log('Subscribing to channel:', channelId);
+    if (this.channels.has(channelId)) {
       this.messageCallbacks.set(channelId, callback);
       return true;
     }
     return false;
   }
 
-  unsubscribeFromTicket(ticketId) {
-    const channelId = this.ticketChannels.get(ticketId.toLowerCase());
-    if (channelId) {
+  unsubscribeFromChannel(channelId) {
+    if (this.channels.has(channelId)) {
       this.messageCallbacks.delete(channelId);
       return true;
     }
     return false;
   }
 
-  async getTicketHistory(ticketId) {
+  async getChannelHistory(channelId) {
     try {
-      console.log('Getting history for ticket:', ticketId);
-      const channelId = this.ticketChannels.get(ticketId.toLowerCase());
-      
-      if (!channelId) {
+      console.log('Getting history for channel:', channelId);
+      if (!this.channels.has(channelId)) {
         throw new Error('Channel not found');
       }
 
-      const response = await fetch(`/.netlify/functions/discord-messages`, {
+      const response = await fetch('/.netlify/functions/discord-messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,16 +88,14 @@ class DiscordChatClient {
     }
   }
 
-  async sendTicketMessage(ticketId, content) {
+  async sendChannelMessage(channelId, content) {
     try {
-      console.log('Sending message to ticket:', ticketId);
-      const channelId = this.ticketChannels.get(ticketId.toLowerCase());
-      
-      if (!channelId) {
-        throw new Error('Ticket channel not found');
+      console.log('Sending message to channel:', channelId);
+      if (!this.channels.has(channelId)) {
+        throw new Error('Channel not found');
       }
 
-      const response = await fetch(`/.netlify/functions/discord-send`, {
+      const response = await fetch('/.netlify/functions/discord-send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
