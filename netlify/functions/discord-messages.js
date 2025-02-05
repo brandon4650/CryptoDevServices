@@ -38,30 +38,36 @@ exports.handler = async (event) => {
     }
 
     const messages = await response.json();
+    let seenMessages = new Set();
 
-    // Transform messages and remove duplicates
-    let seenMessages = new Set(); // Track unique message contents
+    // Transform messages
     const transformedMessages = messages
       .map(msg => {
-        // For Discord user messages (not bot)
-        if (!msg.author.bot) {
+        // For bot messages (website user messages)
+        if (msg.author.bot) {
           return {
             id: msg.id,
-            sender: msg.author.username,
+            sender: 'You',
             content: msg.content,
-            avatar: msg.author.avatar 
-              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-              : null,
             timestamp: msg.timestamp,
-            fromDiscord: true
+            fromWebsite: true
           };
         }
-        // Skip bot messages that are echoing website messages
-        return null;
+        // For Discord user messages
+        return {
+          id: msg.id,
+          sender: msg.author.username,
+          content: msg.content,
+          avatar: msg.author.avatar 
+            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+            : null,
+          timestamp: msg.timestamp,
+          fromDiscord: true
+        };
       })
       .filter(msg => {
-        if (!msg) return false;
-        const messageKey = \`\${msg.content}\${msg.timestamp}\`;
+        // Remove duplicate messages
+        const messageKey = `${msg.sender}:${msg.content}:${msg.timestamp}`;
         if (seenMessages.has(messageKey)) return false;
         seenMessages.add(messageKey);
         return true;
