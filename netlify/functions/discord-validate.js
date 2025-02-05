@@ -5,9 +5,9 @@ const DISCORD_CONFIG = {
   GUILD_ID: '1129935594986942464',
 };
 
+const BOT_USER_ID = '1283568907982209105';
+
 exports.handler = async (event) => {
-  console.log('Starting validation function');
-  
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -19,16 +19,14 @@ exports.handler = async (event) => {
   }
 
   try {
-    console.log('Received event body:', event.body);
     const { channelId } = JSON.parse(event.body);
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!botToken) {
-      console.error('Bot token not found');
       throw new Error('Discord bot token not configured');
     }
 
-    // First, verify the channel exists
+    // Verify channel exists
     const channelResponse = await fetch(
       `https://discord.com/api/v10/channels/${channelId}`,
       {
@@ -40,7 +38,6 @@ exports.handler = async (event) => {
     );
 
     if (!channelResponse.ok) {
-      console.error('Channel not found');
       return {
         statusCode: 200,
         headers,
@@ -53,9 +50,8 @@ exports.handler = async (event) => {
 
     const channel = await channelResponse.json();
 
-    // Verify it's in the correct category
+    // Verify category
     if (channel.parent_id !== DISCORD_CONFIG.CATEGORY_ID) {
-      console.error('Channel not in correct category');
       return {
         statusCode: 200,
         headers,
@@ -83,15 +79,30 @@ exports.handler = async (event) => {
         const rawMessages = await messagesResponse.json();
         messages = rawMessages
           .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
-          .map(msg => ({
-            id: msg.id,
-            sender: msg.author.bot ? 'System' : msg.author.username,
-            content: msg.content,
-            avatar: msg.author.avatar 
-              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-              : null,
-            timestamp: msg.timestamp
-          }))
+          .map(msg => {
+            // If it's a bot message (your website user)
+            if (msg.author.id === BOT_USER_ID) {
+              return {
+                id: msg.id,
+                sender: 'You',
+                content: msg.content,
+                timestamp: msg.timestamp,
+                fromWebsite: true, // Ensures right-side alignment
+                isYou: true
+              };
+            }
+            // Discord user message
+            return {
+              id: msg.id,
+              sender: msg.author.username,
+              content: msg.content,
+              avatar: msg.author.avatar 
+                ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+                : null,
+              timestamp: msg.timestamp,
+              fromDiscord: true
+            };
+          })
           .reverse();
       }
     } catch (error) {
@@ -113,10 +124,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        error: error.message,
-        stack: error.stack
-      })
+      body: JSON.stringify({ error: error.message })
     };
   }
 };
