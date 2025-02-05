@@ -20,7 +20,7 @@ exports.handler = async (event) => {
 
   try {
     console.log('Received event body:', event.body);
-    const { ticketId } = JSON.parse(event.body);
+    const { channelId } = JSON.parse(event.body);
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!botToken) {
@@ -28,92 +28,9 @@ exports.handler = async (event) => {
       throw new Error('Discord bot token not configured');
     }
 
-    // Format channel name
-    const channelName = `ticket-${ticketId.toLowerCase()}`;
-    console.log('Looking for channel:', channelName);
-
-    // Get all guild channels
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${DISCORD_CONFIG.GUILD_ID}/channels`,
+    // First, verify the channel exists
+    const channelResponse = await fetch(
+      `https://discord.com/api/v10/channels/${channelId}`,
       {
         headers: {
-          'Authorization': `Bot ${botToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Discord API Error:', errorText);
-      throw new Error(\`Discord API error: \${errorText}\`);
-    }
-
-    const channels = await response.json();
-    
-    // Find ticket channel
-    const ticketChannel = channels.find(channel => 
-      channel.parent_id === DISCORD_CONFIG.CATEGORY_ID && 
-      channel.type === 0 && 
-      channel.name === channelName
-    );
-
-    console.log('Found channel:', ticketChannel ? 'yes' : 'no');
-
-    // If channel found, get messages
-    let messages = [];
-    if (ticketChannel) {
-      try {
-        const messagesResponse = await fetch(
-          `https://discord.com/api/v10/channels/${ticketChannel.id}/messages?limit=100`,
-          {
-            headers: {
-              'Authorization': `Bot ${botToken}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (messagesResponse.ok) {
-          const rawMessages = await messagesResponse.json();
-          messages = rawMessages
-            .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
-            .map(msg => ({
-              id: msg.id,
-              sender: msg.author.bot ? 'System' : msg.author.username,
-              content: msg.content,
-              avatar: msg.author.avatar 
-                ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-                : null,
-              timestamp: msg.timestamp
-            }))
-            .reverse();
-        }
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        // Don't throw error, just return empty messages array
-        messages = [];
-      }
-    }
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        valid: !!ticketChannel,
-        channelId: ticketChannel ? ticketChannel.id : null,
-        messages
-      })
-    };
-  } catch (error) {
-    console.error('Function error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
-        error: error.message,
-        stack: error.stack
-      })
-    };
-  }
-};
+          'Authorization': `Bot ${botToken
