@@ -1,101 +1,59 @@
 const fetch = require('node-fetch');
 
-exports.handler = async (event, context) => {
-  // Add CORS headers
+const DISCORD_CONFIG = {
+  CATEGORY_ID: '1336065020907229184',
+  GUILD_ID: '1129935594986942464',
+  SUPPORT_ROLE_ID: '1129935594999529715'
+};
+
+exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
-  // Handle preflight requests
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers,
-      body: ''
-    };
-  }
-
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
-    console.log('Received request body:', event.body);
-    
     const { orderInfo } = JSON.parse(event.body);
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!botToken) {
-      console.error('Bot token not configured');
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          error: 'Discord bot token not configured',
-          details: 'Please configure DISCORD_BOT_TOKEN in Netlify environment variables'
-        })
-      };
+      throw new Error('Discord bot token not configured');
     }
 
-    console.log('Creating channel with info:', {
-      guildId: orderInfo.guildId,
-      categoryId: orderInfo.categoryId,
-      channelName: orderInfo.channelName
-    });
-
-    // Create channel
-    const channelResponse = await fetch(`https://discord.com/api/v10/guilds/${orderInfo.guildId}/channels`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bot ${botToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: orderInfo.channelName,
-        type: 0,
-        parent_id: orderInfo.categoryId,
-        topic: `Order ticket for ${orderInfo.projectName}`,
-        permission_overwrites: [
-          {
-            id: orderInfo.guildId,
-            type: 0,
-            deny: "1024"
-          },
-          {
-            id: orderInfo.supportRoleId,
-            type: 0,
-            allow: "1024"
-          }
-        ]
-      })
-    });
-
-    const channelData = await channelResponse.text();
-    console.log('Discord API response:', channelData);
+    // Create the channel
+    const channelResponse = await fetch(
+      `https://discord.com/api/v10/guilds/${DISCORD_CONFIG.GUILD_ID}/channels`, 
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bot ${botToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: `ticket-${orderInfo.orderNumber.toLowerCase()}`,
+          type: 0,
+          parent_id: DISCORD_CONFIG.CATEGORY_ID,
+          topic: `Order ticket for ${orderInfo.projectName}`
+        })
+      }
+    );
 
     if (!channelResponse.ok) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          error: 'Discord API error',
-          details: channelData
-        })
-      };
+      throw new Error('Failed to create channel');
     }
 
-    const channel = JSON.parse(channelData);
+    const channelData = await channelResponse.json();
 
-    // Send initial message
+    // Send initial message with channel ID
     const embedData = {
       embeds: [{
         title: `New Order - ${orderInfo.type}`,
+        description: `**Support Channel ID:** ${channelData.id}\nPlease save this Channel ID to connect to support chat.`,
         color: 0x00ff00,
         fields: [
           {
@@ -119,23 +77,27 @@ exports.handler = async (event, context) => {
             inline: false
           }
         ],
+        footer: {
+          text: "Use the Channel ID above to connect to live support"
+        },
         timestamp: new Date().toISOString()
       }]
     };
 
-    console.log('Sending embed:', embedData);
-
-    const messageResponse = await fetch(`https://discord.com/api/v10/channels/${channel.id}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bot ${botToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(embedData)
-    });
+    const messageResponse = await fetch(
+      `https://discord.com/api/v10/channels/${channelData.id}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bot ${botToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(embedData)
+      }
+    );
 
     if (!messageResponse.ok) {
-      console.error('Error sending message:', await messageResponse.text());
+      throw new Error('Failed to send initial message');
     }
 
     return {
@@ -143,20 +105,17 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         success: true,
-        channelId: channel.id,
-        orderNumber: orderInfo.orderNumber
+        channelId: channelData.id,
+        orderNumber: orderInfo.orderNumber,
+        message: `Your support Channel ID is: ${channelData.id}`
       })
     };
-
   } catch (error) {
-    console.error('Function error:', error);
+    console.error('Error:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({
-        error: error.message,
-        stack: error.stack
-      })
+      body: JSON.stringify({ error: error.message })
     };
   }
 };
