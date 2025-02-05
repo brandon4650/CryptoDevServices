@@ -186,42 +186,55 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       )}
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex items-start gap-3 ${
-              message.sender === 'You' ? 'flex-row-reverse' : ''
-            }`}
-          >
-            {message.avatar ? (
-              <img
-                src={message.avatar}
-                alt={message.sender}
-                className="w-8 h-8 rounded-full bg-blue-900/40"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-                {message.sender[0]}
-              </div>
-            )}
-            <div
-              className={`max-w-[70%] ${
-                message.sender === 'You'
-                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600'
-                  : 'bg-blue-900/40'
-              } p-3 rounded-lg`}
-            >
-              <div className="text-sm font-medium mb-1">{message.sender}</div>
-              <div className="text-zinc-100">{message.content}</div>
-              <div className="text-xs text-zinc-400 mt-1">
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </div>
+<div className="flex-1 overflow-y-auto p-4 space-y-4">
+  {messages.map((message) => (
+    <div
+      key={message.id}
+      className={`flex items-start gap-3 ${
+        message.sender === 'You' || message.fromWebsite ? 'flex-row-reverse' : ''
+      }`}
+    >
+      {message.fromDiscord ? (
+        // Discord user message with avatar
+        <>
+          {message.avatar ? (
+            <img
+              src={message.avatar}
+              alt={message.sender}
+              className="w-8 h-8 rounded-full bg-blue-900/40"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+              {message.sender[0]}
+            </div>
+          )}
+          <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
+            <div className="text-sm font-medium mb-1">{message.sender}</div>
+            <div className="text-zinc-100">{message.content}</div>
+            <div className="text-xs text-zinc-400 mt-1">
+              {new Date(message.timestamp).toLocaleTimeString()}
             </div>
           </div>
-        ))}
-        <div ref={messageEndRef} />
-      </div>
+        </>
+      ) : (
+        // Website user message or system message
+        <>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+            {message.sender[0]}
+          </div>
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-3 rounded-lg max-w-[70%]">
+            <div className="text-sm font-medium mb-1">{message.sender}</div>
+            <div className="text-zinc-100">{message.content}</div>
+            <div className="text-xs text-zinc-400 mt-1">
+              {new Date(message.timestamp).toLocaleTimeString()}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  ))}
+  <div ref={messageEndRef} />
+</div>
 
       {/* Message Input */}
       {chatConnected && (
