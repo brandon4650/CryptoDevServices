@@ -10,14 +10,14 @@ const DEFAULT_WELCOME_MESSAGE = {
   timestamp: new Date()
 };
 
-const LiveChat = ({ orderId, initialOpen = false }) => {
-  const [messages, setMessages] = useState([]);
+const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
+  const [messages, setMessages] = useState([DEFAULT_WELCOME_MESSAGE]);
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [isLoading, setIsLoading] = useState(false);
-  const [chatConnected, setChatConnected] = useState(false);
-  const [orderNumber, setOrderNumber] = useState(orderId || '');
-  const [showOrderInput, setShowOrderInput] = useState(!orderId);
+  const [chatConnected, setChatConnected] = useState(!initialChannelId);
+  const [channelId, setChannelId] = useState(initialChannelId || '');
+  const [showChannelInput, setShowChannelInput] = useState(!initialChannelId);
   const messageEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -30,75 +30,57 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (!orderId && !chatConnected) {
-      setMessages([DEFAULT_WELCOME_MESSAGE]);
-      setChatConnected(true);
-    }
-  }, []);
-
-  // Connect to Discord thread
-  const connectToThread = async (threadId) => {
+  // Connect to Discord channel
+  const connectToChannel = async (id) => {
     setIsLoading(true);
     try {
-      console.log('Connecting to thread:', threadId);
-      
-      // Clean and normalize the ticket number
-      const cleanTicketId = threadId.toUpperCase().trim();
-      
-      // Validate the ticket
-      const isValid = await chatClient.validateTicket(cleanTicketId);
-      
-      if (!isValid) {
-        throw new Error('Invalid ticket number');
+      console.log('Connecting to channel:', id);
+
+      // Validate the channel
+      const validation = await chatClient.validateChannel(id);
+      if (!validation.valid) {
+        throw new Error('Invalid channel ID');
       }
 
       // Set up message subscription
-      chatClient.subscribeToTicket(cleanTicketId, (message) => {
+      chatClient.subscribeToChannel(id, (message) => {
         console.log('Received new message:', message);
         setMessages(prev => [...prev, message]);
       });
 
-      try {
-        // Load message history
-        const history = await chatClient.getTicketHistory(cleanTicketId);
-        if (history && history.length > 0) {
-          setMessages([DEFAULT_WELCOME_MESSAGE, ...history]);
-        } else {
-          setMessages([DEFAULT_WELCOME_MESSAGE]);
-        }
-      } catch (error) {
-        console.error('Error loading history:', error);
+      // Load message history
+      if (validation.messages && validation.messages.length > 0) {
+        setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
+      } else {
         setMessages([DEFAULT_WELCOME_MESSAGE]);
       }
 
       setChatConnected(true);
-      setShowOrderInput(false);
+      setShowChannelInput(false);
     } catch (error) {
-      console.error('Error connecting to thread:', error);
+      console.error('Error connecting to channel:', error);
       setMessages([{
         id: 'error',
         sender: 'System',
-        content: 'Error connecting to support ticket. Please verify your order number and try again.',
+        content: 'Error connecting to support chat. Please verify your channel ID and try again.',
         timestamp: new Date()
       }]);
-      setChatConnected(false);
     }
     setIsLoading(false);
   };
 
   useEffect(() => {
-    if (orderId) {
-      console.log('OrderID provided:', orderId);
-      connectToThread(orderId);
+    if (initialChannelId) {
+      console.log('Channel ID provided:', initialChannelId);
+      connectToChannel(initialChannelId);
     }
 
     return () => {
-      if (orderId) {
-        chatClient.unsubscribeFromTicket(orderId);
+      if (initialChannelId) {
+        chatClient.unsubscribeFromChannel(initialChannelId);
       }
     };
-  }, [orderId]);
+  }, [initialChannelId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -116,12 +98,10 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     setNewMessage('');
 
     try {
-      if (orderNumber) {
-        await chatClient.sendTicketMessage(orderNumber, newMessage);
-      }
+      await chatClient.sendChannelMessage(channelId, newMessage);
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [...prev, {
+      setMessages(prev => [...prev.filter(m => m.id !== tempId), {
         id: 'error',
         sender: 'System',
         content: 'Failed to send message. Please try again.',
@@ -130,10 +110,10 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
     }
   };
 
-  const handleOrderSubmit = (e) => {
+  const handleChannelSubmit = (e) => {
     e.preventDefault();
-    if (orderNumber) {
-      connectToThread(orderNumber);
+    if (channelId) {
+      connectToChannel(channelId);
     }
   };
 
@@ -153,7 +133,7 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
       {/* Header */}
       <div className="p-4 bg-blue-900/20 border-b border-blue-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {showOrderInput && (
+          {showChannelInput && (
             <button
               onClick={() => setIsOpen(false)}
               className="text-cyan-400 hover:text-cyan-300"
@@ -173,20 +153,20 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
         </button>
       </div>
 
-      {/* Order Number Input */}
-      {showOrderInput && (
+      {/* Channel ID Input */}
+      {showChannelInput && (
         <div className="p-6">
-          <form onSubmit={handleOrderSubmit} className="space-y-4">
+          <form onSubmit={handleChannelSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-2">
-                Enter your Order Number to connect
+                Enter your Channel ID to connect
               </label>
               <input
                 type="text"
-                value={orderNumber}
-                onChange={(e) => setOrderNumber(e.target.value)}
+                value={channelId}
+                onChange={(e) => setChannelId(e.target.value)}
                 className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
-                placeholder="Enter order number..."
+                placeholder="Enter channel ID..."
                 required
               />
             </div>
@@ -206,64 +186,62 @@ const LiveChat = ({ orderId, initialOpen = false }) => {
       )}
 
       {/* Chat Messages */}
-      {(chatConnected || messages.length > 0) && (
-        <>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex items-start gap-3 ${
-                  message.sender === 'You' ? 'flex-row-reverse' : ''
-                }`}
-              >
-                {message.avatar ? (
-                  <img
-                    src={message.avatar}
-                    alt={message.sender}
-                    className="w-8 h-8 rounded-full bg-blue-900/40"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-                    {message.sender[0]}
-                  </div>
-                )}
-                <div
-                  className={`max-w-[70%] ${
-                    message.sender === 'You'
-                      ? 'bg-gradient-to-r from-cyan-600 to-blue-600'
-                      : 'bg-blue-900/40'
-                  } p-3 rounded-lg`}
-                >
-                  <div className="text-sm font-medium mb-1">{message.sender}</div>
-                  <div className="text-zinc-100">{message.content}</div>
-                  <div className="text-xs text-zinc-400 mt-1">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-            <div ref={messageEndRef} />
-          </div>
-
-          {/* Message Input */}
-          <form onSubmit={handleSubmit} className="p-4 bg-blue-900/20 border-t border-blue-800">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 bg-blue-900/40 border border-blue-800 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400 text-white"
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex items-start gap-3 ${
+              message.sender === 'You' ? 'flex-row-reverse' : ''
+            }`}
+          >
+            {message.avatar ? (
+              <img
+                src={message.avatar}
+                alt={message.sender}
+                className="w-8 h-8 rounded-full bg-blue-900/40"
               />
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-cyan-600 to-blue-600 p-2 rounded-lg hover:opacity-90 transition-opacity"
-              >
-                <Send className="h-5 w-5" />
-              </button>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+                {message.sender[0]}
+              </div>
+            )}
+            <div
+              className={`max-w-[70%] ${
+                message.sender === 'You'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600'
+                  : 'bg-blue-900/40'
+              } p-3 rounded-lg`}
+            >
+              <div className="text-sm font-medium mb-1">{message.sender}</div>
+              <div className="text-zinc-100">{message.content}</div>
+              <div className="text-xs text-zinc-400 mt-1">
+                {new Date(message.timestamp).toLocaleTimeString()}
+              </div>
             </div>
-          </form>
-        </>
+          </div>
+        ))}
+        <div ref={messageEndRef} />
+      </div>
+
+      {/* Message Input */}
+      {chatConnected && (
+        <form onSubmit={handleSubmit} className="p-4 bg-blue-900/20 border-t border-blue-800">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 bg-blue-900/40 border border-blue-800 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-400 text-white"
+            />
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 p-2 rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <Send className="h-5 w-5" />
+            </button>
+          </div>
+        </form>
       )}
     </div>
   );
