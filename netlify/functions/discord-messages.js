@@ -39,33 +39,34 @@ exports.handler = async (event) => {
 
     const messages = await response.json();
 
-    // Transform and filter messages
-    const transformedMessages = messages.map(msg => {
-      // Check if this is a bot message (website user message)
-      if (msg.author.bot) {
-        // Extract the original user message
-        return {
-          id: msg.id,
-          sender: 'You',
-          content: msg.content,
-          timestamp: msg.timestamp,
-          fromWebsite: true
-        };
-      } else {
-        // This is a Discord user message
-        return {
-          id: msg.id,
-          sender: msg.author.username,
-          content: msg.content,
-          avatar: msg.author.avatar 
-            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-            : null,
-          timestamp: msg.timestamp,
-          fromDiscord: true
-        };
-      }
-    })
-    .reverse();
+    // Transform messages and remove duplicates
+    let seenMessages = new Set(); // Track unique message contents
+    const transformedMessages = messages
+      .map(msg => {
+        // For Discord user messages (not bot)
+        if (!msg.author.bot) {
+          return {
+            id: msg.id,
+            sender: msg.author.username,
+            content: msg.content,
+            avatar: msg.author.avatar 
+              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+              : null,
+            timestamp: msg.timestamp,
+            fromDiscord: true
+          };
+        }
+        // Skip bot messages that are echoing website messages
+        return null;
+      })
+      .filter(msg => {
+        if (!msg) return false;
+        const messageKey = \`\${msg.content}\${msg.timestamp}\`;
+        if (seenMessages.has(messageKey)) return false;
+        seenMessages.add(messageKey);
+        return true;
+      })
+      .reverse();
 
     return {
       statusCode: 200,
