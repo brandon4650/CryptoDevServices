@@ -40,27 +40,32 @@ exports.handler = async (event) => {
     const messages = await response.json();
 
     // Transform and filter messages
-    const transformedMessages = messages
-      .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
-      .map(msg => {
-        // Check if this is a bot message repeating a user message
-        const isEchoMessage = msg.author.bot && msg.content.includes(': ');
-        const content = isEchoMessage ? msg.content.split(': ')[1] : msg.content;
-
+    const transformedMessages = messages.map(msg => {
+      // Check if this is a bot message (website user message)
+      if (msg.author.bot) {
+        // Extract the original user message
         return {
           id: msg.id,
-          sender: isEchoMessage ? msg.content.split(':')[0] : msg.author.username,
-          content: content,
+          sender: 'You',
+          content: msg.content,
+          timestamp: msg.timestamp,
+          fromWebsite: true
+        };
+      } else {
+        // This is a Discord user message
+        return {
+          id: msg.id,
+          sender: msg.author.username,
+          content: msg.content,
           avatar: msg.author.avatar 
             ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
             : null,
           timestamp: msg.timestamp,
-          isBot: msg.author.bot
+          fromDiscord: true
         };
-      })
-      // Filter out bot echoes
-      .filter(msg => !(msg.isBot && msg.content.includes(': ')))
-      .reverse();
+      }
+    })
+    .reverse();
 
     return {
       statusCode: 200,
