@@ -40,19 +40,8 @@ exports.handler = async (event) => {
 
     const messages = await response.json();
     
-    // Transform messages
+    // Transform messages - Include ALL messages, not just replies
     const transformedMessages = messages
-      .filter(msg => {
-        // For initial load, include all messages
-        if (isInitialLoad) return true;
-        
-        // For polling, include non-bot messages or message mentions/replies to the bot
-        if (msg.author.id !== BOT_USER_ID) return true;
-        if (msg.mentions?.some(mention => mention.id === BOT_USER_ID)) return true;
-        if (msg.referenced_message?.author.id === BOT_USER_ID) return true;
-        
-        return false;
-      })
       .map(msg => {
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
@@ -66,7 +55,7 @@ exports.handler = async (event) => {
           };
         }
 
-        // Discord user messages
+        // All Discord user messages
         return {
           id: msg.id,
           sender: msg.author.username,
