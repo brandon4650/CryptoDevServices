@@ -44,8 +44,8 @@ exports.handler = async (event) => {
       .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
       .map(msg => ({
         id: msg.id,
-        sender: msg.author.bot ? 'System' : msg.author.username,
-        content: msg.content,
+        sender: msg.author.username, // Always use the actual username
+        content: msg.content.includes(': ') ? msg.content.split(': ')[1] : msg.content, // Remove username prefix if exists
         avatar: msg.author.avatar 
           ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
           : null,
