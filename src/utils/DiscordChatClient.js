@@ -170,7 +170,7 @@ class DiscordChatClient {
         },
         body: JSON.stringify({
           channelId: cleanChannelId,
-          content,
+          content: content, // Just send the content without username prefix
           userName: 'You'
         })
       });
