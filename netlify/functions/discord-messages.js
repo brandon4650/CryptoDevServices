@@ -1,5 +1,7 @@
 const fetch = require('node-fetch');
 
+const BOT_USER_ID = '1283568907982209105';
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -12,7 +14,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { channelId, after } = JSON.parse(event.body);
+    const { channelId, after, isInitialLoad } = JSON.parse(event.body);
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!botToken) {
@@ -38,13 +40,20 @@ exports.handler = async (event) => {
     }
 
     const messages = await response.json();
-    let seenMessages = new Set();
 
     // Transform messages
     const transformedMessages = messages
+      .filter(msg => {
+        // If it's initial load (page refresh), include bot messages (website user)
+        if (isInitialLoad) {
+          return true;
+        }
+        // During polling, only include non-bot messages (Discord users)
+        return msg.author.id !== BOT_USER_ID;
+      })
       .map(msg => {
-        // For bot messages (website user messages)
-        if (msg.author.bot) {
+        if (msg.author.id === BOT_USER_ID) {
+          // This is a website user's message
           return {
             id: msg.id,
             sender: 'You',
@@ -52,25 +61,19 @@ exports.handler = async (event) => {
             timestamp: msg.timestamp,
             fromWebsite: true
           };
+        } else {
+          // This is a Discord user's message
+          return {
+            id: msg.id,
+            sender: msg.author.username,
+            content: msg.content,
+            avatar: msg.author.avatar 
+              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+              : null,
+            timestamp: msg.timestamp,
+            fromDiscord: true
+          };
         }
-        // For Discord user messages
-        return {
-          id: msg.id,
-          sender: msg.author.username,
-          content: msg.content,
-          avatar: msg.author.avatar 
-            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-            : null,
-          timestamp: msg.timestamp,
-          fromDiscord: true
-        };
-      })
-      .filter(msg => {
-        // Remove duplicate messages
-        const messageKey = `${msg.sender}:${msg.content}:${msg.timestamp}`;
-        if (seenMessages.has(messageKey)) return false;
-        seenMessages.add(messageKey);
-        return true;
       })
       .reverse();
 
