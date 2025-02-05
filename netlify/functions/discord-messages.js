@@ -39,26 +39,34 @@ exports.handler = async (event) => {
     }
 
     const messages = await response.json();
-    
+    console.log('Raw messages received:', messages); // Debug log
+
     // Transform messages
     const transformedMessages = messages
       .filter(msg => {
-        // Include all messages during initial load or non-bot messages during polling
-        return isInitialLoad || msg.author.id !== BOT_USER_ID;
+        // During initial load, include all messages
+        if (isInitialLoad) {
+          return true;
+        }
+        // During polling, include all non-bot messages
+        return msg.author.id !== BOT_USER_ID;
       })
       .map(msg => {
-        // If it's a bot message, it's a website user message (You)
+        console.log('Processing message:', msg); // Debug log
+
+        // If it's a bot message (website user)
         if (msg.author.id === BOT_USER_ID) {
           return {
             id: msg.id,
             sender: 'You',
             content: msg.content,
             timestamp: msg.timestamp,
-            fromWebsite: true,  // This ensures right-side alignment
-            isYou: true        // Additional flag to ensure it's treated as a user message
+            fromWebsite: true,
+            isYou: true
           };
         }
-        // Discord user message
+
+        // Discord user message (handle both replies and standalone messages)
         return {
           id: msg.id,
           sender: msg.author.username,
@@ -67,10 +75,17 @@ exports.handler = async (event) => {
             ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
             : null,
           timestamp: msg.timestamp,
-          fromDiscord: true
+          fromDiscord: true,
+          // Include reference info if it's a reply
+          referencedMessage: msg.referenced_message ? {
+            id: msg.referenced_message.id,
+            content: msg.referenced_message.content
+          } : null
         };
       })
       .reverse();
+
+    console.log('Transformed messages:', transformedMessages); // Debug log
 
     return {
       statusCode: 200,
