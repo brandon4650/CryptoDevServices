@@ -1,4 +1,3 @@
-// DiscordChatClient.js
 class DiscordChatClient {
   constructor() {
     this.channels = new Map();
@@ -8,14 +7,18 @@ class DiscordChatClient {
 
   async validateChannel(channelId) {
     try {
-      console.log('Validating channel:', channelId);
+      // Remove any 'ticket-' prefix if present
+      const cleanChannelId = channelId.replace('ticket-', '');
+      console.log('Validating channel:', cleanChannelId);
       
       const response = await fetch('/.netlify/functions/discord-validate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ channelId })
+        body: JSON.stringify({ 
+          channelId: cleanChannelId
+        })
       });
 
       if (!response.ok) {
@@ -29,7 +32,7 @@ class DiscordChatClient {
 
       if (data.valid && data.channelId) {
         // Store channel info for future use
-        this.channels.set(channelId, data.channelId);
+        this.channels.set(cleanChannelId, data.channelId);
         return {
           valid: true,
           channelId: data.channelId,
@@ -45,17 +48,19 @@ class DiscordChatClient {
   }
 
   subscribeToChannel(channelId, callback) {
-    console.log('Subscribing to channel:', channelId);
-    if (this.channels.has(channelId)) {
-      this.messageCallbacks.set(channelId, callback);
+    const cleanChannelId = channelId.replace('ticket-', '');
+    console.log('Subscribing to channel:', cleanChannelId);
+    if (this.channels.has(cleanChannelId)) {
+      this.messageCallbacks.set(cleanChannelId, callback);
       return true;
     }
     return false;
   }
 
   unsubscribeFromChannel(channelId) {
-    if (this.channels.has(channelId)) {
-      this.messageCallbacks.delete(channelId);
+    const cleanChannelId = channelId.replace('ticket-', '');
+    if (this.channels.has(cleanChannelId)) {
+      this.messageCallbacks.delete(cleanChannelId);
       return true;
     }
     return false;
@@ -63,8 +68,9 @@ class DiscordChatClient {
 
   async getChannelHistory(channelId) {
     try {
-      console.log('Getting history for channel:', channelId);
-      if (!this.channels.has(channelId)) {
+      const cleanChannelId = channelId.replace('ticket-', '');
+      console.log('Getting history for channel:', cleanChannelId);
+      if (!this.channels.has(cleanChannelId)) {
         throw new Error('Channel not found');
       }
 
@@ -73,7 +79,7 @@ class DiscordChatClient {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ channelId })
+        body: JSON.stringify({ channelId: cleanChannelId })
       });
 
       if (!response.ok) {
@@ -90,8 +96,9 @@ class DiscordChatClient {
 
   async sendChannelMessage(channelId, content) {
     try {
-      console.log('Sending message to channel:', channelId);
-      if (!this.channels.has(channelId)) {
+      const cleanChannelId = channelId.replace('ticket-', '');
+      console.log('Sending message to channel:', cleanChannelId);
+      if (!this.channels.has(cleanChannelId)) {
         throw new Error('Channel not found');
       }
 
@@ -101,7 +108,7 @@ class DiscordChatClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          channelId,
+          channelId: cleanChannelId,
           content,
           userName: 'You'
         })
