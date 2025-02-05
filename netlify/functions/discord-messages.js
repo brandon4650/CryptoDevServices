@@ -43,36 +43,32 @@ exports.handler = async (event) => {
     // Transform messages
     const transformedMessages = messages
       .filter(msg => {
-        // If it's initial load (page refresh), include all messages
-        if (isInitialLoad) {
-          return true;
-        }
-        // During polling, only include non-bot messages (Discord users)
-        return msg.author.id !== BOT_USER_ID;
+        // Include all messages during initial load or non-bot messages during polling
+        return isInitialLoad || msg.author.id !== BOT_USER_ID;
       })
       .map(msg => {
+        // If it's a bot message, it's a website user message (You)
         if (msg.author.id === BOT_USER_ID) {
-          // All bot messages are treated as website user messages ("You")
           return {
             id: msg.id,
             sender: 'You',
             content: msg.content,
             timestamp: msg.timestamp,
-            fromWebsite: true
-          };
-        } else {
-          // Discord user messages
-          return {
-            id: msg.id,
-            sender: msg.author.username,
-            content: msg.content,
-            avatar: msg.author.avatar 
-              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-              : null,
-            timestamp: msg.timestamp,
-            fromDiscord: true
+            fromWebsite: true,  // This ensures right-side alignment
+            isYou: true        // Additional flag to ensure it's treated as a user message
           };
         }
+        // Discord user message
+        return {
+          id: msg.id,
+          sender: msg.author.username,
+          content: msg.content,
+          avatar: msg.author.avatar 
+            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+            : null,
+          timestamp: msg.timestamp,
+          fromDiscord: true
+        };
       })
       .reverse();
 
