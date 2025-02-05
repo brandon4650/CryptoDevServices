@@ -2,12 +2,13 @@ class DiscordChatClient {
   constructor() {
     this.channels = new Map();
     this.messageCallbacks = new Map();
+    this.pollingIntervals = new Map();
+    this.lastMessageIds = new Map();
     console.log('DiscordChatClient initialized');
   }
 
   async validateChannel(channelId) {
     try {
-      // Remove any 'ticket-' prefix if present
       const cleanChannelId = channelId.replace('ticket-', '');
       console.log('Validating channel:', cleanChannelId);
       
@@ -31,8 +32,11 @@ class DiscordChatClient {
       console.log('Validation response:', data);
 
       if (data.valid && data.channelId) {
-        // Store channel info for future use
         this.channels.set(cleanChannelId, data.channelId);
+        // Store the last message ID if messages exist
+        if (data.messages && data.messages.length > 0) {
+          this.lastMessageIds.set(cleanChannelId, data.messages[data.messages.length - 1].id);
+        }
         return {
           valid: true,
           channelId: data.channelId,
@@ -50,8 +54,11 @@ class DiscordChatClient {
   subscribeToChannel(channelId, callback) {
     const cleanChannelId = channelId.replace('ticket-', '');
     console.log('Subscribing to channel:', cleanChannelId);
+    
     if (this.channels.has(cleanChannelId)) {
       this.messageCallbacks.set(cleanChannelId, callback);
+      // Start polling for this channel
+      this.startPolling(cleanChannelId);
       return true;
     }
     return false;
@@ -61,9 +68,60 @@ class DiscordChatClient {
     const cleanChannelId = channelId.replace('ticket-', '');
     if (this.channels.has(cleanChannelId)) {
       this.messageCallbacks.delete(cleanChannelId);
+      // Stop polling for this channel
+      this.stopPolling(cleanChannelId);
       return true;
     }
     return false;
+  }
+
+  startPolling(channelId) {
+    if (this.pollingIntervals.has(channelId)) {
+      return; // Already polling
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/.netlify/functions/discord-messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            channelId,
+            after: this.lastMessageIds.get(channelId)
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch messages');
+        }
+
+        const data = await response.json();
+        if (data.messages && data.messages.length > 0) {
+          // Update last message ID
+          this.lastMessageIds.set(channelId, data.messages[data.messages.length - 1].id);
+          
+          // Call callback with new messages
+          const callback = this.messageCallbacks.get(channelId);
+          if (callback) {
+            data.messages.forEach(msg => callback(msg));
+          }
+        }
+      } catch (error) {
+        console.error('Error polling messages:', error);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    this.pollingIntervals.set(channelId, pollInterval);
+  }
+
+  stopPolling(channelId) {
+    const interval = this.pollingIntervals.get(channelId);
+    if (interval) {
+      clearInterval(interval);
+      this.pollingIntervals.delete(channelId);
+    }
   }
 
   async getChannelHistory(channelId) {
@@ -87,6 +145,9 @@ class DiscordChatClient {
       }
 
       const data = await response.json();
+      if (data.messages && data.messages.length > 0) {
+        this.lastMessageIds.set(cleanChannelId, data.messages[data.messages.length - 1].id);
+      }
       return data.messages || [];
     } catch (error) {
       console.error('Error fetching message history:', error);
