@@ -56,6 +56,40 @@ class DiscordChatClient {
     }
   }
 
+  async getChannelHistory(channelId) {
+    try {
+      const cleanChannelId = channelId.replace('ticket-', '');
+      console.log('Getting history for channel:', cleanChannelId);
+      if (!this.channels.has(cleanChannelId)) {
+        throw new Error('Channel not found');
+      }
+
+      const response = await fetch('/.netlify/functions/discord-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          channelId: cleanChannelId,
+          isInitialLoad: true // This is initial load, so include bot messages
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+
+      const data = await response.json();
+      if (data.messages && data.messages.length > 0) {
+        this.lastMessageIds.set(cleanChannelId, data.messages[data.messages.length - 1].id);
+      }
+      return data.messages || [];
+    } catch (error) {
+      console.error('Error fetching message history:', error);
+      return [];
+    }
+  }
+
   subscribeToChannel(channelId, callback) {
     const cleanChannelId = channelId.replace('ticket-', '');
     console.log('Subscribing to channel:', cleanChannelId);
