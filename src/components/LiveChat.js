@@ -187,52 +187,64 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
 
       {/* Chat Messages */}
 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-  {messages.map((message) => (
-    <div
-      key={message.id}
-      className={`flex items-start gap-3 ${
-        message.sender === 'You' || message.fromWebsite ? 'flex-row-reverse' : ''
-      }`}
-    >
-      {message.fromDiscord ? (
-        // Discord user message with avatar
-        <>
-          {message.avatar ? (
-            <img
-              src={message.avatar}
-              alt={message.sender}
-              className="w-8 h-8 rounded-full bg-blue-900/40"
-            />
-          ) : (
+  {messages.map((message) => {
+    const isBotMessage = message.fromWebsite || message.sender === 'You';
+    const isSystemMessage = message.sender === 'CryptoWeb Assistant' || message.sender === 'System';
+    const isDiscordMessage = message.fromDiscord;
+
+    return (
+      <div
+        key={message.id}
+        className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
+      >
+        {isDiscordMessage ? (
+          // Discord user message with avatar
+          <>
+            {message.avatar ? (
+              <img
+                src={message.avatar}
+                alt={message.sender}
+                className="w-8 h-8 rounded-full bg-blue-900/40"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+                {message.sender[0]}
+              </div>
+            )}
+            <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
+              <div className="text-sm font-medium mb-1">{message.sender}</div>
+              <div className="text-zinc-100">{message.content}</div>
+              <div className="text-xs text-zinc-400 mt-1">
+                {new Date(message.timestamp).toLocaleTimeString()}
+              </div>
+            </div>
+          </>
+        ) : (
+          // Website user message or system message
+          <>
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
               {message.sender[0]}
             </div>
-          )}
-          <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
-            <div className="text-sm font-medium mb-1">{message.sender}</div>
-            <div className="text-zinc-100">{message.content}</div>
-            <div className="text-xs text-zinc-400 mt-1">
-              {new Date(message.timestamp).toLocaleTimeString()}
+            <div 
+              className={`${
+                isSystemMessage 
+                  ? 'bg-blue-900/40' 
+                  : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+              } p-3 rounded-lg max-w-[70%]`}
+            >
+              <div className="text-sm font-medium mb-1">
+                {isBotMessage ? 'You' : message.sender}
+              </div>
+              <div className="text-zinc-100">{message.content}</div>
+              <div className="text-xs text-zinc-400 mt-1">
+                {new Date(message.timestamp).toLocaleTimeString()}
+              </div>
             </div>
-          </div>
-        </>
-      ) : (
-        // Website user message or system message
-        <>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-            {message.sender[0]}
-          </div>
-          <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-3 rounded-lg max-w-[70%]">
-            <div className="text-sm font-medium mb-1">{message.sender}</div>
-            <div className="text-zinc-100">{message.content}</div>
-            <div className="text-xs text-zinc-400 mt-1">
-              {new Date(message.timestamp).toLocaleTimeString()}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  ))}
+          </>
+        )}
+      </div>
+    );
+  })}
   <div ref={messageEndRef} />
 </div>
 
