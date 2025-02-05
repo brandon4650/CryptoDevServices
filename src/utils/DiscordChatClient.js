@@ -127,7 +127,7 @@ class DiscordChatClient {
           body: JSON.stringify({ 
             channelId,
             after: this.lastMessageIds.get(channelId),
-            isInitialLoad: false // This is for polling, not initial load
+            isInitialLoad: false
           })
         });
 
@@ -138,10 +138,23 @@ class DiscordChatClient {
 
         const data = await response.json();
         if (data.messages && data.messages.length > 0) {
-          this.lastMessageIds.set(channelId, data.messages[data.messages.length - 1].id);
-          const callback = this.messageCallbacks.get(channelId);
-          if (callback) {
-            data.messages.forEach(msg => callback(msg));
+          // Log new messages for debugging
+          console.log('New messages received:', data.messages);
+          
+          // Filter out messages we've already seen
+          const newMessages = data.messages.filter(msg => {
+            const messageKey = `${msg.id}-${msg.content}`;
+            if (this.seenMessages.has(messageKey)) return false;
+            this.seenMessages.add(messageKey);
+            return true;
+          });
+
+          if (newMessages.length > 0) {
+            this.lastMessageIds.set(channelId, newMessages[newMessages.length - 1].id);
+            const callback = this.messageCallbacks.get(channelId);
+            if (callback) {
+              newMessages.forEach(msg => callback(msg));
+            }
           }
         }
       } catch (error) {
@@ -151,8 +164,9 @@ class DiscordChatClient {
 
     // Initial poll
     pollMessages();
-    // Set up interval
-    const pollInterval = setInterval(pollMessages, 3000);
+    
+    // Poll more frequently for better responsiveness
+    const pollInterval = setInterval(pollMessages, 1000); // Poll every second
     this.pollingIntervals.set(channelId, pollInterval);
   }
 
