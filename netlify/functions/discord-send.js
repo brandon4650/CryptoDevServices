@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -19,9 +19,7 @@ exports.handler = async (event, context) => {
       throw new Error('Discord bot token not configured');
     }
 
-    // Format the message with the username
-    const messageContent = userName ? `${userName}: ${content}` : content;
-
+    // Send message without the username prefix
     const response = await fetch(
       `https://discord.com/api/v10/channels/${channelId}/messages`,
       {
@@ -30,7 +28,9 @@ exports.handler = async (event, context) => {
           'Authorization': `Bot ${botToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content: messageContent })
+        body: JSON.stringify({ 
+          content: content // Remove the userName prefix
+        })
       }
     );
 
@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
         success: true,
         message: {
           id: message.id,
-          sender: userName || 'System',
+          sender: userName,
           content: content,
           timestamp: message.timestamp
         }
