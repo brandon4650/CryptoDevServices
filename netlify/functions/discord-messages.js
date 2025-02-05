@@ -39,22 +39,22 @@ exports.handler = async (event) => {
     }
 
     const messages = await response.json();
-    console.log('Raw messages received:', messages); // Debug log
-
+    
     // Transform messages
     const transformedMessages = messages
       .filter(msg => {
-        // During initial load, include all messages
-        if (isInitialLoad) {
-          return true;
-        }
-        // During polling, include all non-bot messages
-        return msg.author.id !== BOT_USER_ID;
+        // For initial load, include all messages
+        if (isInitialLoad) return true;
+        
+        // For polling, include non-bot messages or message mentions/replies to the bot
+        if (msg.author.id !== BOT_USER_ID) return true;
+        if (msg.mentions?.some(mention => mention.id === BOT_USER_ID)) return true;
+        if (msg.referenced_message?.author.id === BOT_USER_ID) return true;
+        
+        return false;
       })
       .map(msg => {
-        console.log('Processing message:', msg); // Debug log
-
-        // If it's a bot message (website user)
+        // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
           return {
             id: msg.id,
@@ -66,7 +66,7 @@ exports.handler = async (event) => {
           };
         }
 
-        // Discord user message (handle both replies and standalone messages)
+        // Discord user messages
         return {
           id: msg.id,
           sender: msg.author.username,
@@ -75,17 +75,10 @@ exports.handler = async (event) => {
             ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
             : null,
           timestamp: msg.timestamp,
-          fromDiscord: true,
-          // Include reference info if it's a reply
-          referencedMessage: msg.referenced_message ? {
-            id: msg.referenced_message.id,
-            content: msg.referenced_message.content
-          } : null
+          fromDiscord: true
         };
       })
       .reverse();
-
-    console.log('Transformed messages:', transformedMessages); // Debug log
 
     return {
       statusCode: 200,
