@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-exports.handler = async (event, context) => {
+exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -12,7 +12,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { channelId, lastMessageId } = JSON.parse(event.body);
+    const { channelId, after } = JSON.parse(event.body);
     const botToken = process.env.DISCORD_BOT_TOKEN;
 
     if (!botToken) {
@@ -20,8 +20,8 @@ exports.handler = async (event, context) => {
     }
 
     let url = `https://discord.com/api/v10/channels/${channelId}/messages?limit=100`;
-    if (lastMessageId) {
-      url += `&after=${lastMessageId}`;
+    if (after) {
+      url += `&after=${after}`;
     }
 
     const response = await fetch(url, {
