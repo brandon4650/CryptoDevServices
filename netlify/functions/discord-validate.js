@@ -33,4 +33,90 @@ exports.handler = async (event) => {
       `https://discord.com/api/v10/channels/${channelId}`,
       {
         headers: {
-          'Authorization': `Bot ${botToken
+          'Authorization': `Bot ${botToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!channelResponse.ok) {
+      console.error('Channel not found');
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          valid: false,
+          error: 'Channel not found'
+        })
+      };
+    }
+
+    const channel = await channelResponse.json();
+
+    // Verify it's in the correct category
+    if (channel.parent_id !== DISCORD_CONFIG.CATEGORY_ID) {
+      console.error('Channel not in correct category');
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          valid: false,
+          error: 'Invalid channel'
+        })
+      };
+    }
+
+    // Get messages
+    let messages = [];
+    try {
+      const messagesResponse = await fetch(
+        `https://discord.com/api/v10/channels/${channelId}/messages?limit=100`,
+        {
+          headers: {
+            'Authorization': `Bot ${botToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (messagesResponse.ok) {
+        const rawMessages = await messagesResponse.json();
+        messages = rawMessages
+          .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
+          .map(msg => ({
+            id: msg.id,
+            sender: msg.author.bot ? 'System' : msg.author.username,
+            content: msg.content,
+            avatar: msg.author.avatar 
+              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+              : null,
+            timestamp: msg.timestamp
+          }))
+          .reverse();
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      messages = [];
+    }
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        valid: true,
+        channelId: channel.id,
+        messages
+      })
+    };
+  } catch (error) {
+    console.error('Function error:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: error.message,
+        stack: error.stack
+      })
+    };
+  }
+};
