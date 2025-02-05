@@ -42,21 +42,24 @@ exports.handler = async (event) => {
     // Transform and filter messages
     const transformedMessages = messages
       .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
-      .map(msg => ({
-        id: msg.id,
-        sender: msg.author.username, // Always use the actual username
-        content: msg.content.includes(': ') ? msg.content.split(': ')[1] : msg.content, // Remove username prefix if exists
-        avatar: msg.author.avatar 
-          ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-          : null,
-        timestamp: msg.timestamp,
-        attachments: msg.attachments?.map(att => ({
-          id: att.id,
-          url: att.url,
-          filename: att.filename,
-          contentType: att.content_type
-        })) || []
-      }))
+      .map(msg => {
+        // Check if this is a bot message repeating a user message
+        const isEchoMessage = msg.author.bot && msg.content.includes(': ');
+        const content = isEchoMessage ? msg.content.split(': ')[1] : msg.content;
+
+        return {
+          id: msg.id,
+          sender: isEchoMessage ? msg.content.split(':')[0] : msg.author.username,
+          content: content,
+          avatar: msg.author.avatar 
+            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+            : null,
+          timestamp: msg.timestamp,
+          isBot: msg.author.bot
+        };
+      })
+      // Filter out bot echoes
+      .filter(msg => !(msg.isBot && msg.content.includes(': ')))
       .reverse();
 
     return {
