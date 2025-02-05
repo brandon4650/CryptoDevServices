@@ -15,6 +15,7 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [chatConnected, setChatConnected] = useState(!initialChannelId);
   const [channelId, setChannelId] = useState(initialChannelId || '');
   const [showChannelInput, setShowChannelInput] = useState(!initialChannelId);
@@ -33,6 +34,7 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
   // Connect to Discord channel
   const connectToChannel = async (id) => {
     setIsLoading(true);
+    setError(null);
     try {
       console.log('Connecting to channel:', id);
 
@@ -59,6 +61,7 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       setShowChannelInput(false);
     } catch (error) {
       console.error('Error connecting to channel:', error);
+      setError('Error connecting to support chat. Please verify your channel ID and try again.');
       setMessages([{
         id: 'error',
         sender: 'System',
@@ -91,7 +94,9 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       id: tempId,
       sender: 'You',
       content: newMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      fromWebsite: true,
+      isYou: true
     };
 
     setMessages(prev => [...prev, userMessage]);
