@@ -460,32 +460,31 @@ const FileMessage = ({ file }) => {
             {message.content && (
               <div className="text-zinc-100 mb-2">{message.content}</div>
             )}
-            {message.hasAttachments && message.attachments.map((attachment, index) => (
-              <div key={attachment.id} className="mt-2">
-                {attachment.isImage ? (
+            {message.attachment && (
+              <div className="mt-2">
+                {message.attachment.isImage ? (
                   <img
-                    src={attachment.url}
-                    alt={attachment.name}
+                    src={message.attachment.url}
+                    alt={message.attachment.filename}
                     className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                    onClick={() => window.open(attachment.url, '_blank')}
+                    onClick={() => window.open(message.attachment.url, '_blank')}
                   />
                 ) : (
                   <a
-                    href={attachment.url}
+                    href={message.attachment.url}
+                    download={message.attachment.filename}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
                   >
                     <div className="text-sm">
-                      <p className="font-medium">{attachment.name}</p>
-                      <p className="text-xs text-zinc-400">
-                        {Math.round(attachment.size / 1024)}kb
-                      </p>
+                      <p className="font-medium">{message.attachment.filename}</p>
+                      <p className="text-xs text-zinc-400">Click to download</p>
                     </div>
                   </a>
                 )}
               </div>
-            ))}
+            )}
             <div className="text-xs text-zinc-400 mt-1">
               {new Date(message.timestamp).toLocaleTimeString()}
             </div>
@@ -509,32 +508,31 @@ const FileMessage = ({ file }) => {
             {message.content && (
               <div className="text-zinc-100 mb-2">{message.content}</div>
             )}
-            {message.hasAttachments && message.attachments.map((attachment, index) => (
-              <div key={attachment.id} className="mt-2">
-                {attachment.isImage ? (
+            {message.attachment && (
+              <div className="mt-2">
+                {message.attachment.isImage ? (
                   <img
-                    src={attachment.url}
-                    alt={attachment.name}
+                    src={message.attachment.url}
+                    alt={message.attachment.filename}
                     className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                    onClick={() => window.open(attachment.url, '_blank')}
+                    onClick={() => window.open(message.attachment.url, '_blank')}
                   />
                 ) : (
                   <a
-                    href={attachment.url}
+                    href={message.attachment.url}
+                    download={message.attachment.filename}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
                   >
                     <div className="text-sm">
-                      <p className="font-medium">{attachment.name}</p>
-                      <p className="text-xs text-zinc-400">
-                        {Math.round(attachment.size / 1024)}kb
-                      </p>
+                      <p className="font-medium">{message.attachment.filename}</p>
+                      <p className="text-xs text-zinc-400">Click to download</p>
                     </div>
                   </a>
                 )}
               </div>
-            ))}
+            )}
             <div className="text-xs text-zinc-400 mt-1">
               {new Date(message.timestamp).toLocaleTimeString()}
             </div>
