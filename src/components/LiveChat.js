@@ -216,33 +216,22 @@ const FileMessage = ({ file }) => {
     if (!response.ok) throw new Error('Upload failed');
 
     const result = await response.json();
-    console.log('Upload result:', result); // Add this debug log
+    console.log('Upload result:', result);
     
-    // Add the actual message with attachment to the chat
-    if (result.messages && result.messages.length > 0) {
-      setMessages(prev => [...prev, {
-        id: result.messages[0].id,
-        sender: 'You',
-        content: result.messages[0].content || '',
-        timestamp: new Date(),
-        fromWebsite: true,
-        isYou: true,
-        attachments: result.messages[0].attachments.map(attachment => ({
-          id: attachment.id,
-          url: attachment.url,
-          filename: attachment.filename,
-          contentType: attachment.content_type,
-          size: attachment.size,
-          isImage: attachment.content_type?.startsWith('image/')
-        }))
-      }]);
-    }
-
     // Clear files after successful upload
     previewUrls.forEach(url => URL.revokeObjectURL(url));
     setSelectedFiles([]);
     setPreviewUrls([]);
     setUploadProgress(0);
+
+    // Only add system message - remove the direct message addition
+    // The actual file message will come through the subscription callback
+    setMessages(prev => [...prev, {
+      id: `upload-${Date.now()}`,
+      sender: 'System',
+      content: `Successfully uploaded ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}.`,
+      timestamp: new Date()
+    }]);
 
   } catch (error) {
     console.error('Upload error:', error);
@@ -251,7 +240,6 @@ const FileMessage = ({ file }) => {
     setIsUploading(false);
   }
 };
-
   // Logout function
   const handleLogout = () => {
     chatClient.unsubscribeFromChannel(channelId);
