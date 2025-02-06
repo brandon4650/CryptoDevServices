@@ -41,36 +41,36 @@ exports.handler = async (event) => {
 
     const messages = await response.json();
     
-          const transformedMessages = messages
+    // Debug log to see what messages we're receiving
+    console.log('Raw messages from Discord:', messages);
+
+    const transformedMessages = messages
       .filter(msg => {
+        // Always include messages on initial load
         if (isInitialLoad) return true;
-        if (msg.author.id === YOUR_DISCORD_ID) return true;
-        if (msg.author.id === BOT_USER_ID) return true;
+        
+        // Always include your Discord messages and bot messages
+        if (msg.author.id === YOUR_DISCORD_ID || msg.author.id === BOT_USER_ID) return true;
+        
+        // Include messages that mention or reply to the bot
         if (msg.mentions?.some(mention => mention.id === BOT_USER_ID)) return true;
         if (msg.referenced_message?.author.id === BOT_USER_ID) return true;
+        
         return false;
       })
       .map(msg => {
-    // Process attachments first
-    const attachments = msg.attachments?.map(attachment => ({
-        id: attachment.id,
-        url: attachment.url,
-        filename: attachment.filename,
-        content_type: attachment.content_type || 'application/octet-stream',
-        size: attachment.size,
-        height: attachment.height,
-        width: attachment.width,
-        // Add isImage flag
-        isImage: attachment.content_type?.startsWith('image/')
-    })) || [];
+        // Debug log for each message being processed
+        console.log('Processing message:', msg);
 
-    // Base message structure
-    const baseMessage = {
-        id: msg.id,
-        content: msg.content,
-        timestamp: msg.timestamp,
-        attachments: attachments // Include all attachments
-    };
+        // Process attachments if present
+        const attachments = msg.attachments?.map(attachment => ({
+          id: attachment.id,
+          url: attachment.url,
+          filename: attachment.filename,
+          contentType: attachment.content_type || 'application/octet-stream',
+          size: attachment.size,
+          isImage: attachment.content_type?.startsWith('image/')
+        })) || [];
 
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
@@ -81,7 +81,7 @@ exports.handler = async (event) => {
             timestamp: msg.timestamp,
             fromWebsite: true,
             isYou: true,
-            attachment
+            attachments
           };
         }
 
@@ -89,12 +89,13 @@ exports.handler = async (event) => {
         if (msg.author.id === YOUR_DISCORD_ID) {
           return {
             id: msg.id,
-            sender: msg.author.username,
+            sender: 'CCD Support',
             content: msg.content,
             avatar: '/images/cryptowebservice.png',
+            timestamp: msg.timestamp,
             fromDiscord: true,
             isAdmin: true,
-            attachment
+            attachments
           };
         }
 
@@ -104,11 +105,15 @@ exports.handler = async (event) => {
           sender: msg.author.username,
           content: msg.content,
           avatar: '/images/cryptowebservice.png',
+          timestamp: msg.timestamp,
           fromDiscord: true,
-          attachment
+          attachments
         };
       })
       .reverse();
+
+    // Debug log for transformed messages
+    console.log('Transformed messages:', transformedMessages);
 
     return {
       statusCode: 200,
