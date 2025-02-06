@@ -60,6 +60,17 @@ exports.handler = async (event) => {
         return false;
       })
       .map(msg => {
+        // Process attachments if they exist
+        const attachments = msg.attachments?.map(attachment => ({
+          id: attachment.id,
+          url: attachment.url,
+          name: attachment.filename,
+          size: attachment.size,
+          contentType: attachment.content_type,
+          width: attachment.width,
+          height: attachment.height
+        })) || [];
+
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
           return {
@@ -68,7 +79,8 @@ exports.handler = async (event) => {
             content: msg.content,
             timestamp: msg.timestamp,
             fromWebsite: true,
-            isYou: true
+            isYou: true,
+            attachments
           };
         }
 
@@ -83,7 +95,8 @@ exports.handler = async (event) => {
               : null,
             timestamp: msg.timestamp,
             fromDiscord: true,
-            isAdmin: true
+            isAdmin: true,
+            attachments
           };
         }
 
@@ -96,7 +109,8 @@ exports.handler = async (event) => {
             ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
             : null,
           timestamp: msg.timestamp,
-          fromDiscord: true
+          fromDiscord: true,
+          attachments
         };
       })
       .reverse();
