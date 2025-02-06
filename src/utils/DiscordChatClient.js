@@ -69,43 +69,31 @@ class DiscordChatClient {
   }
 
   formatMessage(msg) {
-    // Process attachments if present
-    const attachment = msg.attachments?.[0] ? {
-      id: msg.attachments[0].id,
-      url: msg.attachments[0].url,
-      filename: msg.attachments[0].filename,
-      contentType: msg.attachments[0].content_type,
-      isImage: msg.attachments[0].content_type?.startsWith('image/')
-    } : null;
+  // Process all attachments as an array
+  const attachments = msg.attachments?.map(attachment => ({
+    id: attachment.id,
+    url: attachment.url,
+    filename: attachment.filename,
+    contentType: attachment.content_type || 'application/octet-stream',
+    isImage: attachment.content_type?.startsWith('image/'),
+    size: attachment.size
+  })) || [];
 
-    // Format website user messages
-    if (msg.author?.id === BOT_USER_ID || msg.fromWebsite) {
-      return {
-        id: msg.id,
-        sender: 'You',
-        content: msg.content,
-        timestamp: msg.timestamp,
-        fromWebsite: true,
-        isYou: true,
-        attachment: attachment
-      };
-    }
-    
-    // Format Discord messages (both your messages and other support staff)
-    if (msg.author?.id === YOUR_DISCORD_ID || msg.fromDiscord) {
-      return {
-        id: msg.id,
-        sender: 'CCD Support',
-        content: msg.content,
-        avatar: '/images/cryptowebservice.png',
-        timestamp: msg.timestamp,
-        fromDiscord: true,
-        isSupport: true,
-        attachment: attachment
-      };
-    }
-
-    // Fallback format for any other messages
+  // Format website user messages
+  if (msg.author?.id === BOT_USER_ID || msg.fromWebsite) {
+    return {
+      id: msg.id,
+      sender: 'You',
+      content: msg.content,
+      timestamp: msg.timestamp,
+      fromWebsite: true,
+      isYou: true,
+      attachments: attachments // Now using array
+    };
+  }
+  
+  // Format Discord messages
+  if (msg.author?.id === YOUR_DISCORD_ID || msg.fromDiscord) {
     return {
       id: msg.id,
       sender: 'CCD Support',
@@ -113,10 +101,22 @@ class DiscordChatClient {
       avatar: '/images/cryptowebservice.png',
       timestamp: msg.timestamp,
       fromDiscord: true,
-      attachment: attachment
+      isSupport: true,
+      attachments: attachments // Now using array
     };
   }
 
+  // Fallback format
+  return {
+    id: msg.id,
+    sender: 'CCD Support',
+    content: msg.content,
+    avatar: '/images/cryptowebservice.png',
+    timestamp: msg.timestamp,
+    fromDiscord: true,
+    attachments: attachments // Now using array
+  };
+}
   async getChannelHistory(channelId) {
     try {
       const cleanChannelId = channelId.replace('ticket-', '');
