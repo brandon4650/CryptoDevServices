@@ -20,6 +20,7 @@ const LiveChat = ({
   showChannelInput: forceShowInput = false,
   defaultChannelId = '' 
 }) => {
+  // States
   const [messages, setMessages] = useState([DEFAULT_WELCOME_MESSAGE]);
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(initialOpen);
@@ -31,10 +32,13 @@ const LiveChat = ({
   const [previewUrls, setPreviewUrls] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const messageEndRef = useRef(null);
-  const fileInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Refs
+  const messageEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Scroll chat to bottom
   const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -45,6 +49,7 @@ const LiveChat = ({
     }
   }, [messages]);
 
+  // Try to get channelId from clipboard
   useEffect(() => {
     if (isOpen && !chatConnected) {
       navigator.clipboard.readText()
@@ -57,16 +62,14 @@ const LiveChat = ({
     }
   }, [isOpen, chatConnected]);
 
-  // Handle file selection
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    
+  // Process files (used by both drag&drop and file input)
+  const processFiles = (files) => {
     if (files.length + selectedFiles.length > MAX_FILES) {
       alert(`You can only upload up to ${MAX_FILES} images at a time.`);
       return;
     }
 
-    const validFiles = files.filter(file => {
+    const validFiles = Array.from(files).filter(file => {
       if (file.size > MAX_FILE_SIZE) {
         alert(`${file.name} is too large. Maximum size is 8MB.`);
         return false;
@@ -78,6 +81,8 @@ const LiveChat = ({
       return true;
     });
 
+    if (validFiles.length === 0) return;
+
     setSelectedFiles(prev => [...prev, ...validFiles]);
     
     // Generate previews
@@ -85,6 +90,45 @@ const LiveChat = ({
       const url = URL.createObjectURL(file);
       setPreviewUrls(prev => [...prev, url]);
     });
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (chatConnected) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (chatConnected) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (!chatConnected) return;
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    processFiles(droppedFiles);
+  };
+
+  // File input handler
+  const handleFileSelect = (e) => {
+    processFiles(e.target.files);
   };
 
   // Remove file from selection
@@ -130,7 +174,12 @@ const LiveChat = ({
 
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload files. Please try again.');
+      setMessages(prev => [...prev, {
+        id: 'error',
+        sender: 'System',
+        content: 'Failed to upload files. Please try again.',
+        timestamp: new Date()
+      }]);
     } finally {
       setIsUploading(false);
     }
@@ -147,6 +196,7 @@ const LiveChat = ({
     setPreviewUrls([]);
   };
 
+  // Connect to channel
   const connectToChannel = async (id) => {
     setIsLoading(true);
     try {
@@ -176,15 +226,16 @@ const LiveChat = ({
     setIsLoading(false);
   };
 
+  // Handle message submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Handle file upload first if files are selected
+    // Handle file upload first
     if (selectedFiles.length > 0) {
       await handleUpload();
     }
 
-    // Then handle text message if present
+    // Handle text message
     if (!newMessage.trim()) return;
 
     const tempMessage = {
@@ -310,7 +361,25 @@ const LiveChat = ({
       )}
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div 
+        className={`flex-1 overflow-y-auto p-4 space-y-4 relative ${
+          isDragging ? 'bg-blue-900/40' : ''
+        }`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {isDragging && chatConnected && (
+          <div className="absolute inset-0 bg-blue-900/80 backdrop-blur-sm flex items-center justify-center">
+            <div className="text-center text-white">
+              <Upload className="h-12 w-12 mx-auto mb-2" />
+              <p className="text-lg font-medium">Drop images here</p>
+              <p className="text-sm text-zinc-300">Up to {MAX_FILES} images</p>
+            </div>
+          </div>
+        )}
+
         {messages.map((message) => {
           const isBotMessage = message.fromWebsite || message.sender === 'You';
           const isSystemMessage = message.sender === 'System';
@@ -344,8 +413,7 @@ const LiveChat = ({
                   <div 
                     className={`${
                       isSystemMessage 
-                        ? 'bg-blue-900/40' 
-                        : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+                        ? 'bg-blue-900/40': 'bg-gradient-to-r from-cyan-600 to-blue-600'
                     } p-3 rounded-lg max-w-[70%]`}
                   >
                     <div className="text-sm font-medium mb-1">
@@ -377,7 +445,7 @@ const LiveChat = ({
                 />
                 <button
                   onClick={() => removeFile(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
+                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 rounded-full p-1 transition-colors"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -392,6 +460,14 @@ const LiveChat = ({
               />
             </div>
           )}
+          {selectedFiles.length > 0 && !isUploading && (
+            <button
+              onClick={handleUpload}
+              className="mt-2 w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 transition-opacity rounded-lg py-2 text-sm font-medium"
+            >
+              Upload {selectedFiles.length} {selectedFiles.length === 1 ? 'image' : 'images'}
+            </button>
+          )}
         </div>
       )}
 
@@ -402,7 +478,11 @@ const LiveChat = ({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+              className={`p-2 transition-colors ${
+                selectedFiles.length >= MAX_FILES 
+                  ? 'text-zinc-500 cursor-not-allowed' 
+                  : 'text-cyan-400 hover:text-cyan-300'
+              }`}
               disabled={selectedFiles.length >= MAX_FILES}
               title={selectedFiles.length >= MAX_FILES ? 'Maximum files reached' : 'Upload images'}
             >
@@ -415,6 +495,7 @@ const LiveChat = ({
               multiple
               accept={ALLOWED_TYPES.join(',')}
               className="hidden"
+              disabled={selectedFiles.length >= MAX_FILES}
             />
             <input
               type="text"
@@ -425,7 +506,8 @@ const LiveChat = ({
             />
             <button
               type="submit"
-              className="bg-gradient-to-r from-cyan-600 to-blue-600 p-2 rounded-lg hover:opacity-90 transition-opacity"
+              disabled={!newMessage.trim() && selectedFiles.length === 0}
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 p-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               <Send className="h-5 w-5" />
             </button>
