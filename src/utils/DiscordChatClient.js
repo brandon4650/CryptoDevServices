@@ -75,7 +75,8 @@ class DiscordChatClient {
     url: attachment.url,
     filename: attachment.filename,
     contentType: attachment.content_type || 'application/octet-stream',
-    isImage: attachment.content_type?.startsWith('image/'),
+    isImage: attachment.content_type?.startsWith('image/') || 
+             attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null,
     size: attachment.size
   })) || [];
 
