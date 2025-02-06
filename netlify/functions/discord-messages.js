@@ -41,7 +41,7 @@ exports.handler = async (event) => {
 
     const messages = await response.json();
     
-    const transformedMessages = messages
+          const transformedMessages = messages
       .filter(msg => {
         if (isInitialLoad) return true;
         if (msg.author.id === YOUR_DISCORD_ID) return true;
@@ -51,7 +51,7 @@ exports.handler = async (event) => {
         return false;
       })
       .map(msg => {
-        // Handle attachments first
+        // Process attachments
         const attachment = msg.attachments?.[0] ? {
           id: msg.attachments[0].id,
           url: msg.attachments[0].url,
@@ -60,43 +60,40 @@ exports.handler = async (event) => {
           isImage: msg.attachments[0].content_type?.startsWith('image/') || false
         } : null;
 
-        // Base message structure
-        const baseMessage = {
-          id: msg.id,
-          content: msg.content,
-          timestamp: msg.timestamp,
-          attachment: attachment // Add attachment to base message
-        };
-
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
           return {
-            ...baseMessage,
+            id: msg.id,
             sender: 'You',
+            content: msg.content,
+            timestamp: msg.timestamp,
             fromWebsite: true,
-            isYou: true
+            isYou: true,
+            attachment
           };
         }
 
         // Your Discord messages
         if (msg.author.id === YOUR_DISCORD_ID) {
           return {
-            ...baseMessage,
+            id: msg.id,
             sender: msg.author.username,
             content: msg.content,
             avatar: '/images/cryptowebservice.png',
             fromDiscord: true,
-            isAdmin: true
+            isAdmin: true,
+            attachment
           };
         }
 
         // Other Discord user messages
         return {
-          ...baseMessage,
+          id: msg.id,
           sender: msg.author.username,
           content: msg.content,
           avatar: '/images/cryptowebservice.png',
-          fromDiscord: true
+          fromDiscord: true,
+          attachment
         };
       })
       .reverse();
