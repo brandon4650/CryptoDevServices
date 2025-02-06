@@ -469,7 +469,7 @@ const FileMessage = ({ file }) => {
                     <img
                       src={attachment.url}
                       alt={attachment.filename}
-                      className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                      className="max-w-[200px] h-auto rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
                     />
                   </a>
                 ) : (
