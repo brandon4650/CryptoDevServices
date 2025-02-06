@@ -43,42 +43,35 @@ exports.handler = async (event) => {
     
     const transformedMessages = messages
       .filter(msg => {
-        // Filter messages with content or attachments
-        if (!msg.content.trim() && (!msg.attachments || msg.attachments.length === 0)) {
-          return false;
-        }
-        
         if (isInitialLoad) return true;
         if (msg.author.id === YOUR_DISCORD_ID) return true;
         if (msg.author.id === BOT_USER_ID) return true;
         if (msg.mentions?.some(mention => mention.id === BOT_USER_ID)) return true;
         if (msg.referenced_message?.author.id === BOT_USER_ID) return true;
-        
         return false;
       })
       .map(msg => {
+        // Handle attachments first
+        const attachment = msg.attachments?.[0] ? {
+          id: msg.attachments[0].id,
+          url: msg.attachments[0].url,
+          filename: msg.attachments[0].filename,
+          contentType: msg.attachments[0].content_type || 'application/octet-stream',
+          isImage: msg.attachments[0].content_type?.startsWith('image/') || false
+        } : null;
+
         // Base message structure
-        const baseMsg = {
+        const baseMessage = {
           id: msg.id,
           content: msg.content,
-          timestamp: msg.timestamp
+          timestamp: msg.timestamp,
+          attachment: attachment // Add attachment to base message
         };
-
-        // Add attachment if present
-        if (msg.attachments && msg.attachments.length > 0) {
-          const attachment = msg.attachments[0]; // Get first attachment
-          baseMsg.attachment = {
-            filename: attachment.filename,
-            url: attachment.url,
-            contentType: attachment.content_type || 'application/octet-stream',
-            isImage: attachment.content_type?.startsWith('image/')
-          };
-        }
 
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
           return {
-            ...baseMsg,
+            ...baseMessage,
             sender: 'You',
             fromWebsite: true,
             isYou: true
@@ -88,11 +81,10 @@ exports.handler = async (event) => {
         // Your Discord messages
         if (msg.author.id === YOUR_DISCORD_ID) {
           return {
-            ...baseMsg,
+            ...baseMessage,
             sender: msg.author.username,
-            avatar: msg.author.avatar 
-              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-              : null,
+            content: msg.content,
+            avatar: '/images/cryptowebservice.png',
             fromDiscord: true,
             isAdmin: true
           };
@@ -100,11 +92,10 @@ exports.handler = async (event) => {
 
         // Other Discord user messages
         return {
-          ...baseMsg,
+          ...baseMessage,
           sender: msg.author.username,
-          avatar: msg.author.avatar 
-            ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-            : null,
+          content: msg.content,
+          avatar: '/images/cryptowebservice.png',
           fromDiscord: true
         };
       })
