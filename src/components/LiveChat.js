@@ -461,7 +461,7 @@ const FileMessage = ({ file }) => {
             )}
             {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
               <div key={`${message.id}-attachment-${index}`} className="mt-2">
-                {attachment.isImage ? (
+                {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
                   <a 
                     href={attachment.url} 
                     target="_blank" 
@@ -521,7 +521,7 @@ const FileMessage = ({ file }) => {
             )}
             {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
               <div key={`${message.id}-attachment-${index}`} className="mt-2">
-                {attachment.isImage ? (
+                {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
                   <a 
                     href={attachment.url} 
                     target="_blank" 
