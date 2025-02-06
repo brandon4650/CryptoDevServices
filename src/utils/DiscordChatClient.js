@@ -216,38 +216,53 @@ class DiscordChatClient {
   }
 
   async sendChannelMessage(channelId, content, file = null) {
-    try {
-      const cleanChannelId = channelId.replace('ticket-', '');
-      console.log('Sending message to channel:', cleanChannelId);
-      if (!this.channels.has(cleanChannelId)) {
-        throw new Error('Channel not found');
+  try {
+    const cleanChannelId = channelId.replace('ticket-', '');
+    console.log('Sending message to channel:', cleanChannelId);
+    
+    if (!this.channels.has(cleanChannelId)) {
+      throw new Error('Channel not found');
+    }
+
+    if (file) {
+      console.log('Uploading file:', file);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('channelId', cleanChannelId);
+      formData.append('content', content);
+
+      const response = await fetch('/.netlify/functions/discord-upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
       }
 
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('channelId', cleanChannelId);
-        formData.append('content', content);
+      const result = await response.json();
+      console.log('Upload response:', result);
 
-        const response = await fetch('/.netlify/functions/discord-upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to upload file');
-        }
-
-        const result = await response.json();
-        return {
-          success: true,
-          message: this.formatMessage({
-            ...result.message,
-            fromWebsite: true,
-            isYou: true
-          })
-        };
-      }
+      // Handle the upload response - it contains the Discord message with attachments
+      return {
+        success: true,
+        message: this.formatMessage({
+          id: result.messages[0].id,
+          content: content,
+          timestamp: new Date().toISOString(),
+          fromWebsite: true,
+          isYou: true,
+          attachments: result.messages[0].attachments.map(attachment => ({
+            id: attachment.id,
+            url: attachment.url,
+            filename: attachment.filename,
+            contentType: attachment.content_type || 'application/octet-stream',
+            size: attachment.size,
+            isImage: attachment.content_type?.startsWith('image/')
+          }))
+        })
+      };
+    }
 
       // Track temporary message
       const tempKey = `temp-${content}`;
