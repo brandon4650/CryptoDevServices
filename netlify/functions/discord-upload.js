@@ -1,8 +1,9 @@
+// netlify/functions/discord-upload.js
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 const busboy = require('busboy');
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -13,14 +14,6 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
-  }
-
   try {
     return new Promise((resolve, reject) => {
       const bb = busboy({ headers: event.headers });
@@ -29,7 +22,7 @@ exports.handler = async (event) => {
 
       bb.on('file', (name, file, info) => {
         const chunks = [];
-        file.on('data', data => chunks.push(data));
+        file.on('data', (data) => chunks.push(data));
         file.on('end', () => {
           files.push({
             content: Buffer.concat(chunks),
@@ -44,17 +37,18 @@ exports.handler = async (event) => {
         if (name === 'channelId') channelId = val;
       });
 
-      bb.on('close', async () => {
+      bb.on('finish', async () => {
         try {
           const botToken = process.env.DISCORD_BOT_TOKEN;
+          
           if (!botToken) {
             throw new Error('Discord bot token not configured');
           }
 
-          // Upload files to Discord
-          const results = await Promise.all(files.map(async (file) => {
-            const formData = new FormData();
-            formData.append('files[0]', file.content, {
+          // Upload each file to Discord
+          const uploadPromises = files.map(async (file) => {
+            const form = new FormData();
+            form.append('file', file.content, {
               filename: file.filename,
               contentType: file.mimeType
             });
@@ -64,19 +58,21 @@ exports.handler = async (event) => {
               {
                 method: 'POST',
                 headers: {
-                  'Authorization': `Bot ${botToken}`,
+                  'Authorization': `Bot ${botToken}`
                 },
-                body: formData
+                body: form
               }
             );
 
             if (!response.ok) {
-              const error = await response.text();
-              throw new Error(`Discord API error: ${error}`);
+              const errorText = await response.text();
+              throw new Error(`Discord API error: ${errorText}`);
             }
 
             return response.json();
-          }));
+          });
+
+          const results = await Promise.all(uploadPromises);
 
           resolve({
             statusCode: 200,
@@ -96,7 +92,9 @@ exports.handler = async (event) => {
         }
       });
 
-      bb.write(Buffer.from(event.body, 'base64'));
+      // Handle the raw body
+      const buffer = Buffer.from(event.body, 'base64');
+      bb.end(buffer);
     });
   } catch (error) {
     console.error('Function error:', error);
