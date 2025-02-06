@@ -4,20 +4,24 @@ import { chatClient } from '../utils/DiscordChatClient';
 
 const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
-  sender: 'CryptoWeb Assistant',
-  avatar: 'https://i.imgur.com/AfFp7pu.png',
+  sender: 'CCD Support',
+  avatar: '/images/cryptowebservice.png',
   content: 'Welcome to live support! How can I assist you today?',
   timestamp: new Date()
 };
 
-const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
+const LiveChat = ({ 
+  initialOpen = false, 
+  showChannelInput: forceShowInput = false,
+  defaultChannelId = '' 
+}) => {
   const [messages, setMessages] = useState([DEFAULT_WELCOME_MESSAGE]);
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [isLoading, setIsLoading] = useState(false);
   const [chatConnected, setChatConnected] = useState(false);
-  const [channelId, setChannelId] = useState(initialChannelId || '');
-  const [showChannelInput, setShowChannelInput] = useState(!initialChannelId);
+  const [channelId, setChannelId] = useState(defaultChannelId || '');
+  const [showChannelInput, setShowChannelInput] = useState(true);
   const messageEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -30,24 +34,34 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
     }
   }, [messages]);
 
+  // Try to get channelId from clipboard when opening chat
+  useEffect(() => {
+    if (isOpen && !chatConnected) {
+      navigator.clipboard.readText()
+        .then(text => {
+          if (text && text.trim()) {
+            setChannelId(text.trim());
+          }
+        })
+        .catch(err => console.log('Could not read clipboard'));
+    }
+  }, [isOpen, chatConnected]);
+
   const connectToChannel = async (id) => {
     setIsLoading(true);
     try {
       console.log('Connecting to channel:', id);
 
-      // Validate the channel
       const validation = await chatClient.validateChannel(id);
       if (!validation.valid) {
         throw new Error('Invalid channel ID');
       }
 
-      // Set up message subscription
       chatClient.subscribeToChannel(id, (message) => {
         console.log('Received new message:', message);
         setMessages(prev => [...prev, message]);
       });
 
-      // Load message history
       if (validation.messages && validation.messages.length > 0) {
         setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
       }
@@ -66,20 +80,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
     setIsLoading(false);
   };
 
-  useEffect(() => {
-    if (initialChannelId) {
-      console.log('Initial Channel ID provided:', initialChannelId);
-      setChannelId(initialChannelId);
-      connectToChannel(initialChannelId);
-    }
-
-    return () => {
-      if (channelId) {
-        chatClient.unsubscribeFromChannel(channelId);
-      }
-    };
-  }, [initialChannelId]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -93,7 +93,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       isYou: true
     };
 
-    // Add message to UI immediately
     setMessages(prev => [...prev, tempMessage]);
     const messageContent = newMessage;
     setNewMessage('');
@@ -104,7 +103,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
         throw new Error('Failed to send message');
       }
 
-      // Replace temp message with actual message
       setMessages(prev => prev.map(msg => 
         msg.id === tempMessage.id ? {
           ...result.message,
@@ -114,7 +112,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       ));
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove temp message and show error
       setMessages(prev => [
         ...prev.filter(msg => msg.id !== tempMessage.id),
         {
@@ -133,7 +130,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       connectToChannel(channelId);
     }
   };
-
 
   if (!isOpen) {
     return (
@@ -204,67 +200,59 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       )}
 
       {/* Chat Messages */}
-<div className="flex-1 overflow-y-auto p-4 space-y-4">
-  {messages.map((message) => {
-    const isBotMessage = message.fromWebsite || message.sender === 'You';
-    const isSystemMessage = message.sender === 'CryptoWeb Assistant' || message.sender === 'System';
-    const isDiscordMessage = message.fromDiscord;
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message) => {
+          const isBotMessage = message.fromWebsite || message.sender === 'You';
+          const isSystemMessage = message.sender === 'System';
+          const isDiscordMessage = message.fromDiscord;
 
-    return (
-      <div
-        key={message.id}
-        className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
-      >
-        {isDiscordMessage ? (
-          // Discord user message with avatar
-          <>
-            {message.avatar ? (
-              <img
-                src={message.avatar}
-                alt={message.sender}
-                className="w-8 h-8 rounded-full bg-blue-900/40"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-                {message.sender[0]}
-              </div>
-            )}
-            <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
-              <div className="text-sm font-medium mb-1">{message.sender}</div>
-              <div className="text-zinc-100">{message.content}</div>
-              <div className="text-xs text-zinc-400 mt-1">
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </div>
-            </div>
-          </>
-        ) : (
-          // Website user message or system message
-          <>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-              {message.sender[0]}
-            </div>
-            <div 
-              className={`${
-                isSystemMessage 
-                  ? 'bg-blue-900/40' 
-                  : 'bg-gradient-to-r from-cyan-600 to-blue-600'
-              } p-3 rounded-lg max-w-[70%]`}
+          return (
+            <div
+              key={message.id}
+              className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
             >
-              <div className="text-sm font-medium mb-1">
-                {isBotMessage ? 'You' : message.sender}
-              </div>
-              <div className="text-zinc-100">{message.content}</div>
-              <div className="text-xs text-zinc-400 mt-1">
-                {new Date(message.timestamp).toLocaleTimeString()}
-              </div>
+              {isDiscordMessage || message.sender === 'CCD Support' ? (
+                <>
+                  <img
+                    src="/images/cryptowebservice.png"
+                    alt="CCD Support"
+                    className="w-8 h-8 rounded-full bg-blue-900/40"
+                  />
+                  <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
+                    <div className="text-sm font-medium mb-1">CCD Support</div>
+                    <div className="text-zinc-100">{message.content}</div>
+                    <div className="text-xs text-zinc-400 mt-1">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+                    {message.sender[0]}
+                  </div>
+                  <div 
+                    className={`${
+                      isSystemMessage 
+                        ? 'bg-blue-900/40' 
+                        : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+                    } p-3 rounded-lg max-w-[70%]`}
+                  >
+                    <div className="text-sm font-medium mb-1">
+                      {isBotMessage ? 'You' : message.sender}
+                    </div>
+                    <div className="text-zinc-100">{message.content}</div>
+                    <div className="text-xs text-zinc-400 mt-1">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          </>
-        )}
+          );
+        })}
+        <div ref={messageEndRef} />
       </div>
-    );
-  })}
-  <div ref={messageEndRef} />
-</div>
 
       {/* Message Input */}
       {chatConnected && (
