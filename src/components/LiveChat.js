@@ -442,7 +442,6 @@ const FileMessage = ({ file }) => {
   const isBotMessage = message.fromWebsite || message.sender === 'You';
   const isSystemMessage = message.sender === 'System';
   const isDiscordMessage = message.fromDiscord;
-  const hasAttachments = message.attachments && message.attachments.length > 0;
 
   return (
     <div
@@ -461,13 +460,32 @@ const FileMessage = ({ file }) => {
             {message.content && (
               <div className="text-zinc-100 mb-2">{message.content}</div>
             )}
-            {hasAttachments && (
-              <div className="space-y-2">
-                {message.attachments.map((file, index) => (
-                  <FileMessage key={index} file={file} />
-                ))}
+            {message.hasAttachments && message.attachments.map((attachment, index) => (
+              <div key={attachment.id} className="mt-2">
+                {attachment.isImage ? (
+                  <img
+                    src={attachment.url}
+                    alt={attachment.name}
+                    className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                    onClick={() => window.open(attachment.url, '_blank')}
+                  />
+                ) : (
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+                  >
+                    <div className="text-sm">
+                      <p className="font-medium">{attachment.name}</p>
+                      <p className="text-xs text-zinc-400">
+                        {Math.round(attachment.size / 1024)}kb
+                      </p>
+                    </div>
+                  </a>
+                )}
               </div>
-            )}
+            ))}
             <div className="text-xs text-zinc-400 mt-1">
               {new Date(message.timestamp).toLocaleTimeString()}
             </div>
@@ -491,13 +509,32 @@ const FileMessage = ({ file }) => {
             {message.content && (
               <div className="text-zinc-100 mb-2">{message.content}</div>
             )}
-            {hasAttachments && (
-              <div className="space-y-2">
-                {message.attachments.map((file, index) => (
-                  <FileMessage key={index} file={file} />
-                ))}
+            {message.hasAttachments && message.attachments.map((attachment, index) => (
+              <div key={attachment.id} className="mt-2">
+                {attachment.isImage ? (
+                  <img
+                    src={attachment.url}
+                    alt={attachment.name}
+                    className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                    onClick={() => window.open(attachment.url, '_blank')}
+                  />
+                ) : (
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+                  >
+                    <div className="text-sm">
+                      <p className="font-medium">{attachment.name}</p>
+                      <p className="text-xs text-zinc-400">
+                        {Math.round(attachment.size / 1024)}kb
+                      </p>
+                    </div>
+                  </a>
+                )}
               </div>
-            )}
+            ))}
             <div className="text-xs text-zinc-400 mt-1">
               {new Date(message.timestamp).toLocaleTimeString()}
             </div>
