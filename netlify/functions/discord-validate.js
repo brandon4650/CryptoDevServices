@@ -80,6 +80,15 @@ exports.handler = async (event) => {
         messages = rawMessages
           .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
           .map(msg => {
+            // Process attachments if present
+            const attachment = msg.attachments?.[0] ? {
+              id: msg.attachments[0].id,
+              url: msg.attachments[0].url,
+              filename: msg.attachments[0].filename,
+              contentType: msg.attachments[0].content_type || 'application/octet-stream',
+              isImage: msg.attachments[0].content_type?.startsWith('image/') || false
+            } : null;
+
             // If it's a bot message (your website user)
             if (msg.author.id === BOT_USER_ID) {
               return {
@@ -87,8 +96,9 @@ exports.handler = async (event) => {
                 sender: 'You',
                 content: msg.content,
                 timestamp: msg.timestamp,
-                fromWebsite: true, // Ensures right-side alignment
-                isYou: true
+                fromWebsite: true,
+                isYou: true,
+                attachment
               };
             }
             // Discord user message
@@ -96,11 +106,10 @@ exports.handler = async (event) => {
               id: msg.id,
               sender: msg.author.username,
               content: msg.content,
-              avatar: msg.author.avatar 
-                ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
-                : null,
+              avatar: '/images/cryptowebservice.png',
               timestamp: msg.timestamp,
-              fromDiscord: true
+              fromDiscord: true,
+              attachment
             };
           })
           .reverse();
