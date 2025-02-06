@@ -257,6 +257,7 @@ const FileMessage = ({ file }) => {
     try {
       console.log('Connecting to channel:', id);
       const validation = await chatClient.validateChannel(id);
+      console.log('Validation response:', validation);
       if (!validation.valid) {
         throw new Error('Invalid channel ID');
       }
