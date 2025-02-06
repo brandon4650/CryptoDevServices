@@ -41,76 +41,69 @@ exports.handler = async (event) => {
 
     const messages = await response.json();
     
-    // Transform messages - Include bot messages, your Discord messages, and replies
     const transformedMessages = messages
       .filter(msg => {
-        // Always include initial messages when loading history
+        // Filter logic remains the same
         if (isInitialLoad) return true;
-        
-        // Include messages from your Discord ID
         if (msg.author.id === YOUR_DISCORD_ID) return true;
-        
-        // Include bot messages
         if (msg.author.id === BOT_USER_ID) return true;
-        
-        // Include messages that mention or reply to the bot
         if (msg.mentions?.some(mention => mention.id === BOT_USER_ID)) return true;
         if (msg.referenced_message?.author.id === BOT_USER_ID) return true;
-        
         return false;
       })
       .map(msg => {
-        // Process attachments if they exist
+        // Process attachments
         const attachments = msg.attachments?.map(attachment => ({
           id: attachment.id,
           url: attachment.url,
           name: attachment.filename,
+          contentType: attachment.content_type || 'application/octet-stream',
           size: attachment.size,
-          contentType: attachment.content_type,
           width: attachment.width,
-          height: attachment.height
+          height: attachment.height,
+          isImage: attachment.content_type?.startsWith('image/') || false
         })) || [];
+
+        // Base message structure
+        const baseMessage = {
+          id: msg.id,
+          content: msg.content || '',
+          timestamp: msg.timestamp,
+          attachments: attachments,
+          hasAttachments: attachments.length > 0
+        };
 
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
           return {
-            id: msg.id,
+            ...baseMessage,
             sender: 'You',
-            content: msg.content,
-            timestamp: msg.timestamp,
             fromWebsite: true,
-            isYou: true,
-            attachments
+            isYou: true
           };
         }
 
         // Your Discord messages
         if (msg.author.id === YOUR_DISCORD_ID) {
           return {
-            id: msg.id,
+            ...baseMessage,
             sender: msg.author.username,
-            content: msg.content,
             avatar: msg.author.avatar 
               ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
               : null,
-            timestamp: msg.timestamp,
             fromDiscord: true,
-            isAdmin: true,
-            attachments
+            isAdmin: true
           };
         }
 
         // Other Discord user messages
         return {
-          id: msg.id,
+          ...baseMessage,
           sender: msg.author.username,
-          content: msg.content,
           avatar: msg.author.avatar 
             ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
             : null,
-          timestamp: msg.timestamp,
-          fromDiscord: true,
-          attachments
+          fromDiscord: true
         };
       })
       .reverse();
