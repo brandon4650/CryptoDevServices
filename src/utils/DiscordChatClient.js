@@ -73,29 +73,25 @@ class DiscordChatClient {
       };
     }
     
-    // Format your Discord messages
-    if (msg.author?.id === YOUR_DISCORD_ID) {
+    // Format Discord messages (both your messages and other support staff)
+    if (msg.author?.id === YOUR_DISCORD_ID || msg.fromDiscord) {
       return {
         id: msg.id,
-        sender: msg.author.username || msg.sender,
+        sender: 'CCD Support',
         content: msg.content,
-        avatar: msg.author.avatar ? 
-          `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png` : 
-          null,
+        avatar: '/images/cryptowebservice.png',
         timestamp: msg.timestamp,
         fromDiscord: true,
         isSupport: true
       };
     }
 
-    // Format other Discord user messages
+    // Fallback format for any other messages
     return {
       id: msg.id,
-      sender: msg.author?.username || msg.sender,
+      sender: 'CCD Support',
       content: msg.content,
-      avatar: msg.author?.avatar ? 
-        `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png` : 
-        null,
+      avatar: '/images/cryptowebservice.png',
       timestamp: msg.timestamp,
       fromDiscord: true
     };
