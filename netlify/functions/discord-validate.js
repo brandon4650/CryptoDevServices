@@ -78,40 +78,41 @@ exports.handler = async (event) => {
       if (messagesResponse.ok) {
         const rawMessages = await messagesResponse.json();
         messages = rawMessages
-          .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
-          .map(msg => {
-            // Process attachments if present
-            const attachment = msg.attachments?.[0] ? {
-              id: msg.attachments[0].id,
-              url: msg.attachments[0].url,
-              filename: msg.attachments[0].filename,
-              contentType: msg.attachments[0].content_type || 'application/octet-stream',
-              isImage: msg.attachments[0].content_type?.startsWith('image/') || false
-            } : null;
+  .filter(msg => !msg.content.includes('[INVISIBLE_MESSAGE]'))
+  .map(msg => {
+    // Process all attachments as an array
+    const attachments = msg.attachments?.map(attachment => ({
+      id: attachment.id,
+      url: attachment.url,
+      filename: attachment.filename,
+      contentType: attachment.content_type || 'application/octet-stream',
+      size: attachment.size,
+      isImage: attachment.content_type?.startsWith('image/')
+    })) || [];
 
-            // If it's a bot message (your website user)
-            if (msg.author.id === BOT_USER_ID) {
-              return {
-                id: msg.id,
-                sender: 'You',
-                content: msg.content,
-                timestamp: msg.timestamp,
-                fromWebsite: true,
-                isYou: true,
-                attachment
-              };
-            }
-            // Discord user message
-            return {
-              id: msg.id,
-              sender: msg.author.username,
-              content: msg.content,
-              avatar: '/images/cryptowebservice.png',
-              timestamp: msg.timestamp,
-              fromDiscord: true,
-              attachment
-            };
-          })
+    // If it's a bot message (your website user)
+    if (msg.author.id === BOT_USER_ID) {
+      return {
+        id: msg.id,
+        sender: 'You',
+        content: msg.content,
+        timestamp: msg.timestamp,
+        fromWebsite: true,
+        isYou: true,
+        attachments  // Now using array instead of single attachment
+      };
+    }
+    // Discord user message
+    return {
+      id: msg.id,
+      sender: msg.author.username,
+      content: msg.content,
+      avatar: '/images/cryptowebservice.png',
+      timestamp: msg.timestamp,
+      fromDiscord: true,
+      attachments  // Now using array instead of single attachment
+    };
+  })
           .reverse();
       }
     } catch (error) {
