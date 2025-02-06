@@ -436,109 +436,121 @@ const FileMessage = ({ file }) => {
         )}
 
         {messages.map((message) => {
-  const isBotMessage = message.fromWebsite || message.sender === 'You';
-  const isSystemMessage = message.sender === 'System';
-  const isDiscordMessage = message.fromDiscord;
+        const isBotMessage = message.fromWebsite || message.sender === 'You';
+        const isSystemMessage = message.sender === 'System';
+        const isDiscordMessage = message.fromDiscord;
 
-  return (
-    <div
-      key={message.id}
-      className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
-    >
-      {isDiscordMessage || message.sender === 'CCD Support' ? (
-        <>
-          <img
-            src="/images/cryptowebservice.png"
-            alt="CCD Support"
-            className="w-8 h-8 rounded-full bg-blue-900/40"
-          />
-          <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
-            <div className="text-sm font-medium mb-1">CCD Support</div>
-            {message.content && (
-              <div className="text-zinc-100 mb-2">{message.content}</div>
-            )}
-            {message.attachment && (
-              <div className="mt-2">
-                {message.attachment.isImage ? (
-                  <img
-                    src={message.attachment.url}
-                    alt={message.attachment.filename}
-                    className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                    onClick={() => window.open(message.attachment.url, '_blank')}
-                  />
-                ) : (
-                  <a
-                    href={message.attachment.url}
-                    download={message.attachment.filename}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
-                  >
-                    <div className="text-sm">
-                      <p className="font-medium">{message.attachment.filename}</p>
-                      <p className="text-xs text-zinc-400">Click to download</p>
-                    </div>
-                  </a>
-                )}
-              </div>
-            )}
-            <div className="text-xs text-zinc-400 mt-1">
-              {new Date(message.timestamp).toLocaleTimeString()}
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-            {message.sender[0]}
-          </div>
-          <div 
-            className={`${
-              isSystemMessage 
-                ? 'bg-blue-900/40' 
-                : 'bg-gradient-to-r from-cyan-600 to-blue-600'
-            } p-3 rounded-lg max-w-[70%]`}
+        return (
+          <div
+            key={message.id}
+            className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
           >
-            <div className="text-sm font-medium mb-1">
-              {isBotMessage ? 'You' : message.sender}
-            </div>
-            {message.content && (
-              <div className="text-zinc-100 mb-2">{message.content}</div>
-            )}
-            {message.attachment && (
-              <div className="mt-2">
-                {message.attachment.isImage ? (
-                  <img
-                    src={message.attachment.url}
-                    alt={message.attachment.filename}
-                    className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                    onClick={() => window.open(message.attachment.url, '_blank')}
-                  />
-                ) : (
-                  <a
-                    href={message.attachment.url}
-                    download={message.attachment.filename}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
-                  >
-                    <div className="text-sm">
-                      <p className="font-medium">{message.attachment.filename}</p>
-                      <p className="text-xs text-zinc-400">Click to download</p>
+            {isDiscordMessage || message.sender === 'CCD Support' ? (
+              <>
+                <img
+                  src="/images/cryptowebservice.png"
+                  alt="CCD Support"
+                  className="w-8 h-8 rounded-full bg-blue-900/40"
+                />
+                <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
+                  <div className="text-sm font-medium mb-1">CCD Support</div>
+                  {message.content && (
+                    <div className="text-zinc-100 mb-2">{message.content}</div>
+                  )}
+                  {message.attachment && (
+                    <div className="mt-2">
+                      {message.attachment.isImage ? (
+                        <a 
+                          href={message.attachment.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={message.attachment.url}
+                            alt={message.attachment.filename}
+                            className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          href={message.attachment.url}
+                          download={message.attachment.filename}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+                        >
+                          <div className="text-sm">
+                            <p className="font-medium text-cyan-400">{message.attachment.filename}</p>
+                            <p className="text-xs text-zinc-400">Click to download</p>
+                          </div>
+                        </a>
+                      )}
                     </div>
-                  </a>
-                )}
-              </div>
+                  )}
+                  <div className="text-xs text-zinc-400 mt-1">
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+                  {message.sender[0]}
+                </div>
+                <div 
+                  className={`${
+                    isSystemMessage 
+                      ? 'bg-blue-900/40' 
+                      : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+                  } p-3 rounded-lg max-w-[70%]`}
+                >
+                  <div className="text-sm font-medium mb-1">
+                    {isBotMessage ? 'You' : message.sender}
+                  </div>
+                  {message.content && (
+                    <div className="text-zinc-100 mb-2">{message.content}</div>
+                  )}
+                  {message.attachment && (
+                    <div className="mt-2">
+                      {message.attachment.isImage ? (
+                        <a 
+                          href={message.attachment.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={message.attachment.url}
+                            alt={message.attachment.filename}
+                            className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          href={message.attachment.url}
+                          download={message.attachment.filename}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+                        >
+                          <div className="text-sm">
+                            <p className="font-medium text-cyan-400">{message.attachment.filename}</p>
+                            <p className="text-xs text-zinc-400">Click to download</p>
+                          </div>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  <div className="text-xs text-zinc-400 mt-1">
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+              </>
             )}
-            <div className="text-xs text-zinc-400 mt-1">
-              {new Date(message.timestamp).toLocaleTimeString()}
-            </div>
           </div>
-        </>
-      )}
-    </div>
-  );
-})}
+        );
+      })}
         <div ref={messageEndRef} />
       </div>
 
