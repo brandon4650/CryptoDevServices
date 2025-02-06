@@ -199,46 +199,58 @@ const FileMessage = ({ file }) => {
   // Handle file upload
 // Handle file upload
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
-    setIsUploading(true);
+  if (selectedFiles.length === 0) return;
+  setIsUploading(true);
+  setUploadProgress(0);
+
+  const formData = new FormData();
+  selectedFiles.forEach(file => formData.append('files', file));
+  formData.append('channelId', channelId);
+
+  try {
+    const response = await fetch('/.netlify/functions/discord-upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error('Upload failed');
+
+    const result = await response.json();
+    console.log('Upload result:', result); // Add this debug log
+    
+    // Add the actual message with attachment to the chat
+    if (result.messages && result.messages.length > 0) {
+      setMessages(prev => [...prev, {
+        id: result.messages[0].id,
+        sender: 'You',
+        content: result.messages[0].content || '',
+        timestamp: new Date(),
+        fromWebsite: true,
+        isYou: true,
+        attachments: result.messages[0].attachments.map(attachment => ({
+          id: attachment.id,
+          url: attachment.url,
+          filename: attachment.filename,
+          contentType: attachment.content_type,
+          size: attachment.size,
+          isImage: attachment.content_type?.startsWith('image/')
+        }))
+      }]);
+    }
+
+    // Clear files after successful upload
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     setUploadProgress(0);
 
-    const formData = new FormData();
-    selectedFiles.forEach(file => formData.append('files', file));
-    formData.append('channelId', channelId);
-
-    try {
-      const response = await fetch('/.netlify/functions/discord-upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error('Upload failed');
-
-      const result = await response.json();
-      
-      // Clear files after successful upload
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-      setUploadProgress(0);
-
-      // Add system message about successful upload with correct file type
-      const fileType = selectedFiles[0]?.type?.startsWith('image/') ? 'image' : 'file';
-      setMessages(prev => [...prev, {
-        id: `upload-${Date.now()}`,
-        sender: 'System',
-        content: `Successfully uploaded ${selectedFiles.length} ${fileType}${selectedFiles.length > 1 ? 's' : ''}.`,
-        timestamp: new Date()
-      }]);
-
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload files. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert('Failed to upload files. Please try again.');
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   // Logout function
   const handleLogout = () => {
@@ -437,6 +449,7 @@ const FileMessage = ({ file }) => {
         )}
 
         {messages.map((message) => {
+          console.log('Rendering message:', message);
   const isBotMessage = message.fromWebsite || message.sender === 'You';
   const isSystemMessage = message.sender === 'System';
   const isDiscordMessage = message.fromDiscord;
@@ -530,7 +543,7 @@ const FileMessage = ({ file }) => {
                     <img
                       src={attachment.url}
                       alt={attachment.filename}
-                      className="max-w-full rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                      className="max-w-[200px] h-auto rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
                     />
                   </a>
                 ) : (
