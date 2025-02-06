@@ -462,7 +462,15 @@ const QuotePage = () => {
                     </p>
                     <div className="space-y-3">
                         <button
-                            onClick={() => setShowChat(true)}
+                            onClick={() => {
+                                setShowChat(true);
+                                // Copy channel ID to clipboard
+                                navigator.clipboard.writeText(channelId).then(() => {
+                                    console.log('Channel ID copied:', channelId);
+                                }).catch(err => {
+                                    console.error('Failed to copy:', err);
+                                });
+                            }}
                             className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 transition-opacity rounded-lg py-3 font-medium"
                         >
                             Open Live Chat
@@ -482,10 +490,13 @@ const QuotePage = () => {
                     </div>
                 </div>
             </div>
-            {showChat && <LiveChat channelId={channelId} initialOpen={true} />}
-        </>
-    )}
-
+            {showChat && (
+                <LiveChat 
+                    initialOpen={true}
+                    showChannelInput={true}
+                    defaultChannelId={channelId}
+                />
+            )}
     {showChat && <LiveChat channelId={channelId} initialOpen={true} />}
             </div>
         </div>
