@@ -439,54 +439,74 @@ const FileMessage = ({ file }) => {
         )}
 
         {messages.map((message) => {
-          const isBotMessage = message.fromWebsite || message.sender === 'You';
-          const isSystemMessage = message.sender === 'System';
-          const isDiscordMessage = message.fromDiscord;
+  const isBotMessage = message.fromWebsite || message.sender === 'You';
+  const isSystemMessage = message.sender === 'System';
+  const isDiscordMessage = message.fromDiscord;
+  const hasAttachments = message.attachments && message.attachments.length > 0;
 
-          return (
-            <div
-              key={message.id}
-              className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
-            >
-              {isDiscordMessage || message.sender === 'CCD Support' ? (
-                <>
-                  <img
-                    src="/images/cryptowebservice.png"
-                    alt="CCD Support"
-                    className="w-8 h-8 rounded-full bg-blue-900/40"
-                  />
-                  <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
-                    <div className="text-sm font-medium mb-1">CCD Support</div>
-                    <div className="text-zinc-100">{message.content}</div>
-                    <div className="text-xs text-zinc-400 mt-1">
-                      {new Date(message.timestamp).toLocaleTimeString()}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-                    {message.sender[0]}
-                  </div>
-                  <div 
-                    className={`${
-                      isSystemMessage 
-                        ? 'bg-blue-900/40': 'bg-gradient-to-r from-cyan-600 to-blue-600'
-                    } p-3 rounded-lg max-w-[70%]`}
-                  >
-                    <div className="text-sm font-medium mb-1">
-                      {isBotMessage ? 'You' : message.sender}
-                    </div>
-                    <div className="text-zinc-100">{message.content}</div>
-                    <div className="text-xs text-zinc-400 mt-1">
-                      {new Date(message.timestamp).toLocaleTimeString()}
-                    </div>
-                  </div>
-                </>
-              )}
+  return (
+    <div
+      key={message.id}
+      className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
+    >
+      {isDiscordMessage || message.sender === 'CCD Support' ? (
+        <>
+          <img
+            src="/images/cryptowebservice.png"
+            alt="CCD Support"
+            className="w-8 h-8 rounded-full bg-blue-900/40"
+          />
+          <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
+            <div className="text-sm font-medium mb-1">CCD Support</div>
+            {message.content && (
+              <div className="text-zinc-100 mb-2">{message.content}</div>
+            )}
+            {hasAttachments && (
+              <div className="space-y-2">
+                {message.attachments.map((file, index) => (
+                  <FileMessage key={index} file={file} />
+                ))}
+              </div>
+            )}
+            <div className="text-xs text-zinc-400 mt-1">
+              {new Date(message.timestamp).toLocaleTimeString()}
             </div>
-          );
-        })}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+            {message.sender[0]}
+          </div>
+          <div 
+            className={`${
+              isSystemMessage 
+                ? 'bg-blue-900/40' 
+                : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+            } p-3 rounded-lg max-w-[70%]`}
+          >
+            <div className="text-sm font-medium mb-1">
+              {isBotMessage ? 'You' : message.sender}
+            </div>
+            {message.content && (
+              <div className="text-zinc-100 mb-2">{message.content}</div>
+            )}
+            {hasAttachments && (
+              <div className="space-y-2">
+                {message.attachments.map((file, index) => (
+                  <FileMessage key={index} file={file} />
+                ))}
+              </div>
+            )}
+            <div className="text-xs text-zinc-400 mt-1">
+              {new Date(message.timestamp).toLocaleTimeString()}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+})}
         <div ref={messageEndRef} />
       </div>
 
