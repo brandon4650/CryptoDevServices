@@ -473,7 +473,7 @@ const FileMessage = ({ file }) => {
                     />
                   </a>
                 ) : (
-                  
+                  <a
                     href={attachment.url}
                     download={attachment.filename}
                     target="_blank"
