@@ -435,68 +435,70 @@ const QuotePage = () => {
                     </form>
                 )}
                 {/* Order Complete Modal */}
-                {orderComplete && (
-        <>
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                <div className="bg-blue-900/90 p-8 rounded-xl max-w-md w-full mx-4">
-                    <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                        Order Submitted Successfully!
-                    </h3>
-                    <p className="text-zinc-300 mb-4">
-                        Your order has been received. Please save your Channel ID for connecting to live support:
-                    </p>
-                    <div className="bg-blue-900/50 p-4 rounded-lg mb-4">
-                        <p className="text-sm text-zinc-400 mb-2">Channel ID:</p>
-                        <span className="text-2xl font-mono text-cyan-400">{channelId}</span>
-                    </div>
-                    {orderData?.orderNumber && (
-                        <div className="bg-blue-900/50 p-4 rounded-lg mb-4">
-                            <p className="text-sm text-zinc-400 mb-2">Order Number:</p>
-                            <span className="text-lg font-mono text-cyan-400">{orderData.orderNumber}</span>
-                        </div>
-                    )}
-                    <p className="text-zinc-300 mb-6">
-                        Use the Channel ID above to connect to live support anytime.
-                        <br />
-                        Save this information for future reference.
-                    </p>
-                    <div className="space-y-3">
-                        <button
-                            onClick={() => {
-                                setShowChat(true);
-                                // Copy channel ID to clipboard
-                                navigator.clipboard.writeText(channelId).then(() => {
-                                    console.log('Channel ID copied:', channelId);
-                                }).catch(err => {
-                                    console.error('Failed to copy:', err);
-                                });
-                            }}
-                            className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 transition-opacity rounded-lg py-3 font-medium"
-                        >
-                            Open Live Chat
-                        </button>
-                        <button
-                            onClick={() => {
-                                setOrderComplete(false);
-                                setChannelId('');
-                                setOrderData(null);
-                                setFormType('');
-                                setSelectedOption('');
-                            }}
-                            className="w-full border border-cyan-500/50 hover:bg-cyan-500/10 transition-colors rounded-lg py-3 font-medium"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {showChat && (
-                <LiveChat 
-                    initialOpen={true}
-                    showChannelInput={true}
-                    defaultChannelId={channelId}
-                />
-            )}
+                // Update the order complete modal section in QuotePage.js
+{orderComplete && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-blue-900/90 p-8 rounded-xl max-w-md w-full mx-4">
+      <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+        Order Submitted Successfully!
+      </h3>
+      <p className="text-zinc-300 mb-4">
+        Your order has been received. Please save your Channel ID for connecting to live support:
+      </p>
+      <div className="bg-blue-900/50 p-4 rounded-lg mb-4">
+        <p className="text-sm text-zinc-400 mb-2">Channel ID:</p>
+        <span className="text-2xl font-mono text-cyan-400">{channelId}</span>
+      </div>
+      {orderData?.orderNumber && (
+        <div className="bg-blue-900/50 p-4 rounded-lg mb-4">
+          <p className="text-sm text-zinc-400 mb-2">Order Number:</p>
+          <span className="text-lg font-mono text-cyan-400">{orderData.orderNumber}</span>
+        </div>
+      )}
+      <p className="text-zinc-300 mb-6">
+        Use the Channel ID above to connect to live support anytime.
+        <br />
+        Save this information for future reference.
+      </p>
+      <div className="space-y-3">
+        <button
+          onClick={() => {
+            setShowChat(true);
+            // Copy channel ID to clipboard
+            navigator.clipboard.writeText(channelId).then(() => {
+              console.log('Channel ID copied:', channelId);
+            }).catch(err => {
+              console.error('Failed to copy:', err);
+            });
+          }}
+          className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 transition-opacity rounded-lg py-3 font-medium"
+        >
+          Open Live Chat
+        </button>
+        <button
+          onClick={() => {
+            setOrderComplete(false);
+            setChannelId('');
+            setOrderData(null);
+            setFormType('');
+            setSelectedOption('');
+          }}
+          className="w-full border border-cyan-500/50 hover:bg-cyan-500/10 transition-colors rounded-lg py-3 font-medium"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{showChat && (
+  <LiveChat 
+    initialOpen={true}
+    showChannelInput={true}
+    defaultChannelId={channelId}
+  />
+)}
     {showChat && <LiveChat channelId={channelId} initialOpen={true} />}
             </div>
         </div>
