@@ -15,11 +15,10 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [isLoading, setIsLoading] = useState(false);
-  const [chatConnected, setChatConnected] = useState(!initialChannelId);
+  const [chatConnected, setChatConnected] = useState(false);
   const [channelId, setChannelId] = useState(initialChannelId || '');
   const [showChannelInput, setShowChannelInput] = useState(!initialChannelId);
   const messageEndRef = useRef(null);
-  const [seenMessageIds] = useState(new Set());
 
   const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,7 +30,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
     }
   }, [messages]);
 
-  // Connect to Discord channel
   const connectToChannel = async (id) => {
     setIsLoading(true);
     try {
@@ -45,19 +43,13 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
 
       // Set up message subscription
       chatClient.subscribeToChannel(id, (message) => {
-        if (!seenMessageIds.has(message.id)) {
-          seenMessageIds.add(message.id);
-          setMessages(prev => [...prev, message]);
-        }
+        console.log('Received new message:', message);
+        setMessages(prev => [...prev, message]);
       });
 
       // Load message history
       if (validation.messages && validation.messages.length > 0) {
-        const uniqueMessages = validation.messages.filter(msg => !seenMessageIds.has(msg.id));
-        uniqueMessages.forEach(msg => seenMessageIds.add(msg.id));
-        setMessages([DEFAULT_WELCOME_MESSAGE, ...uniqueMessages]);
-      } else {
-        setMessages([DEFAULT_WELCOME_MESSAGE]);
+        setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
       }
 
       setChatConnected(true);
@@ -76,13 +68,14 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
 
   useEffect(() => {
     if (initialChannelId) {
-      console.log('Channel ID provided:', initialChannelId);
+      console.log('Initial Channel ID provided:', initialChannelId);
+      setChannelId(initialChannelId);
       connectToChannel(initialChannelId);
     }
 
     return () => {
-      if (initialChannelId) {
-        chatClient.unsubscribeFromChannel(initialChannelId);
+      if (channelId) {
+        chatClient.unsubscribeFromChannel(channelId);
       }
     };
   }, [initialChannelId]);
@@ -91,9 +84,8 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const tempId = Date.now().toString();
-    const userMessage = {
-      id: tempId,
+    const tempMessage = {
+      id: `temp-${Date.now()}`,
       sender: 'You',
       content: newMessage,
       timestamp: new Date(),
@@ -101,22 +93,37 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       isYou: true
     };
 
+    // Add message to UI immediately
+    setMessages(prev => [...prev, tempMessage]);
+    const messageContent = newMessage;
     setNewMessage('');
 
     try {
-      const result = await chatClient.sendChannelMessage(channelId, newMessage);
-      if (result.success) {
-        // Don't add the temporary message - wait for it to come through the webhook
-        seenMessageIds.add(result.message.id);
+      const result = await chatClient.sendChannelMessage(channelId, messageContent);
+      if (!result.success) {
+        throw new Error('Failed to send message');
       }
+
+      // Replace temp message with actual message
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempMessage.id ? {
+          ...result.message,
+          fromWebsite: true,
+          isYou: true
+        } : msg
+      ));
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [...prev, {
-        id: 'error',
-        sender: 'System',
-        content: 'Failed to send message. Please try again.',
-        timestamp: new Date()
-      }]);
+      // Remove temp message and show error
+      setMessages(prev => [
+        ...prev.filter(msg => msg.id !== tempMessage.id),
+        {
+          id: 'error',
+          sender: 'System',
+          content: 'Failed to send message. Please try again.',
+          timestamp: new Date()
+        }
+      ]);
     }
   };
 
@@ -126,6 +133,7 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       connectToChannel(channelId);
     }
   };
+
 
   if (!isOpen) {
     return (
