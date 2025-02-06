@@ -1,3 +1,5 @@
+const BOT_USER_ID = '1283568907982209105';
+
 class DiscordChatClient {
   constructor() {
     this.channels = new Map();
@@ -186,10 +188,8 @@ class DiscordChatClient {
         throw new Error('Channel not found');
       }
 
+      // Only create one messageKey
       const messageKey = `${BOT_USER_ID}-${Date.now()}-${content}`;
-      this.seenMessages.add(messageKey); // Add to seen messages before sending
-
-      const messageKey = `local-${Date.now()}-${content}`;
       this.seenMessages.add(messageKey); // Add to seen messages before sending
 
       const response = await fetch('/.netlify/functions/discord-send', {
@@ -209,7 +209,14 @@ class DiscordChatClient {
         throw new Error(error.error || 'Failed to send message');
       }
 
-      return await response.json();
+      const result = await response.json();
+      
+      // Add the returned message ID to seen messages
+      if (result.message && result.message.id) {
+        this.seenMessages.add(`${result.message.id}-${content}`);
+      }
+
+      return result;
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
