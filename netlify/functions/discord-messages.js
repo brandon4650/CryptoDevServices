@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const BOT_USER_ID = '1283568907982209105';
+const YOUR_DISCORD_ID = '643915314329026561';
 
 exports.handler = async (event) => {
   const headers = {
@@ -40,8 +41,24 @@ exports.handler = async (event) => {
 
     const messages = await response.json();
     
-    // Transform messages - Include ALL messages, not just replies
+    // Transform messages - Include bot messages, your Discord messages, and replies
     const transformedMessages = messages
+      .filter(msg => {
+        // Always include initial messages when loading history
+        if (isInitialLoad) return true;
+        
+        // Include messages from your Discord ID
+        if (msg.author.id === YOUR_DISCORD_ID) return true;
+        
+        // Include bot messages
+        if (msg.author.id === BOT_USER_ID) return true;
+        
+        // Include messages that mention or reply to the bot
+        if (msg.mentions?.some(mention => mention.id === BOT_USER_ID)) return true;
+        if (msg.referenced_message?.author.id === BOT_USER_ID) return true;
+        
+        return false;
+      })
       .map(msg => {
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
@@ -55,7 +72,22 @@ exports.handler = async (event) => {
           };
         }
 
-        // All Discord user messages
+        // Your Discord messages
+        if (msg.author.id === YOUR_DISCORD_ID) {
+          return {
+            id: msg.id,
+            sender: msg.author.username,
+            content: msg.content,
+            avatar: msg.author.avatar 
+              ? `https://cdn.discordapp.com/avatars/${msg.author.id}/${msg.author.avatar}.png`
+              : null,
+            timestamp: msg.timestamp,
+            fromDiscord: true,
+            isAdmin: true
+          };
+        }
+
+        // Other Discord user messages
         return {
           id: msg.id,
           sender: msg.author.username,
