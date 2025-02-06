@@ -34,24 +34,32 @@ class DiscordChatClient {
       console.log('Validation response:', data);
 
       if (data.valid && data.channelId) {
-        this.channels.set(cleanChannelId, data.channelId);
-        if (data.messages && data.messages.length > 0) {
-          const lastMessage = data.messages[data.messages.length - 1];
-          this.lastMessageIds.set(cleanChannelId, lastMessage.id);
-          data.messages.forEach(msg => {
-            // Track messages by both ID and content to prevent duplicates
-            this.seenMessages.add(`${msg.id}-${msg.content}`);
-            if (msg.fromWebsite) {
-              this.seenMessages.add(`temp-${msg.content}`);
-            }
-          });
-        }
-        return {
-          valid: true,
-          channelId: data.channelId,
-          messages: data.messages?.map(msg => this.formatMessage(msg)) || []
-        };
+  this.channels.set(cleanChannelId, data.channelId);
+  if (data.messages && data.messages.length > 0) {
+    const lastMessage = data.messages[data.messages.length - 1];
+    this.lastMessageIds.set(cleanChannelId, lastMessage.id);
+    data.messages.forEach(msg => {
+      // Track messages by both ID and content/attachment to prevent duplicates
+      const messageKey = msg.attachments?.[0] 
+        ? `${msg.id}-${msg.attachments[0].url}` 
+        : `${msg.id}-${msg.content}`;
+      this.seenMessages.add(messageKey);
+      
+      // Also track temp messages for website messages
+      if (msg.fromWebsite) {
+        const tempKey = msg.attachments?.[0]
+          ? `temp-${msg.attachments[0].url}`
+          : `temp-${msg.content}`;
+        this.seenMessages.add(tempKey);
       }
+    });
+  }
+  return {
+    valid: true,
+    channelId: data.channelId,
+    messages: data.messages?.map(msg => this.formatMessage(msg)) || []
+  };
+}
 
       return { valid: false };
     } catch (error) {
@@ -61,6 +69,15 @@ class DiscordChatClient {
   }
 
   formatMessage(msg) {
+    // Process attachments if present
+    const attachment = msg.attachments?.[0] ? {
+      id: msg.attachments[0].id,
+      url: msg.attachments[0].url,
+      filename: msg.attachments[0].filename,
+      contentType: msg.attachments[0].content_type,
+      isImage: msg.attachments[0].content_type?.startsWith('image/')
+    } : null;
+
     // Format website user messages
     if (msg.author?.id === BOT_USER_ID || msg.fromWebsite) {
       return {
@@ -69,7 +86,8 @@ class DiscordChatClient {
         content: msg.content,
         timestamp: msg.timestamp,
         fromWebsite: true,
-        isYou: true
+        isYou: true,
+        attachment: attachment
       };
     }
     
@@ -82,7 +100,8 @@ class DiscordChatClient {
         avatar: '/images/cryptowebservice.png',
         timestamp: msg.timestamp,
         fromDiscord: true,
-        isSupport: true
+        isSupport: true,
+        attachment: attachment
       };
     }
 
@@ -93,7 +112,8 @@ class DiscordChatClient {
       content: msg.content,
       avatar: '/images/cryptowebservice.png',
       timestamp: msg.timestamp,
-      fromDiscord: true
+      fromDiscord: true,
+      attachment: attachment
     };
   }
 
@@ -155,11 +175,27 @@ class DiscordChatClient {
           console.log('New messages received:', data.messages);
           
           const newMessages = data.messages.filter(msg => {
-            const messageKey = `${msg.id}-${msg.content}`;
-            if (this.seenMessages.has(messageKey)) return false;
-            this.seenMessages.add(messageKey);
-            return true;
-          });
+  // Create message key based on whether it has an attachment
+  const messageKey = msg.attachments?.[0]
+    ? `${msg.id}-${msg.attachments[0].url}`
+    : `${msg.id}-${msg.content}`;
+    
+  // Check if we've seen this message before
+  if (this.seenMessages.has(messageKey)) return false;
+  
+  // Add to seen messages
+  this.seenMessages.add(messageKey);
+  
+  // If it's from website, also track temp key
+  if (msg.fromWebsite) {
+    const tempKey = msg.attachments?.[0]
+      ? `temp-${msg.attachments[0].url}`
+      : `temp-${msg.content}`;
+    this.seenMessages.add(tempKey);
+  }
+  
+  return true;
+});
 
           if (newMessages.length > 0) {
             this.lastMessageIds.set(channelId, newMessages[newMessages.length - 1].id);
@@ -179,12 +215,38 @@ class DiscordChatClient {
     this.pollingIntervals.set(channelId, pollInterval);
   }
 
-  async sendChannelMessage(channelId, content) {
+  async sendChannelMessage(channelId, content, file = null) {
     try {
       const cleanChannelId = channelId.replace('ticket-', '');
       console.log('Sending message to channel:', cleanChannelId);
       if (!this.channels.has(cleanChannelId)) {
         throw new Error('Channel not found');
+      }
+
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('channelId', cleanChannelId);
+        formData.append('content', content);
+
+        const response = await fetch('/.netlify/functions/discord-upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload file');
+        }
+
+        const result = await response.json();
+        return {
+          success: true,
+          message: this.formatMessage({
+            ...result.message,
+            fromWebsite: true,
+            isYou: true
+          })
+        };
       }
 
       // Track temporary message
