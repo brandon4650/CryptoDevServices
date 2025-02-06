@@ -51,14 +51,26 @@ exports.handler = async (event) => {
         return false;
       })
       .map(msg => {
-        // Process attachments
-        const attachment = msg.attachments?.[0] ? {
-          id: msg.attachments[0].id,
-          url: msg.attachments[0].url,
-          filename: msg.attachments[0].filename,
-          contentType: msg.attachments[0].content_type || 'application/octet-stream',
-          isImage: msg.attachments[0].content_type?.startsWith('image/') || false
-        } : null;
+    // Process attachments first
+    const attachments = msg.attachments?.map(attachment => ({
+        id: attachment.id,
+        url: attachment.url,
+        filename: attachment.filename,
+        content_type: attachment.content_type || 'application/octet-stream',
+        size: attachment.size,
+        height: attachment.height,
+        width: attachment.width,
+        // Add isImage flag
+        isImage: attachment.content_type?.startsWith('image/')
+    })) || [];
+
+    // Base message structure
+    const baseMessage = {
+        id: msg.id,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        attachments: attachments // Include all attachments
+    };
 
         // Bot messages (website user)
         if (msg.author.id === BOT_USER_ID) {
