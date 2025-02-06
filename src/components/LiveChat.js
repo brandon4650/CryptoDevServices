@@ -563,6 +563,7 @@ const FileMessage = ({ file }) => {
     </div>
   );
 })}
+
         <div ref={messageEndRef} />
       </div>
 
