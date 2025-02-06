@@ -33,6 +33,7 @@ const LiveChat = ({
   const [isUploading, setIsUploading] = useState(false);
   const messageEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
