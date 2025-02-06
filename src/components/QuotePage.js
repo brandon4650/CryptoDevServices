@@ -30,9 +30,6 @@ const QuotePage = () => {
         }));
     };
 
-    const [orderComplete, setOrderComplete] = useState(false);
-    const [channelId, setChannelId] = useState('');
-    const [orderData, setOrderData] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
