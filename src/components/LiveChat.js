@@ -197,6 +197,7 @@ const FileMessage = ({ file }) => {
   };
 
   // Handle file upload
+// Handle file upload
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
     setIsUploading(true);
@@ -222,22 +223,18 @@ const FileMessage = ({ file }) => {
       setPreviewUrls([]);
       setUploadProgress(0);
 
-      // Add system message about successful upload
+      // Add system message about successful upload with correct file type
+      const fileType = selectedFiles[0]?.type?.startsWith('image/') ? 'image' : 'file';
       setMessages(prev => [...prev, {
         id: `upload-${Date.now()}`,
         sender: 'System',
-        content: `Successfully uploaded ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''}.`,
+        content: `Successfully uploaded ${selectedFiles.length} ${fileType}${selectedFiles.length > 1 ? 's' : ''}.`,
         timestamp: new Date()
       }]);
 
     } catch (error) {
       console.error('Upload error:', error);
-      setMessages(prev => [...prev, {
-        id: 'error',
-        sender: 'System',
-        content: 'Failed to upload files. Please try again.',
-        timestamp: new Date()
-      }]);
+      alert('Failed to upload files. Please try again.');
     } finally {
       setIsUploading(false);
     }
