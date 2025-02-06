@@ -15,11 +15,11 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [chatConnected, setChatConnected] = useState(!initialChannelId);
   const [channelId, setChannelId] = useState(initialChannelId || '');
   const [showChannelInput, setShowChannelInput] = useState(!initialChannelId);
   const messageEndRef = useRef(null);
+  const [seenMessageIds] = useState(new Set());
 
   const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,7 +34,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
   // Connect to Discord channel
   const connectToChannel = async (id) => {
     setIsLoading(true);
-    setError(null);
     try {
       console.log('Connecting to channel:', id);
 
@@ -46,13 +45,17 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
 
       // Set up message subscription
       chatClient.subscribeToChannel(id, (message) => {
-        console.log('Received new message:', message);
-        setMessages(prev => [...prev, message]);
+        if (!seenMessageIds.has(message.id)) {
+          seenMessageIds.add(message.id);
+          setMessages(prev => [...prev, message]);
+        }
       });
 
       // Load message history
       if (validation.messages && validation.messages.length > 0) {
-        setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
+        const uniqueMessages = validation.messages.filter(msg => !seenMessageIds.has(msg.id));
+        uniqueMessages.forEach(msg => seenMessageIds.add(msg.id));
+        setMessages([DEFAULT_WELCOME_MESSAGE, ...uniqueMessages]);
       } else {
         setMessages([DEFAULT_WELCOME_MESSAGE]);
       }
@@ -61,7 +64,6 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       setShowChannelInput(false);
     } catch (error) {
       console.error('Error connecting to channel:', error);
-      setError('Error connecting to support chat. Please verify your channel ID and try again.');
       setMessages([{
         id: 'error',
         sender: 'System',
@@ -89,7 +91,7 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const tempId = Date.now();
+    const tempId = Date.now().toString();
     const userMessage = {
       id: tempId,
       sender: 'You',
@@ -99,14 +101,17 @@ const LiveChat = ({ channelId: initialChannelId, initialOpen = false }) => {
       isYou: true
     };
 
-    setMessages(prev => [...prev, userMessage]);
     setNewMessage('');
 
     try {
-      await chatClient.sendChannelMessage(channelId, newMessage);
+      const result = await chatClient.sendChannelMessage(channelId, newMessage);
+      if (result.success) {
+        // Don't add the temporary message - wait for it to come through the webhook
+        seenMessageIds.add(result.message.id);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
-      setMessages(prev => [...prev.filter(m => m.id !== tempId), {
+      setMessages(prev => [...prev, {
         id: 'error',
         sender: 'System',
         content: 'Failed to send message. Please try again.',
