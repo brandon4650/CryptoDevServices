@@ -186,6 +186,9 @@ class DiscordChatClient {
         throw new Error('Channel not found');
       }
 
+      const messageKey = `${BOT_USER_ID}-${Date.now()}-${content}`;
+      this.seenMessages.add(messageKey); // Add to seen messages before sending
+
       const messageKey = `local-${Date.now()}-${content}`;
       this.seenMessages.add(messageKey); // Add to seen messages before sending
 
