@@ -430,8 +430,8 @@ const FileMessage = ({ file }) => {
           <div className="absolute inset-0 bg-blue-900/80 backdrop-blur-sm flex items-center justify-center">
             <div className="text-center text-white">
               <Upload className="h-12 w-12 mx-auto mb-2" />
-              <p className="text-lg font-medium">Drop images here</p>
-              <p className="text-sm text-zinc-300">Up to {MAX_FILES} images</p>
+              <p className="text-lg font-medium">Drop to upload</p>
+              <p className="text-sm text-zinc-300">Images or files up to {formatFileSize(MAX_FILE_SIZE)}</p>
             </div>
           </div>
         )}
@@ -602,7 +602,9 @@ const FileMessage = ({ file }) => {
               onClick={handleUpload}
               className="mt-2 w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 transition-opacity rounded-lg py-2 text-sm font-medium"
             >
-              Upload {selectedFiles.length} {selectedFiles.length === 1 ? 'image' : 'images'}
+              Upload {selectedFiles.length} {selectedFiles.length === 1 ? 
+                (selectedFiles[0].type.startsWith('image/') ? 'image' : 'file') : 
+                'files'}
             </button>
           )}
         </div>
