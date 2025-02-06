@@ -13,7 +13,26 @@ const DEFAULT_WELCOME_MESSAGE = {
 // File upload constants
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 const MAX_FILES = 10;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+const ALLOWED_TYPES = [
+  'image/jpeg', 
+  'image/png', 
+  'image/gif',
+  'text/plain',
+  'application/pdf',
+  'text/csv',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
+
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const LiveChat = ({ 
   initialOpen = false, 
@@ -37,6 +56,45 @@ const LiveChat = ({
   // Refs
   const messageEndRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // File Message Component
+const FileMessage = ({ file }) => {
+  const isImage = IMAGE_TYPES.includes(file.contentType);
+  
+  if (isImage) {
+    return (
+      <a 
+        href={file.url} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="block"
+      >
+        <img 
+          src={file.url} 
+          alt={file.name} 
+          className="max-w-[200px] rounded-lg hover:opacity-90 transition-opacity"
+        />
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={file.url}
+      download={file.name}
+      className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+    >
+      <div className="flex-shrink-0 p-2 bg-blue-800/50 rounded">
+        <FileIcon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-medium truncate">{file.name}</p>
+        <p className="text-xs text-zinc-400">{formatFileSize(file.size)}</p>
+      </div>
+      <Download className="h-4 w-4 text-zinc-400" />
+    </a>
+  );
+};
 
   // Scroll chat to bottom
   const scrollToBottom = () => {
