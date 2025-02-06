@@ -7,8 +7,11 @@ import LiveChat from './LiveChat';
 const QuotePage = () => {
     const [selectedOption, setSelectedOption] = useState('');
     const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+    const [orderComplete, setOrderComplete] = useState(false);
     const [formType, setFormType] = useState(''); // 'plan' or 'quote'
     const [showChat, setShowChat] = useState(false);
+    const [channelId, setChannelId] = useState('');
+    const [orderData, setOrderData] = useState(null);
     const [formData, setFormData] = useState({
         projectName: '',
         email: '',
