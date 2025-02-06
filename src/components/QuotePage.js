@@ -435,7 +435,7 @@ const QuotePage = () => {
                     </form>
                 )}
                 {/* Order Complete Modal */}
-                // Update the order complete modal section in QuotePage.js
+                
 {orderComplete && (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
     <div className="bg-blue-900/90 p-8 rounded-xl max-w-md w-full mx-4">
