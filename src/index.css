@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base Animations */
 @keyframes float {
   0% {
     transform: translateY(0px);
@@ -15,24 +14,10 @@
   }
 }
 
-@keyframes borderShine {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Animation Classes */
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
 
-/* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -50,7 +35,6 @@
   background: #0891b2;
 }
 
-/* Base Styles */
 html {
   scroll-behavior: smooth;
 }
@@ -64,11 +48,4 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #000;
-}
-
-/* Utilities */
-@layer utilities {
-  .hover\:before\:pause:hover::before {
-    animation-play-state: paused;
-  }
 }
