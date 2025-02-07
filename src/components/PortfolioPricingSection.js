@@ -66,13 +66,12 @@ const PricingCard = ({ tier, price, features, isPopular }) => (
       before:absolute before:inset-[-2px] before:rounded-xl
       before:bg-gradient-to-r before:from-cyan-400 before:via-blue-500 before:to-cyan-400
       before:bg-[length:200%_100%] before:animate-[borderShine_3s_linear_infinite]
-      before:-z-10 animate-[wiggle_4s_ease-in-out_infinite]
-      hover:before:pause hover:animate-none
+      before:-z-10
     ` : ''} 
     hover:bg-blue-900/30 transition-colors
   `}>
     {isPopular && (
-      <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-1 rounded-full text-sm font-medium animate-pulse">
+      <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-1 rounded-full text-sm font-medium">
         Most Popular
       </span>
     )}
@@ -89,9 +88,9 @@ const PricingCard = ({ tier, price, features, isPopular }) => (
         </li>
       ))}
     </ul>
-    <button className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${
+    <button className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
       isPopular 
-        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 hover:scale-105' 
+        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90' 
         : 'border border-cyan-500/50 hover:bg-cyan-500/10'
     }`}>
       Get Started <ArrowRight className="h-4 w-4" />
