@@ -35,6 +35,8 @@ const SELL_APP_PACKAGES = [
   }
 ];
 
+const [selectedPackage, setSelectedPackage] = useState(null);
+
 // File upload constants
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 const MAX_FILES = 10;
@@ -428,6 +430,23 @@ const FileMessage = ({ file }) => {
           ×
         </button>
       </div>
+
+     {/* Pinned Package Banner */}
+     {selectedPackage && chatConnected && (
+       <div className="sticky top-0 p-3 bg-gradient-to-r from-blue-900/95 to-blue-950/95 backdrop-blur-sm border-b border-blue-800 z-10 flex items-center justify-between">
+         <div>
+           <div className="text-sm font-medium text-cyan-400">{selectedPackage.planName}</div>
+           <div className="text-xs text-zinc-400">${selectedPackage.price}</div>
+         </div>
+         <SellAppButton
+           storeId={selectedPackage.storeId}
+           productId={selectedPackage.productId}
+           planName={selectedPackage.planName}
+           price={selectedPackage.price}
+           className="scale-90"
+         />
+       </div>
+     )}
 
       {/* Channel ID Input */}
       {showChannelInput && (
