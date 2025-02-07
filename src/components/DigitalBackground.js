@@ -103,21 +103,21 @@ const DigitalBackground = () => {
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      onMouseMove={handleMouseMove}
-      className="fixed top-0 left-0 w-full h-full"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-        background: 'transparent'
-      }}
-    />
-  );
+  <canvas
+    ref={canvasRef}
+    onMouseMove={handleMouseMove}
+    className="fixed top-0 left-0 w-full h-full"
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      zIndex: -1, // Changed to -1
+      background: 'rgb(15 23 42)' // Your original blue-950 color
+    }}
+  />
+);
 };
 
 export default DigitalBackground;
