@@ -7,7 +7,7 @@ const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
   sender: 'CCD Support',
   avatar: '/images/cryptowebservice.png',
-  content: 'Welcome to live support! How can I assist you today?',
+  content: 'Welcome to live support! If your looking to make your purchase type /buy',
   timestamp: new Date()
 };
 
