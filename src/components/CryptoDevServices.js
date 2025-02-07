@@ -9,7 +9,7 @@ import PortfolioPricingSection from './PortfolioPricingSection';
 const CryptoWebDev = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-950 to-black text-white">
+    <div className="min-h-screen text-white relative z-10">
       {/* Navigation */}
       <nav className="fixed w-full bg-blue-950/90 backdrop-blur-sm z-50">
         <div className="max-w-7xl mx-auto px-4">
@@ -44,7 +44,7 @@ const CryptoWebDev = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
+      <section className="pt-32 pb-20 px-4 relative">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             Building the Future of <br/>
@@ -75,7 +75,7 @@ const CryptoWebDev = () => {
       </section>
 
       {/* Services Grid */}
-      <section id="services" className="py-20 px-4 bg-blue-950/30">
+      <section id="services" className="py-20 px-4 bg-blue-950/40">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-16">Our Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -111,7 +111,7 @@ const CryptoWebDev = () => {
                 description: "Optimized for speed and responsiveness across all devices and platforms."
               }
             ].map((service, index) => (
-              <div key={index} className="bg-blue-900/20 p-6 rounded-xl hover:bg-blue-900/30 transition-colors">
+              <div key={index} className="bg-blue-900/20 p-6 rounded-xl hover:bg-blue-900/30 transition-colors backdrop-blur-sm">
                 <div className="bg-blue-900/40 w-fit p-3 rounded-lg mb-4">
                   {service.icon}
                 </div>
@@ -124,14 +124,6 @@ const CryptoWebDev = () => {
       </section>
 
       <PortfolioPricingSection />
-
-      {/* Would you like me to continue with more sections like:
-      1. Process/How it Works
-      2. Portfolio showcase
-      3. Pricing plans
-      4. Contact form
-      5. Testimonials
-      ? */}
     </div>
   );
 };
