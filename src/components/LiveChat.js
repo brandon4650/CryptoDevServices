@@ -1,10 +1,7 @@
-// 1. Imports first
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, MessageCircle, LogOut, Upload, X, FileIcon, Download } from 'lucide-react';
 import { chatClient } from '../utils/DiscordChatClient';
-import SellAppButton from './SellAppButton';
 
-// 2. Constants and helper functions
 const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
   sender: 'CCD Support',
@@ -12,21 +9,6 @@ const DEFAULT_WELCOME_MESSAGE = {
   content: 'Welcome to live support! How can I assist you today?',
   timestamp: new Date()
 };
-
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
-const MAX_FILES = 10;
-const ALLOWED_TYPES = [
-  'image/jpeg', 
-  'image/png', 
-  'image/gif',
-  'text/plain',
-  'application/pdf',
-  'text/csv',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-];
-
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
 const SELL_APP_PACKAGES = [
   {
@@ -51,6 +33,43 @@ const SELL_APP_PACKAGES = [
     description: "Full-Featured Website with Premium Integrations"
   }
 ];
+
+// In your message rendering section:
+{message.type === 'sell-buttons' && (
+  <div className="flex flex-col gap-3 mt-4 mb-2">
+    <div className="text-sm text-cyan-400 font-medium">Select a Package:</div>
+    {SELL_APP_PACKAGES.map((package, index) => (
+      <div key={index} className="bg-blue-900/20 p-3 rounded-lg">
+        <div className="mb-2">
+          <div className="text-white font-medium">{package.planName}</div>
+          <div className="text-sm text-zinc-400">{package.description}</div>
+        </div>
+        <SellAppButton
+          storeId={package.storeId}
+          productId={package.productId}
+          planName={package.planName}
+          price={package.price}
+        />
+      </div>
+    ))}
+  </div>
+)}
+
+// File upload constants
+const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
+const MAX_FILES = 10;
+const ALLOWED_TYPES = [
+  'image/jpeg', 
+  'image/png', 
+  'image/gif',
+  'text/plain',
+  'application/pdf',
+  'text/csv',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
+
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
 const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 B';
@@ -79,73 +98,48 @@ const LiveChat = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Package configurations
-  const SELL_APP_PACKAGES = [
-    {
-      storeId: "56234",
-      productId: "273869",
-      planName: "Basic Plan",
-      price: "150",
-      description: "Basic Website Design with Essential Features"
-    },
-    {
-      storeId: "56234",
-      productId: "273879",
-      planName: "Standard Plan",
-      price: "300",
-      description: "Advanced Design with Interactive Elements"
-    },
-    {
-      storeId: "56234",
-      productId: "273880",
-      planName: "Premium Plan",
-      price: "450",
-      description: "Full-Featured Website with Premium Integrations"
-    }
-  ];
-
   // Refs
   const messageEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
   // File Message Component
-  const FileMessage = ({ file }) => {
-    const isImage = IMAGE_TYPES.includes(file.contentType);
-    
-    if (isImage) {
-      return (
-        <a 
-          href={file.url} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="block"
-        >
-          <img 
-            src={file.url} 
-            alt={file.name} 
-            className="max-w-[200px] rounded-lg hover:opacity-90 transition-opacity"
-          />
-        </a>
-      );
-    }
-
+const FileMessage = ({ file }) => {
+  const isImage = IMAGE_TYPES.includes(file.contentType);
+  
+  if (isImage) {
     return (
-      <a
-        href={file.url}
-        download={file.name}
-        className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+      <a 
+        href={file.url} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="block"
       >
-        <div className="flex-shrink-0 p-2 bg-blue-800/50 rounded">
-          <FileIcon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{file.name}</p>
-          <p className="text-xs text-zinc-400">{formatFileSize(file.size)}</p>
-        </div>
-        <Download className="h-4 w-4 text-zinc-400" />
+        <img 
+          src={file.url} 
+          alt={file.name} 
+          className="max-w-[200px] rounded-lg hover:opacity-90 transition-opacity"
+        />
       </a>
     );
-  };
+  }
+
+  return (
+    <a
+      href={file.url}
+      download={file.name}
+      className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+    >
+      <div className="flex-shrink-0 p-2 bg-blue-800/50 rounded">
+        <FileIcon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-medium truncate">{file.name}</p>
+        <p className="text-xs text-zinc-400">{formatFileSize(file.size)}</p>
+      </div>
+      <Download className="h-4 w-4 text-zinc-400" />
+    </a>
+  );
+};
 
   // Scroll chat to bottom
   const scrollToBottom = () => {
@@ -171,10 +165,10 @@ const LiveChat = ({
     }
   }, [isOpen, chatConnected]);
 
-  // File handling functions
+  // Process files (used by both drag&drop and file input)
   const processFiles = (files) => {
     if (files.length + selectedFiles.length > MAX_FILES) {
-      alert(`You can only upload up to ${MAX_FILES} files at a time.`);
+      alert(`You can only upload up to ${MAX_FILES} images at a time.`);
       return;
     }
 
@@ -184,7 +178,7 @@ const LiveChat = ({
         return false;
       }
       if (!ALLOWED_TYPES.includes(file.type)) {
-        alert(`${file.name} has an unsupported file type.`);
+        alert(`${file.name} must be a JPEG, PNG, or GIF.`);
         return false;
       }
       return true;
@@ -235,59 +229,63 @@ const LiveChat = ({
     processFiles(droppedFiles);
   };
 
+  // File input handler
   const handleFileSelect = (e) => {
     processFiles(e.target.files);
   };
 
+  // Remove file from selection
   const removeFile = (index) => {
     URL.revokeObjectURL(previewUrls[index]);
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Upload handler
+  // Handle file upload
+// Handle file upload
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
-    setIsUploading(true);
+  if (selectedFiles.length === 0) return;
+  setIsUploading(true);
+  setUploadProgress(0);
+
+  const formData = new FormData();
+  selectedFiles.forEach(file => formData.append('files', file));
+  formData.append('channelId', channelId);
+
+  try {
+    const response = await fetch('/.netlify/functions/discord-upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error('Upload failed');
+
+    const result = await response.json();
+    console.log('Upload result:', result);
+    
+    // Clear files after successful upload
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     setUploadProgress(0);
 
-    const formData = new FormData();
-    selectedFiles.forEach(file => formData.append('files', file));
-    formData.append('channelId', channelId);
+    // Only add system message - remove the direct message addition
+    // The actual file message will come through the subscription callback
+    setMessages(prev => [...prev, {
+      id: `upload-${Date.now()}`,
+      sender: 'System',
+      content: `Successfully uploaded ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}.`,
+      timestamp: new Date()
+    }]);
 
-    try {
-      const response = await fetch('/.netlify/functions/discord-upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error('Upload failed');
-
-      const result = await response.json();
-      console.log('Upload result:', result);
-      
-      // Clear files after successful upload
-      previewUrls.forEach(url => URL.revokeObjectURL(url));
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-      setUploadProgress(0);
-
-      setMessages(prev => [...prev, {
-        id: `upload-${Date.now()}`,
-        sender: 'System',
-        content: `Successfully uploaded ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}.`,
-        timestamp: new Date()
-      }]);
-
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload files. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Chat functions
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert('Failed to upload files. Please try again.');
+  } finally {
+    setIsUploading(false);
+  }
+};
+  // Logout function
   const handleLogout = () => {
     chatClient.unsubscribeFromChannel(channelId);
     setChatConnected(false);
@@ -297,7 +295,8 @@ const LiveChat = ({
     setSelectedFiles([]);
     setPreviewUrls([]);
   };
- // Channel and message handling
+
+  // Connect to channel
   const connectToChannel = async (id) => {
     setIsLoading(true);
     try {
@@ -328,22 +327,9 @@ const LiveChat = ({
     setIsLoading(false);
   };
 
+  // Handle message submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Check for package command
-    if (newMessage.trim().toLowerCase() === '/packages' || newMessage.trim().toLowerCase() === '/buy') {
-      try {
-        await chatClient.sendChannelMessage(channelId, {
-          type: 'sell-buttons',
-          content: 'Available Packages:'
-        });
-        setNewMessage('');
-        return;
-      } catch (error) {
-        console.error('Error sending package buttons:', error);
-      }
-    }
 
     // Handle file upload first
     if (selectedFiles.length > 0) {
@@ -399,35 +385,6 @@ const LiveChat = ({
     }
   };
 
-  // Render methods
-  const renderMessage = (message) => {
-    const isBotMessage = message.fromWebsite || message.sender === 'You';
-    const isSystemMessage = message.sender === 'System';
-    const isDiscordMessage = message.fromDiscord;
-
-    // Handle package buttons
-    if (message.type === 'sell-buttons') {
-      return (
-        <div className="flex flex-col gap-3 mt-4 mb-2">
-          <div className="text-sm text-cyan-400 font-medium">Select a Package:</div>
-          {SELL_APP_PACKAGES.map((pkg, index) => (
-            <div key={index} className="bg-blue-900/20 p-3 rounded-lg">
-              <div className="mb-2">
-                <div className="text-white font-medium">{pkg.planName}</div>
-                <div className="text-sm text-zinc-400">{pkg.description}</div>
-              </div>
-              <SellAppButton
-                storeId={pkg.storeId}
-                productId={pkg.productId}
-                planName={pkg.planName}
-                price={pkg.price}
-              />
-            </div>
-          ))}
-        </div>
-      );
-    }
-// Main render method
   if (!isOpen) {
     return (
       <button
@@ -525,157 +482,135 @@ const LiveChat = ({
         )}
 
         {messages.map((message) => {
-          const isBotMessage = message.fromWebsite || message.sender === 'You';
-          const isSystemMessage = message.sender === 'System';
-          const isDiscordMessage = message.fromDiscord;
+          console.log('Rendering message:', message);
+  const isBotMessage = message.fromWebsite || message.sender === 'You';
+  const isSystemMessage = message.sender === 'System';
+  const isDiscordMessage = message.fromDiscord;
 
-          // Handle package buttons if present
-          if (message.type === 'sell-buttons') {
-            return (
-              <div key={message.id} className="flex flex-col gap-3 mt-4 mb-2">
-                <div className="text-sm text-cyan-400 font-medium">Select a Package:</div>
-                {SELL_APP_PACKAGES.map((pkg, index) => (
-                  <div key={index} className="bg-blue-900/20 p-3 rounded-lg">
-                    <div className="mb-2">
-                      <div className="text-white font-medium">{pkg.planName}</div>
-                      <div className="text-sm text-zinc-400">{pkg.description}</div>
-                    </div>
-                    <SellAppButton
-                      storeId={pkg.storeId}
-                      productId={pkg.productId}
-                      planName={pkg.planName}
-                      price={pkg.price}
-                    />
-                  </div>
-                ))}
-              </div>
-            );
-          }
-
-          // Regular message rendering
-          return (
-            <div
-              key={message.id}
-              className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
-            >
-              {isDiscordMessage || message.sender === 'CCD Support' ? (
-                <>
-                  <img
-                    src="/images/cryptowebservice.png"
-                    alt="CCD Support"
-                    className="w-8 h-8 rounded-full bg-blue-900/40"
-                  />
-                  <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
-                    <div className="text-sm font-medium mb-1">CCD Support</div>
-                    {message.content && (
-                      <div className="text-zinc-100 mb-2">{message.content}</div>
-                    )}
-                    {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
-                      <div key={`${message.id}-attachment-${index}`} className="mt-2">
-                        {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
-                          <a 
-                            href={attachment.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="block"
-                          >
-                            <img
-                              src={attachment.url}
-                              alt={attachment.filename}
-                              className="max-w-[200px] h-auto rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                            />
-                          </a>
-                        ) : (
-                          <a
-                            href={attachment.url}
-                            download={attachment.filename}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
-                          >
-                            <div className="flex-shrink-0 p-2 bg-blue-800/50 rounded">
-                              <FileIcon className="h-5 w-5 text-cyan-400" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-cyan-400 truncate">{attachment.filename}</p>
-                              <p className="text-xs text-zinc-400">
-                                {formatFileSize(attachment.size)}
-                              </p>
-                            </div>
-                            <Download className="h-4 w-4 text-zinc-400 ml-auto" />
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                    <div className="text-xs text-zinc-400 mt-1">
-                      {new Date(message.timestamp).toLocaleTimeString()}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
-                    {message.sender[0]}
-                  </div>
-                  <div 
-                    className={`${
-                      isSystemMessage 
-                        ? 'bg-blue-900/40' 
-                        : 'bg-gradient-to-r from-cyan-600 to-blue-600'
-                    } p-3 rounded-lg max-w-[70%]`}
+  return (
+    <div
+      key={message.id}
+      className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
+    >
+      {isDiscordMessage || message.sender === 'CCD Support' ? (
+        <>
+          <img
+            src="/images/cryptowebservice.png"
+            alt="CCD Support"
+            className="w-8 h-8 rounded-full bg-blue-900/40"
+          />
+          <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
+            <div className="text-sm font-medium mb-1">CCD Support</div>
+            {message.content && (
+              <div className="text-zinc-100 mb-2">{message.content}</div>
+            )}
+            {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
+              <div key={`${message.id}-attachment-${index}`} className="mt-2">
+                {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
+                  <a 
+                    href={attachment.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block"
                   >
-                    <div className="text-sm font-medium mb-1">
-                      {isBotMessage ? 'You' : message.sender}
+                    <img
+                      src={attachment.url}
+                      alt={attachment.filename}
+                      className="max-w-[200px] h-auto rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                    />
+                  </a>
+                ) : (
+                  <a
+                    href={attachment.url}
+                    download={attachment.filename}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+                  >
+                    <div className="flex-shrink-0 p-2 bg-blue-800/50 rounded">
+                      <FileIcon className="h-5 w-5 text-cyan-400" />
                     </div>
-                    {message.content && (
-                      <div className="text-zinc-100 mb-2">{message.content}</div>
-                    )}
-                    {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
-                      <div key={`${message.id}-attachment-${index}`} className="mt-2">
-                        {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
-                          <a 
-                            href={attachment.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="block"
-                          >
-                            <img
-                              src={attachment.url}
-                              alt={attachment.filename}
-                              className="max-w-[200px] h-auto rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
-                            />
-                          </a>
-                        ) : (
-                          <a
-                            href={attachment.url}
-                            download={attachment.filename}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
-                          >
-                            <div className="flex-shrink-0 p-2 bg-blue-800/50 rounded">
-                              <FileIcon className="h-5 w-5 text-cyan-400" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-cyan-400 truncate">{attachment.filename}</p>
-                              <p className="text-xs text-zinc-400">
-                                {formatFileSize(attachment.size)}
-                              </p>
-                            </div>
-                            <Download className="h-4 w-4 text-zinc-400 ml-auto" />
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                    <div className="text-xs text-zinc-400 mt-1">
-                      {new Date(message.timestamp).toLocaleTimeString()}
+                    <div className="min-w-0">
+                      <p className="font-medium text-cyan-400 truncate">{attachment.filename}</p>
+                      <p className="text-xs text-zinc-400">
+                        {formatFileSize(attachment.size)}
+                      </p>
                     </div>
-                  </div>
-                </>
-              )}
+                    <Download className="h-4 w-4 text-zinc-400 ml-auto" />
+                  </a>
+                )}
+              </div>
+            ))}
+            <div className="text-xs text-zinc-400 mt-1">
+              {new Date(message.timestamp).toLocaleTimeString()}
             </div>
-          );
-        })}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 flex items-center justify-center text-white text-sm">
+            {message.sender[0]}
+          </div>
+          <div 
+            className={`${
+              isSystemMessage 
+                ? 'bg-blue-900/40' 
+                : 'bg-gradient-to-r from-cyan-600 to-blue-600'
+            } p-3 rounded-lg max-w-[70%]`}
+          >
+            <div className="text-sm font-medium mb-1">
+              {isBotMessage ? 'You' : message.sender}
+            </div>
+            {message.content && (
+              <div className="text-zinc-100 mb-2">{message.content}</div>
+            )}
+            {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
+              <div key={`${message.id}-attachment-${index}`} className="mt-2">
+                {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
+                  <a 
+                    href={attachment.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={attachment.url}
+                      alt={attachment.filename}
+                      className="max-w-[200px] h-auto rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
+                    />
+                  </a>
+                ) : (
+                  <a
+                    href={attachment.url}
+                    download={attachment.filename}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 bg-blue-900/40 rounded-lg hover:bg-blue-900/60 transition-colors"
+                  >
+                    <div className="flex-shrink-0 p-2 bg-blue-800/50 rounded">
+                      <FileIcon className="h-5 w-5 text-cyan-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-cyan-400 truncate">{attachment.filename}</p>
+                      <p className="text-xs text-zinc-400">
+                        {formatFileSize(attachment.size)}
+                      </p>
+                    </div>
+                    <Download className="h-4 w-4 text-zinc-400 ml-auto" />
+                  </a>
+                )}
+              </div>
+            ))}
+            <div className="text-xs text-zinc-400 mt-1">
+              {new Date(message.timestamp).toLocaleTimeString()}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+})}
+
         <div ref={messageEndRef} />
       </div>
 
@@ -768,6 +703,3 @@ const LiveChat = ({
 };
 
 export default LiveChat;
-
-
-
