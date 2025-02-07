@@ -35,7 +35,6 @@ const SELL_APP_PACKAGES = [
   }
 ];
 
-const [selectedPackage, setSelectedPackage] = useState(null);
 
 // File upload constants
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
