@@ -59,7 +59,7 @@ const PortfolioItem = ({ imageSrc, title, description }) => {
   );
 };
 
-PricingCard = ({ tier, price, features, isPopular }) => (
+const PricingCard = ({ tier, price, features, isPopular }) => (
   <div className={bg-blue-900/20 rounded-xl p-8 relative ${isPopular ? 'border-2 border-cyan-400' : ''} hover:bg-blue-900/30 transition-colors}>
     {isPopular && (
       <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-1 rounded-full text-sm font-medium">
