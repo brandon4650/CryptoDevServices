@@ -79,6 +79,7 @@ const LiveChat = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
 
   // Refs
   const messageEndRef = useRef(null);
@@ -380,6 +381,14 @@ const FileMessage = ({ file }) => {
     }
   };
 
+const handlePackageSelect = (pkg) => {
+  setSelectedPackage(pkg);
+  // Send a message to Discord about the package selection
+  chatClient.sendChannelMessage(channelId, 
+    `Selected Package: ${pkg.planName} ($${pkg.price})`
+  );
+};
+
   const handleChannelSubmit = (e) => {
     e.preventDefault();
     if (channelId) {
@@ -504,26 +513,34 @@ const FileMessage = ({ file }) => {
           console.log('Rendering message:', message);
           // Add package buttons rendering
   if (message.type === 'sell-buttons') {
-    return (
-      <div className="flex flex-col gap-3 mt-4 mb-2">
-        <div className="text-sm text-cyan-400 font-medium">Select a Package:</div>
-        {SELL_APP_PACKAGES.map((pkg, index) => (
-          <div key={index} className="bg-blue-900/20 p-3 rounded-lg">
-            <div className="mb-2">
-              <div className="text-white font-medium">{pkg.planName}</div>
-              <div className="text-sm text-zinc-400">{pkg.description}</div>
-            </div>
+  return (
+    <div className="flex flex-col gap-3 mt-4 mb-2">
+      <div className="text-sm text-cyan-400 font-medium">Select a Package:</div>
+      {SELL_APP_PACKAGES.map((pkg, index) => (
+        <div key={index} className="bg-blue-900/20 p-3 rounded-lg">
+          <div className="mb-2">
+            <div className="text-white font-medium">{pkg.planName}</div>
+            <div className="text-sm text-zinc-400">{pkg.description}</div>
+          </div>
+          <div className="flex items-center gap-2">
             <SellAppButton
               storeId={pkg.storeId}
               productId={pkg.productId}
               planName={pkg.planName}
               price={pkg.price}
             />
+            <button
+              onClick={() => handlePackageSelect(pkg)}
+              className="px-3 py-1 text-sm bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 hover:text-cyan-300 transition-colors rounded-lg"
+            >
+              Pin Package
+            </button>
           </div>
-        ))}
-      </div>
-    );
-  }
+        </div>
+      ))}
+    </div>
+  );
+}
   const isBotMessage = message.fromWebsite || message.sender === 'You';
   const isSystemMessage = message.sender === 'System';
   const isDiscordMessage = message.fromDiscord;
