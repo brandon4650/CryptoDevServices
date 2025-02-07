@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base Animations */
 @keyframes float {
   0% {
     transform: translateY(0px);
@@ -14,10 +15,24 @@
   }
 }
 
+@keyframes borderShine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Animation Classes */
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
 
+/* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -35,6 +50,7 @@
   background: #0891b2;
 }
 
+/* Base Styles */
 html {
   scroll-behavior: smooth;
 }
@@ -50,29 +66,7 @@ body {
   background-color: #000;
 }
 
-/* New animations for pricing card */
-@keyframes borderShine {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes wiggle {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-/* Custom utilities */
+/* Utilities */
 @layer utilities {
   .hover\:before\:pause:hover::before {
     animation-play-state: paused;
