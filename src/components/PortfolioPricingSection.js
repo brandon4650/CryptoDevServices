@@ -61,8 +61,14 @@ const PortfolioItem = ({ imageSrc, title, description }) => {
 
 const PricingCard = ({ tier, price, features, isPopular }) => (
   <div className={`
-    bg-blue-900/20 rounded-xl p-8 relative 
-    ${isPopular ? 'border-2 border-transparent before:absolute before:inset-0 before:rounded-xl before:p-[2px] before:bg-gradient-to-r before:from-cyan-400 before:via-blue-500 before:to-cyan-400 before:bg-[length:200%_100%] before:animate-[borderShine_3s_linear_infinite]' : ''} 
+    bg-blue-900/20 rounded-xl p-8 relative z-0
+    ${isPopular ? `
+      after:absolute after:top-0 after:left-0 after:right-0 after:bottom-0 
+      after:rounded-xl after:border-2 after:border-transparent
+      after:bg-gradient-to-r after:from-cyan-400 after:via-blue-500 after:to-cyan-400
+      after:bg-[length:200%_100%] after:animate-[borderShine_3s_linear_infinite]
+      after:-z-10
+    ` : ''} 
     hover:bg-blue-900/30 transition-colors
   `}>
     {isPopular && (
@@ -70,29 +76,31 @@ const PricingCard = ({ tier, price, features, isPopular }) => (
         Most Popular
       </span>
     )}
-    <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{tier}</h3>
-    <div className="mb-6">
-      <span className="text-4xl font-bold">${price}</span>
-      <span className="text-zinc-400">/project</span>
+    {/* Rest of the card content remains the same */}
+    <div className="relative z-10"> {/* Wrap content to ensure it's above the border effect */}
+      <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{tier}</h3>
+      <div className="mb-6">
+        <span className="text-4xl font-bold">${price}</span>
+        <span className="text-zinc-400">/project</span>
+      </div>
+      <ul className="space-y-4 mb-8">
+        {features.map((feature, index) => (
+          <li key={index} className="flex items-start gap-3">
+            <Check className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
+            <span className="text-zinc-300">{feature}</span>
+          </li>
+        ))}
+      </ul>
+      <button className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
+        isPopular 
+          ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90' 
+          : 'border border-cyan-500/50 hover:bg-cyan-500/10'
+      }`}>
+        Get Started <ArrowRight className="h-4 w-4" />
+      </button>
     </div>
-    <ul className="space-y-4 mb-8">
-      {features.map((feature, index) => (
-        <li key={index} className="flex items-start gap-3">
-          <Check className="h-5 w-5 text-cyan-400 shrink-0 mt-0.5" />
-          <span className="text-zinc-300">{feature}</span>
-        </li>
-      ))}
-    </ul>
-    <button className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
-      isPopular 
-        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90' 
-        : 'border border-cyan-500/50 hover:bg-cyan-500/10'
-    }`}>
-      Get Started <ArrowRight className="h-4 w-4" />
-    </button>
   </div>
 );
-
 const PortfolioPricingSection = () => {
   const portfolioItems = [
     {
