@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, MessageCircle, LogOut, Upload, X, FileIcon, Download } from 'lucide-react';
 import { chatClient } from '../utils/DiscordChatClient';
+import SellAppButton from './SellAppButton';
 
 const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
@@ -33,27 +34,6 @@ const SELL_APP_PACKAGES = [
     description: "Full-Featured Website with Premium Integrations"
   }
 ];
-
-// In your message rendering section:
-{message.type === 'sell-buttons' && (
-  <div className="flex flex-col gap-3 mt-4 mb-2">
-    <div className="text-sm text-cyan-400 font-medium">Select a Package:</div>
-    {SELL_APP_PACKAGES.map((package, index) => (
-      <div key={index} className="bg-blue-900/20 p-3 rounded-lg">
-        <div className="mb-2">
-          <div className="text-white font-medium">{package.planName}</div>
-          <div className="text-sm text-zinc-400">{package.description}</div>
-        </div>
-        <SellAppButton
-          storeId={package.storeId}
-          productId={package.productId}
-          planName={package.planName}
-          price={package.price}
-        />
-      </div>
-    ))}
-  </div>
-)}
 
 // File upload constants
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
@@ -331,6 +311,20 @@ const FileMessage = ({ file }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (newMessage.trim().toLowerCase() === '/packages' || newMessage.trim().toLowerCase() === '/buy') {
+    try {
+      await chatClient.sendChannelMessage(channelId, {
+        type: 'sell-buttons',
+        content: 'Available Packages:'
+      });
+      setNewMessage('');
+      return;
+    } catch (error) {
+      console.error('Error sending package buttons:', error);
+    }
+  }
+
+
     // Handle file upload first
     if (selectedFiles.length > 0) {
       await handleUpload();
@@ -483,6 +477,28 @@ const FileMessage = ({ file }) => {
 
         {messages.map((message) => {
           console.log('Rendering message:', message);
+          // Add package buttons rendering
+  if (message.type === 'sell-buttons') {
+    return (
+      <div className="flex flex-col gap-3 mt-4 mb-2">
+        <div className="text-sm text-cyan-400 font-medium">Select a Package:</div>
+        {SELL_APP_PACKAGES.map((pkg, index) => (
+          <div key={index} className="bg-blue-900/20 p-3 rounded-lg">
+            <div className="mb-2">
+              <div className="text-white font-medium">{pkg.planName}</div>
+              <div className="text-sm text-zinc-400">{pkg.description}</div>
+            </div>
+            <SellAppButton
+              storeId={pkg.storeId}
+              productId={pkg.productId}
+              planName={pkg.planName}
+              price={pkg.price}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
   const isBotMessage = message.fromWebsite || message.sender === 'You';
   const isSystemMessage = message.sender === 'System';
   const isDiscordMessage = message.fromDiscord;
