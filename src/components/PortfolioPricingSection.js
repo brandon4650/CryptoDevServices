@@ -60,7 +60,7 @@ const PortfolioItem = ({ imageSrc, title, description }) => {
 };
 
 const PricingCard = ({ tier, price, features, isPopular }) => (
-  <div className={bg-blue-900/20 rounded-xl p-8 relative ${isPopular ? 'border-2 border-cyan-400' : ''} hover:bg-blue-900/30 transition-colors}>
+  <div className={`bg-blue-900/20 rounded-xl p-8 relative ${isPopular ? 'border-2 border-cyan-400' : ''} hover:bg-blue-900/30 transition-colors`}>
     {isPopular && (
       <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-1 rounded-full text-sm font-medium">
         Most Popular
@@ -79,15 +79,16 @@ const PricingCard = ({ tier, price, features, isPopular }) => (
         </li>
       ))}
     </ul>
-    <button className={w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
+    <button className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
       isPopular 
         ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90' 
         : 'border border-cyan-500/50 hover:bg-cyan-500/10'
-    }}>
+    }`}>
       Get Started <ArrowRight className="h-4 w-4" />
     </button>
   </div>
 );
+
 const PortfolioPricingSection = () => {
   const portfolioItems = [
     {
