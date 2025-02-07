@@ -62,12 +62,7 @@ const PortfolioItem = ({ imageSrc, title, description }) => {
 const PricingCard = ({ tier, price, features, isPopular }) => (
   <div className={`
     bg-blue-900/20 rounded-xl p-8 relative 
-    ${isPopular ? `
-      before:absolute before:inset-[-2px] before:rounded-xl
-      before:bg-gradient-to-r before:from-cyan-400 before:via-blue-500 before:to-cyan-400
-      before:bg-[length:200%_100%] before:animate-[borderShine_3s_linear_infinite]
-      before:-z-10
-    ` : ''} 
+    ${isPopular ? 'border-2 border-transparent before:absolute before:inset-0 before:rounded-xl before:p-[2px] before:bg-gradient-to-r before:from-cyan-400 before:via-blue-500 before:to-cyan-400 before:bg-[length:200%_100%] before:animate-[borderShine_3s_linear_infinite]' : ''} 
     hover:bg-blue-900/30 transition-colors
   `}>
     {isPopular && (
