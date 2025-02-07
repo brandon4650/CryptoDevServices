@@ -1,8 +1,10 @@
+// 1. Imports first
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, MessageCircle, LogOut, Upload, X, FileIcon, Download } from 'lucide-react';
 import { chatClient } from '../utils/DiscordChatClient';
 import SellAppButton from './SellAppButton';
 
+// 2. Constants and helper functions
 const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
   sender: 'CCD Support',
@@ -11,8 +13,7 @@ const DEFAULT_WELCOME_MESSAGE = {
   timestamp: new Date()
 };
 
-// File upload constants
-const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const MAX_FILES = 10;
 const ALLOWED_TYPES = [
   'image/jpeg', 
@@ -26,6 +27,30 @@ const ALLOWED_TYPES = [
 ];
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+
+const SELL_APP_PACKAGES = [
+  {
+    storeId: "56234",
+    productId: "273869",
+    planName: "Basic Plan",
+    price: "150",
+    description: "Basic Website Design with Essential Features"
+  },
+  {
+    storeId: "56234",
+    productId: "273879",
+    planName: "Standard Plan",
+    price: "300",
+    description: "Advanced Design with Interactive Elements"
+  },
+  {
+    storeId: "56234",
+    productId: "273880",
+    planName: "Premium Plan",
+    price: "450",
+    description: "Full-Featured Website with Premium Integrations"
+  }
+];
 
 const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 B';
