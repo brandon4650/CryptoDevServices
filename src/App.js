@@ -1,10 +1,11 @@
+import DigitalBackground from './components/DigitalBackground';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import CryptoWebDev from './components/CryptoDevServices';
 import QuotePage from './components/QuotePage';
 import LiveChat from './components/LiveChat';
 import { initializeChat, chatClient } from './utils/DiscordChatClient';
-import DigitalBackground from './components/DigitalBackground';
+
 
 function App() {
   const [chatInitialized, setChatInitialized] = useState(false);
