@@ -225,6 +225,21 @@ class DiscordChatClient {
       throw new Error('Channel not found');
     }
 
+    if (typeof content === 'object' && content.type === 'sell-buttons') {
+      console.log('Handling sell-buttons message');
+      return {
+        success: true,
+        message: {
+          id: `pkg-${Date.now()}`,
+          type: 'sell-buttons',
+          content: content.content,
+          timestamp: new Date().toISOString(),
+          fromWebsite: true,
+          isYou: true
+        }
+      };
+    }
+
     if (file) {
       console.log('Uploading file:', file);
       const formData = new FormData();
