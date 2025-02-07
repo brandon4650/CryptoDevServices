@@ -103,21 +103,20 @@ const DigitalBackground = () => {
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      onMouseMove={handleMouseMove}
-      className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: -1,
-        background: 'black'
-      }}
-    />
-  );
-};
+  <canvas
+    ref={canvasRef}
+    onMouseMove={handleMouseMove}
+    className="digital-background"
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      zIndex: -1,
+      background: 'transparent' // Changed from black to transparent
+    }}
+  />
+);
 
 export default DigitalBackground;
