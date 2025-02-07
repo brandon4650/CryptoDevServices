@@ -19,26 +19,26 @@ const DigitalBackground = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Create initial nodes with more visible settings
+    // Create initial nodes
     const createNodes = () => {
       const nodes = [];
-      for (let i = 0; i < 100; i++) { // Increased number of nodes
+      for (let i = 0; i < 100; i++) {
         nodes.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 1, // Increased speed
+          vx: (Math.random() - 0.5) * 1,
           vy: (Math.random() - 0.5) * 1,
-          radius: Math.random() * 3 + 2, // Increased size
-          color: `rgba(34, 211, 238, ${Math.random() * 0.7 + 0.3})` // More opacity
+          radius: Math.random() * 3 + 2,
+          color: `rgba(34, 211, 238, ${Math.random() * 0.7 + 0.3})`
         });
       }
       nodesRef.current = nodes;
     };
     createNodes();
 
-    // Animation with clearer visuals
+    // Animation
     const animate = () => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Increased trail
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       nodesRef.current.forEach((node, i) => {
@@ -59,19 +59,19 @@ const DigitalBackground = () => {
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Connect nodes with brighter lines
+        // Connect nodes
         nodesRef.current.forEach((otherNode, j) => {
           if (i !== j) {
             const dx = otherNode.x - node.x;
             const dy = otherNode.y - node.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < 200) { // Increased connection distance
+            if (distance < 200) {
               ctx.beginPath();
               ctx.moveTo(node.x, node.y);
               ctx.lineTo(otherNode.x, otherNode.y);
               ctx.strokeStyle = `rgba(34, 211, 238, ${0.2 * (1 - distance / 200)})`;
-              ctx.lineWidth = 2; // Thicker lines
+              ctx.lineWidth = 2;
               ctx.stroke();
             }
           }
@@ -81,7 +81,7 @@ const DigitalBackground = () => {
         const dx = mouse.x - node.x;
         const dy = mouse.y - node.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < 150) { // Increased interaction radius
+        if (distance < 150) {
           node.x += dx * 0.02;
           node.y += dy * 0.02;
         }
@@ -103,20 +103,21 @@ const DigitalBackground = () => {
   };
 
   return (
-  <canvas
-    ref={canvasRef}
-    onMouseMove={handleMouseMove}
-    className="digital-background"
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      zIndex: -1,
-      background: 'transparent' // Changed from black to transparent
-    }}
-  />
-);
+    <canvas
+      ref={canvasRef}
+      onMouseMove={handleMouseMove}
+      className="fixed top-0 left-0 w-full h-full"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0,
+        background: 'transparent'
+      }}
+    />
+  );
+};
 
 export default DigitalBackground;
