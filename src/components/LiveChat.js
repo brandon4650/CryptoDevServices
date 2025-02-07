@@ -312,17 +312,23 @@ const FileMessage = ({ file }) => {
     e.preventDefault();
 
     if (newMessage.trim().toLowerCase() === '/packages' || newMessage.trim().toLowerCase() === '/buy') {
-    try {
-      await chatClient.sendChannelMessage(channelId, {
-        type: 'sell-buttons',
-        content: 'Available Packages:'
-      });
-      setNewMessage('');
-      return;
-    } catch (error) {
-      console.error('Error sending package buttons:', error);
+  try {
+    console.log('Sending package buttons');
+    const result = await chatClient.sendChannelMessage(channelId, {
+      type: 'sell-buttons',
+      content: 'Available Packages:',
+      fromWebsite: true
+    });
+    
+    if (result.success) {
+      setMessages(prev => [...prev, result.message]);
     }
+    setNewMessage('');
+    return;
+  } catch (error) {
+    console.error('Error sending package buttons:', error);
   }
+}
 
 
     // Handle file upload first
