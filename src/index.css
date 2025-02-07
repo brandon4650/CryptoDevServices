@@ -49,3 +49,32 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #000;
 }
+
+/* New animations for pricing card */
+@keyframes borderShine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  .hover\:before\:pause:hover::before {
+    animation-play-state: paused;
+  }
+}
