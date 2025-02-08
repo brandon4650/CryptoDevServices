@@ -321,55 +321,38 @@ useEffect(() => {
   try {
     console.log('Connecting to channel:', id);
     const validation = await chatClient.validateChannel(id);
-    console.log('Validation response:', validation);
     
     if (!validation.valid) {
       throw new Error('Invalid channel ID');
     }
 
     chatClient.subscribeToChannel(id, (message) => {
-      console.log('Received new message:', message);
       setMessages(prev => [...prev, message]);
     });
 
-    // Check initial embed message for plan type
-    if (validation.messages?.length > 0) {
-      const initialMessage = validation.messages[0];
-      console.log('Initial message:', initialMessage);
+    // Simply check the first message for plan type
+    if (validation.messages?.[0]?.embeds?.[0]?.fields) {
+      const fields = validation.messages[0].embeds[0].fields;
+      const planField = fields.find(f => f.name === "Plan Type");
       
-      if (initialMessage.embeds?.[0]?.fields) {
-        const planField = initialMessage.embeds[0].fields.find(f => f.name === "Plan Type");
-        console.log('Found plan field:', planField);
+      if (planField?.value) {
+        const planType = planField.value.toLowerCase();
         
-        if (planField?.value && !isQuoteType(planField.value)) {
-          const matchingPackage = findMatchingPackage(planField.value);
-          console.log('Matching package found:', matchingPackage);
-          
-          if (matchingPackage) {
-            setSelectedPackage(matchingPackage);
-            localStorage.setItem(`plan_${id}`, JSON.stringify(matchingPackage));
-            
-            // Add a system message about the selected package
-            const packageMessage = {
-              id: `pkg-${Date.now()}`,
-              type: 'system',
-              sender: 'System',
-              content: `Package selected: ${matchingPackage.planName} ($${matchingPackage.price})`,
-              timestamp: new Date()
-            };
-            validation.messages.push(packageMessage);
-          }
-        } else {
-          console.log('Quote request detected, skipping package selection');
-          // Clear any existing package data
-          localStorage.removeItem(`plan_${id}`);
+        // Match basic/standard/premium
+        if (planType.includes('basic')) {
+          setSelectedPackage(SELL_APP_PACKAGES[0]); // Basic
+        } else if (planType.includes('standard')) {
+          setSelectedPackage(SELL_APP_PACKAGES[1]); // Standard
+        } else if (planType.includes('premium')) {
+          setSelectedPackage(SELL_APP_PACKAGES[2]); // Premium
         }
       }
-      setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
     }
 
+    setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
     setChatConnected(true);
     setShowChannelInput(false);
+
   } catch (error) {
     console.error('Error connecting to channel:', error);
     setMessages([{
@@ -378,12 +361,8 @@ useEffect(() => {
       content: 'Error connecting to support chat. Please verify your channel ID and try again.',
       timestamp: new Date()
     }]);
-    // Clean up on error
-    localStorage.removeItem(`plan_${id}`);
-    setSelectedPackage(null);
-  } finally {
-    setIsLoading(false);
   }
+  setIsLoading(false);
 };
 
   // Handle message submission
