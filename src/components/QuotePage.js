@@ -32,36 +32,50 @@ const QuotePage = () => {
 
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
+    try {
+        // Log the form submission type
+        console.log('Submitting form with type:', selectedOption || 'quote');
 
-        try {
-            const result = await sendToDiscord(
-                formData,
-                selectedOption || 'quote'
-            );
+        const result = await sendToDiscord(
+            formData,
+            selectedOption || 'quote'
+        );
 
-            if (result.success) {
-                setChannelId(result.channelId);
-                setOrderData(result);
-                setOrderComplete(true);
-                // Reset form data
-                setFormData({
-                    projectName: '',
-                    email: '',
-                    details: '',
-                    additionalInfo: '',
-                    twitterLink: '',
-                    telegramLink: '',
-                    discordLink: ''
-                });
-            } else {
-                throw new Error(result.error || 'Failed to submit');
+        if (result.success) {
+            setChannelId(result.channelId);
+            setOrderData(result);
+            setOrderComplete(true);
+
+            // Store plan type only if it's not a quote
+            if (selectedOption && selectedOption !== 'quote') {
+                // Find the matching package
+                const selectedPlan = SELL_APP_PACKAGES.find(pkg => 
+                    pkg.planName.toLowerCase() === selectedOption.toLowerCase()
+                );
+                if (selectedPlan) {
+                    localStorage.setItem(`plan_${result.channelId}`, JSON.stringify(selectedPlan));
+                }
             }
-        } catch (error) {
-            console.error('Error submitting form:', error);
-            alert('There was an error submitting your request. Please try again later.');
+
+            // Reset form data
+            setFormData({
+                projectName: '',
+                email: '',
+                details: '',
+                additionalInfo: '',
+                twitterLink: '',
+                telegramLink: '',
+                discordLink: ''
+            });
+        } else {
+            throw new Error(result.error || 'Failed to submit');
         }
-    };
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('There was an error submitting your request. Please try again later.');
+    }
+};
     const pricingTiers = [
         {
             tier: "Basic",
