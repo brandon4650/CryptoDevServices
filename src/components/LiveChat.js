@@ -285,6 +285,7 @@ const FileMessage = ({ file }) => {
       console.log('Connecting to channel:', id);
       const validation = await chatClient.validateChannel(id);
       console.log('Validation response:', validation);
+      
       if (!validation.valid) {
         throw new Error('Invalid channel ID');
       }
@@ -297,17 +298,26 @@ const FileMessage = ({ file }) => {
       // Add plan detection here
       if (validation.messages && validation.messages.length > 0) {
         const initialMessage = validation.messages[0];
+        console.log('Initial message:', initialMessage);
+        
         // Check for plan info in the embed fields
         if (initialMessage.embeds && initialMessage.embeds[0]?.fields) {
           const planField = initialMessage.embeds[0].fields.find(f => f.name === "Plan Type");
-          if (planField) {
+          console.log('Found plan field:', planField);
+
+          // Only process if it's not a quote
+          if (planField && planField.value.toLowerCase() !== 'quote') {
             // Find matching package
             const matchingPackage = SELL_APP_PACKAGES.find(pkg => 
               pkg.planName.toLowerCase().includes(planField.value.toLowerCase())
             );
+            console.log('Matching package:', matchingPackage);
+
             if (matchingPackage) {
               setSelectedPackage(matchingPackage);
             }
+          } else {
+            console.log('Quote detected, skipping package selection');
           }
         }
         setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
