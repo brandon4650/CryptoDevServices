@@ -3,6 +3,7 @@ import { ArrowLeft, Info, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { sendToDiscord } from '../utils/discordWebhook';
 import LiveChat from './LiveChat';
+import { SELL_APP_PACKAGES } from '../utils/packageData';
 
 const QuotePage = () => {
     const [selectedOption, setSelectedOption] = useState('');
