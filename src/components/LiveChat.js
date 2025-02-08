@@ -439,22 +439,40 @@ const handlePackageSelect = (pkg) => {
         </button>
       </div>
 
-     {/* Pinned Package Banner */}
-     {selectedPackage && chatConnected && (
-       <div className="sticky top-0 p-3 bg-gradient-to-r from-blue-900/95 to-blue-950/95 backdrop-blur-sm border-b border-blue-800 z-10 flex items-center justify-between">
-         <div>
-           <div className="text-sm font-medium text-cyan-400">{selectedPackage.planName}</div>
-           <div className="text-xs text-zinc-400">${selectedPackage.price}</div>
-         </div>
-         <SellAppButton
-           storeId={selectedPackage.storeId}
-           productId={selectedPackage.productId}
-           planName={selectedPackage.planName}
-           price={selectedPackage.price}
-           className="scale-90"
-         />
-       </div>
-     )}
+     {/* Pinned Package Banner - Add here */}
+    {selectedPackage && chatConnected && (
+      <div className="sticky top-0 p-3 bg-gradient-to-r from-blue-900/95 to-blue-950/95 backdrop-blur-sm border-b border-blue-800 z-10">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <div className="text-sm font-medium text-cyan-400">{selectedPackage.planName}</div>
+            <div className="text-xs text-zinc-400">${selectedPackage.price}</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setMessages(prev => [...prev, {
+                  id: `pkg-${Date.now()}`,
+                  type: 'sell-buttons',
+                  sender: 'System',
+                  timestamp: new Date()
+                }]);
+              }}
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              Change Plan
+            </button>
+            <SellAppButton
+              storeId={selectedPackage.storeId}
+              productId={selectedPackage.productId}
+              planName={selectedPackage.planName}
+              price={selectedPackage.price}
+              className="scale-90"
+            />
+          </div>
+        </div>
+      </div>
+    )}
+
 
       {/* Channel ID Input */}
       {showChannelInput && (
