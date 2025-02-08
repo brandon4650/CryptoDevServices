@@ -106,38 +106,83 @@ const FileMessage = ({ file }) => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom();
-    }
-  }, [messages]);
+  // Scroll chat to bottom when messages update
+useEffect(() => {
+  if (messages.length > 0) {
+    scrollToBottom();
+  }
+}, [messages]);
 
-  // Try to get channelId from clipboard
-  useEffect(() => {
+// Handle channel connection and clipboard
+useEffect(() => {
+  const getChannelFromClipboard = async () => {
     if (isOpen && !chatConnected) {
-      navigator.clipboard.readText()
-        .then(text => {
-          if (text && text.trim()) {
-            setChannelId(text.trim());
-          }
-        })
-        .catch(err => console.log('Could not read clipboard'));
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text?.trim()) {
+          setChannelId(text.trim());
+        }
+      } catch (err) {
+        console.log('Could not read clipboard');
+      }
     }
-  }, [isOpen, chatConnected]);
+  };
 
-  useEffect(() => {
-    if (channelId) {
+  getChannelFromClipboard();
+}, [isOpen, chatConnected]);
+
+// Handle package selection and initial message loading
+useEffect(() => {
+  const initializePackage = async () => {
+    if (!channelId) return;
+
+    try {
+      // First check localStorage for existing package
       const savedPackage = localStorage.getItem(`plan_${channelId}`);
       if (savedPackage) {
         try {
           const parsedPackage = JSON.parse(savedPackage);
           setSelectedPackage(parsedPackage);
+          return; // Exit if we found a saved package
         } catch (error) {
-          console.error('Error loading saved package:', error);
+          console.error('Error parsing saved package:', error);
+          localStorage.removeItem(`plan_${channelId}`); // Clear invalid data
         }
       }
+
+      // If no saved package, check initial messages from Discord
+      const validation = await chatClient.validateChannel(channelId);
+      if (validation.messages?.length > 0) {
+        const initialMessage = validation.messages[0];
+        console.log('Checking initial message:', initialMessage);
+
+        // Look for plan info in embed fields
+        if (initialMessage.embeds?.[0]?.fields) {
+          const planField = initialMessage.embeds[0].fields.find(
+            f => f.name === "Plan Type"
+          );
+          
+          // Only process if it's not a quote
+          if (planField && planField.value.toLowerCase() !== 'quote') {
+            const matchingPackage = SELL_APP_PACKAGES.find(pkg => 
+              pkg.planName.toLowerCase().includes(planField.value.toLowerCase())
+            );
+            
+            if (matchingPackage) {
+              console.log('Found matching package:', matchingPackage);
+              setSelectedPackage(matchingPackage);
+              localStorage.setItem(`plan_${channelId}`, JSON.stringify(matchingPackage));
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing package:', error);
     }
-  }, [channelId]);
+  };
+
+  initializePackage();
+}, [channelId]); // Only depend on channelId
 
   // Process files (used by both drag&drop and file input)
   const processFiles = (files) => {
@@ -272,63 +317,88 @@ const FileMessage = ({ file }) => {
 
   // Connect to channel
   const connectToChannel = async (id) => {
-    setIsLoading(true);
-    try {
-      console.log('Connecting to channel:', id);
-      const validation = await chatClient.validateChannel(id);
-      console.log('Validation response:', validation);
-      
-      if (!validation.valid) {
-        throw new Error('Invalid channel ID');
-      }
+ setIsLoading(true);
+ try {
+   console.log('Connecting to channel:', id);
+   const validation = await chatClient.validateChannel(id);
+   console.log('Validation response:', validation);
+   
+   if (!validation.valid) {
+     throw new Error('Invalid channel ID');
+   }
 
-      chatClient.subscribeToChannel(id, (message) => {
-        console.log('Received new message:', message);
-        setMessages(prev => [...prev, message]);
-      });
+   // Subscribe to new messages
+   chatClient.subscribeToChannel(id, (message) => {
+     console.log('Received new message:', message);
+     setMessages(prev => [...prev, message]);
+   });
 
-      // Add plan detection here
-      if (validation.messages && validation.messages.length > 0) {
-        const initialMessage = validation.messages[0];
-        console.log('Initial message:', initialMessage);
-        
-        // Check for plan info in the embed fields
-        if (initialMessage.embeds && initialMessage.embeds[0]?.fields) {
-          const planField = initialMessage.embeds[0].fields.find(f => f.name === "Plan Type");
-          console.log('Found plan field:', planField);
+   // Process initial messages and detect plan
+   if (validation.messages?.length > 0) {
+     const initialMessage = validation.messages[0];
+     console.log('Initial message:', initialMessage);
+     
+     // Check for plan info in the embed fields
+     if (initialMessage.embeds?.[0]?.fields) {
+       const planField = initialMessage.embeds[0].fields.find(f => f.name === "Plan Type");
+       console.log('Found plan field:', planField);
 
-          // Only process if it's not a quote
-          if (planField && planField.value.toLowerCase() !== 'quote') {
-            // Find matching package
-            const matchingPackage = SELL_APP_PACKAGES.find(pkg => 
-              pkg.planName.toLowerCase().includes(planField.value.toLowerCase())
-            );
-            console.log('Matching package:', matchingPackage);
+       if (planField && planField.value.toLowerCase() !== 'quote') {
+         // Find matching package
+         const matchingPackage = SELL_APP_PACKAGES.find(pkg => 
+           pkg.planName.toLowerCase().includes(planField.value.toLowerCase())
+         );
+         console.log('Matching package:', matchingPackage);
 
-            if (matchingPackage) {
-              setSelectedPackage(matchingPackage);
-            }
-          } else {
-            console.log('Quote detected, skipping package selection');
-          }
-        }
-        setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
-      }
+         if (matchingPackage) {
+           setSelectedPackage(matchingPackage);
+           // Store the selected package
+           localStorage.setItem(`plan_${id}`, JSON.stringify(matchingPackage));
+           
+           // Add package selection message to chat
+           const packageMessage = {
+             id: `pkg-${Date.now()}`,
+             type: 'system',
+             sender: 'System',
+             content: `Selected package: ${matchingPackage.planName} ($${matchingPackage.price})`,
+             timestamp: new Date()
+           };
+           validation.messages.push(packageMessage);
+         }
+       } else {
+         console.log('Quote detected, skipping package selection');
+         // Clear any existing package data for this channel
+         localStorage.removeItem(`plan_${id}`);
+       }
+     }
 
-      setChatConnected(true);
-      setShowChannelInput(false);
-    } catch (error) {
-      console.error('Error connecting to channel:', error);
-      setMessages([{
-        id: 'error',
-        sender: 'System',
-        content: 'Error connecting to support chat. Please verify your channel ID and try again.',
-        timestamp: new Date()
-      }]);
-    }
-    setIsLoading(false);
-  };
+     // Set messages with welcome message first
+     setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
+   } else {
+     // If no messages, just show welcome message
+     setMessages([DEFAULT_WELCOME_MESSAGE]);
+   }
 
+   // Update UI state
+   setChatConnected(true);
+   setShowChannelInput(false);
+
+ } catch (error) {
+   console.error('Error connecting to channel:', error);
+   setMessages([{
+     id: 'error',
+     sender: 'System',
+     content: 'Error connecting to support chat. Please verify your channel ID and try again.',
+     timestamp: new Date()
+   }]);
+   
+   // Clean up on error
+   localStorage.removeItem(`plan_${id}`);
+   setSelectedPackage(null);
+ } finally {
+   setIsLoading(false);
+ }
+};
 
   // Handle message submission
   const handleSubmit = async (e) => {
@@ -403,12 +473,11 @@ const FileMessage = ({ file }) => {
 
 const handlePackageSelect = (pkg) => {
   setSelectedPackage(pkg);
-  // Send a message to Discord about the package selection
+  localStorage.setItem(`plan_${channelId}`, JSON.stringify(pkg));
   chatClient.sendChannelMessage(channelId, 
     `Selected Package: ${pkg.planName} ($${pkg.price})`
   );
 };
-
   const handleChannelSubmit = (e) => {
     e.preventDefault();
     if (channelId) {
@@ -462,37 +531,41 @@ const handlePackageSelect = (pkg) => {
 
      {/* Pinned Package Banner - Add here */}
     {selectedPackage && chatConnected && (
-      <div className="sticky top-0 p-3 bg-gradient-to-r from-blue-900/95 to-blue-950/95 backdrop-blur-sm border-b border-blue-800 z-10">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <div className="text-sm font-medium text-cyan-400">{selectedPackage.planName}</div>
-            <div className="text-xs text-zinc-400">${selectedPackage.price}</div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setMessages(prev => [...prev, {
-                  id: `pkg-${Date.now()}`,
-                  type: 'sell-buttons',
-                  sender: 'System',
-                  timestamp: new Date()
-                }]);
-              }}
-              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-            >
-              Change Plan
-            </button>
-            <SellAppButton
-              storeId={selectedPackage.storeId}
-              productId={selectedPackage.productId}
-              planName={selectedPackage.planName}
-              price={selectedPackage.price}
-              className="scale-90"
-            />
-          </div>
+  <div className="sticky top-0 p-3 bg-gradient-to-r from-blue-900/95 to-blue-950/95 backdrop-blur-sm border-b border-blue-800 z-10">
+    <div className="flex items-center justify-between mb-2">
+      <div>
+        <div className="text-sm font-medium text-cyan-400">
+          {selectedPackage.planName}
+        </div>
+        <div className="text-xs text-zinc-400">
+          ${selectedPackage.price}
         </div>
       </div>
-    )}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => {
+            setMessages(prev => [...prev, {
+              id: `pkg-${Date.now()}`,
+              type: 'sell-buttons',
+              sender: 'System',
+              timestamp: new Date()
+            }]);
+          }}
+          className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+        >
+          Change Plan
+        </button>
+        <SellAppButton
+          storeId={selectedPackage.storeId}
+          productId={selectedPackage.productId}
+          planName={selectedPackage.planName}
+          price={selectedPackage.price}
+          className="scale-90"
+        />
+      </div>
+    </div>
+  </div>
+)}
 
 
       {/* Channel ID Input */}
