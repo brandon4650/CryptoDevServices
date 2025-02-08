@@ -44,18 +44,23 @@ const QuotePage = () => {
         );
 
         if (result.success) {
+            console.log('Discord submission successful:', result);
             setChannelId(result.channelId);
             setOrderData(result);
             setOrderComplete(true);
 
             // Store plan type only if it's not a quote
             if (selectedOption && selectedOption !== 'quote') {
+                console.log('Finding package for:', selectedOption);
                 // Find the matching package
                 const selectedPlan = SELL_APP_PACKAGES.find(pkg => 
                     pkg.planName.toLowerCase() === selectedOption.toLowerCase()
                 );
+                console.log('Selected plan:', selectedPlan);
+
                 if (selectedPlan) {
                     localStorage.setItem(`plan_${result.channelId}`, JSON.stringify(selectedPlan));
+                    console.log('Stored plan data for channel:', result.channelId);
                 }
             }
 
