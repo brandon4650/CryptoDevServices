@@ -67,6 +67,11 @@ exports.handler = async (event) => {
             inline: true
           },
           {
+            name: "Plan Type", // Add this field
+            value: orderInfo.planType,
+            inline: true
+          },
+          {
             name: "Contact Email",
             value: orderInfo.email,
             inline: true
