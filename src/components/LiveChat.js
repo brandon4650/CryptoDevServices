@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, MessageCircle, LogOut, Upload, X, FileIcon, Download } from 'lucide-react';
 import { chatClient } from '../utils/DiscordChatClient';
 import SellAppButton from './SellAppButton';
+import { SELL_APP_PACKAGES } from '../utils/packageData';
 
 const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
