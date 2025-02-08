@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, MessageCircle, LogOut, Upload, X, FileIcon, Download } from 'lucide-react';
 import { chatClient } from '../utils/DiscordChatClient';
 import SellAppButton from './SellAppButton';
-import { SELL_APP_PACKAGES } from '../utils/packageData';
+import { SELL_APP_PACKAGES, findMatchingPackage, isQuoteType } from '../utils/packageData';
 
 const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
@@ -341,24 +341,28 @@ useEffect(() => {
         const planField = initialMessage.embeds[0].fields.find(f => f.name === "Plan Type");
         console.log('Found plan field:', planField);
         
-        if (planField?.value) {
-          const planType = planField.value.toLowerCase();
+        if (planField?.value && !isQuoteType(planField.value)) {
+          const matchingPackage = findMatchingPackage(planField.value);
+          console.log('Matching package found:', matchingPackage);
           
-          // Skip if it's a quote
-          if (planType !== 'quote' && planType !== 'custom quote') {
-            // Find matching package based on plan type
-            const matchingPackage = SELL_APP_PACKAGES.find(pkg => {
-              const pkgName = pkg.planName.toLowerCase().replace(' plan', '');
-              return planType.includes(pkgName);
-            });
+          if (matchingPackage) {
+            setSelectedPackage(matchingPackage);
+            localStorage.setItem(`plan_${id}`, JSON.stringify(matchingPackage));
             
-            console.log('Matching package found:', matchingPackage);
-            
-            if (matchingPackage) {
-              setSelectedPackage(matchingPackage);
-              localStorage.setItem(`plan_${id}`, JSON.stringify(matchingPackage));
-            }
+            // Add a system message about the selected package
+            const packageMessage = {
+              id: `pkg-${Date.now()}`,
+              type: 'system',
+              sender: 'System',
+              content: `Package selected: ${matchingPackage.planName} ($${matchingPackage.price})`,
+              timestamp: new Date()
+            };
+            validation.messages.push(packageMessage);
           }
+        } else {
+          console.log('Quote request detected, skipping package selection');
+          // Clear any existing package data
+          localStorage.removeItem(`plan_${id}`);
         }
       }
       setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
@@ -374,8 +378,12 @@ useEffect(() => {
       content: 'Error connecting to support chat. Please verify your channel ID and try again.',
       timestamp: new Date()
     }]);
+    // Clean up on error
+    localStorage.removeItem(`plan_${id}`);
+    setSelectedPackage(null);
+  } finally {
+    setIsLoading(false);
   }
-  setIsLoading(false);
 };
 
   // Handle message submission
