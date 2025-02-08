@@ -113,16 +113,13 @@ exports.handler = async (event) => {
       }
     // Discord user message
     return {
-      id: msg.id,
-      sender: msg.author.username,
-      content: msg.content,
-      avatar: '/images/cryptowebservice.png',
-      timestamp: msg.timestamp,
-      fromDiscord: true,
-      attachments  // Now using array instead of single attachment
-    };
-  })
-          .reverse();
+        ...baseMessage,
+        sender: msg.author.username,
+        avatar: '/images/cryptowebservice.png',
+        fromDiscord: true
+      };
+    })
+    .reverse();
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
