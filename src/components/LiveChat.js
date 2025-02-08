@@ -184,6 +184,12 @@ useEffect(() => {
   initializePackage();
 }, [channelId]); // Only depend on channelId
 
+useEffect(() => {
+    console.log('selectedPackage changed:', selectedPackage);
+    console.log('chatConnected status:', chatConnected);
+  }, [selectedPackage, chatConnected]);
+
+
   // Process files (used by both drag&drop and file input)
   const processFiles = (files) => {
     if (files.length + selectedFiles.length > MAX_FILES) {
@@ -321,6 +327,7 @@ useEffect(() => {
   try {
     console.log('Connecting to channel:', id);
     const validation = await chatClient.validateChannel(id);
+    console.log('Validation response:', validation); 
     
     if (!validation.valid) {
       throw new Error('Invalid channel ID');
@@ -333,19 +340,30 @@ useEffect(() => {
     // Simply check the first message for plan type
     if (validation.messages?.[0]?.embeds?.[0]?.fields) {
       const fields = validation.messages[0].embeds[0].fields;
+      console.log('Found embed fields:', fields);
       const planField = fields.find(f => f.name === "Plan Type");
+      console.log('Found plan field:', planField);
       
       if (planField?.value) {
         const planType = planField.value.toLowerCase();
+        console.log('Plan type found:', planType);
         
         // Match basic/standard/premium
         if (planType.includes('basic')) {
+          console.log('Setting Basic package');
           setSelectedPackage(SELL_APP_PACKAGES[0]); // Basic
+          console.log('Selected package after set:', SELL_APP_PACKAGES[0]);
         } else if (planType.includes('standard')) {
+          console.log('Setting Standard package');
           setSelectedPackage(SELL_APP_PACKAGES[1]); // Standard
+          console.log('Selected package after set:', SELL_APP_PACKAGES[1]);
         } else if (planType.includes('premium')) {
+          console.log('Setting Premium package');
           setSelectedPackage(SELL_APP_PACKAGES[2]); // Premium
+          console.log('Selected package after set:', SELL_APP_PACKAGES[2]);
         }
+        console.log('Plan type found:', planType);
+        console.log('Chat connected status at package set:', chatConnected);
       }
     }
 
