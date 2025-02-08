@@ -317,87 +317,65 @@ useEffect(() => {
 
   // Connect to channel
   const connectToChannel = async (id) => {
- setIsLoading(true);
- try {
-   console.log('Connecting to channel:', id);
-   const validation = await chatClient.validateChannel(id);
-   console.log('Validation response:', validation);
-   
-   if (!validation.valid) {
-     throw new Error('Invalid channel ID');
-   }
+  setIsLoading(true);
+  try {
+    console.log('Connecting to channel:', id);
+    const validation = await chatClient.validateChannel(id);
+    console.log('Validation response:', validation);
+    
+    if (!validation.valid) {
+      throw new Error('Invalid channel ID');
+    }
 
-   // Subscribe to new messages
-   chatClient.subscribeToChannel(id, (message) => {
-     console.log('Received new message:', message);
-     setMessages(prev => [...prev, message]);
-   });
+    chatClient.subscribeToChannel(id, (message) => {
+      console.log('Received new message:', message);
+      setMessages(prev => [...prev, message]);
+    });
 
-   // Process initial messages and detect plan
-   if (validation.messages?.length > 0) {
-     const initialMessage = validation.messages[0];
-     console.log('Initial message:', initialMessage);
-     
-     // Check for plan info in the embed fields
-     if (initialMessage.embeds?.[0]?.fields) {
-       const planField = initialMessage.embeds[0].fields.find(f => f.name === "Plan Type");
-       console.log('Found plan field:', planField);
+    // Check initial embed message for plan type
+    if (validation.messages?.length > 0) {
+      const initialMessage = validation.messages[0];
+      console.log('Initial message:', initialMessage);
+      
+      if (initialMessage.embeds?.[0]?.fields) {
+        const planField = initialMessage.embeds[0].fields.find(f => f.name === "Plan Type");
+        console.log('Found plan field:', planField);
+        
+        if (planField?.value) {
+          const planType = planField.value.toLowerCase();
+          
+          // Skip if it's a quote
+          if (planType !== 'quote' && planType !== 'custom quote') {
+            // Find matching package based on plan type
+            const matchingPackage = SELL_APP_PACKAGES.find(pkg => {
+              const pkgName = pkg.planName.toLowerCase().replace(' plan', '');
+              return planType.includes(pkgName);
+            });
+            
+            console.log('Matching package found:', matchingPackage);
+            
+            if (matchingPackage) {
+              setSelectedPackage(matchingPackage);
+              localStorage.setItem(`plan_${id}`, JSON.stringify(matchingPackage));
+            }
+          }
+        }
+      }
+      setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
+    }
 
-       if (planField && planField.value.toLowerCase() !== 'quote') {
-         // Find matching package
-         const matchingPackage = SELL_APP_PACKAGES.find(pkg => 
-           pkg.planName.toLowerCase().includes(planField.value.toLowerCase())
-         );
-         console.log('Matching package:', matchingPackage);
-
-         if (matchingPackage) {
-           setSelectedPackage(matchingPackage);
-           // Store the selected package
-           localStorage.setItem(`plan_${id}`, JSON.stringify(matchingPackage));
-           
-           // Add package selection message to chat
-           const packageMessage = {
-             id: `pkg-${Date.now()}`,
-             type: 'system',
-             sender: 'System',
-             content: `Selected package: ${matchingPackage.planName} ($${matchingPackage.price})`,
-             timestamp: new Date()
-           };
-           validation.messages.push(packageMessage);
-         }
-       } else {
-         console.log('Quote detected, skipping package selection');
-         // Clear any existing package data for this channel
-         localStorage.removeItem(`plan_${id}`);
-       }
-     }
-
-     // Set messages with welcome message first
-     setMessages([DEFAULT_WELCOME_MESSAGE, ...validation.messages]);
-   } else {
-     // If no messages, just show welcome message
-     setMessages([DEFAULT_WELCOME_MESSAGE]);
-   }
-
-   // Update UI state
-   setChatConnected(true);
-   setShowChannelInput(false);
-
- } catch (error) {
-   console.error('Error connecting to channel:', error);
-   setMessages([{
-     id: 'error',
-     sender: 'System',
-     content: 'Error connecting to support chat. Please verify your channel ID and try again.',
-     timestamp: new Date()
-   }]);
-   
-   // Clean up on error
-   localStorage.removeItem(`plan_${id}`);
-   setSelectedPackage(null);
- } finally {
-   setIsLoading(false);
- }
+    setChatConnected(true);
+    setShowChannelInput(false);
+  } catch (error) {
+    console.error('Error connecting to channel:', error);
+    setMessages([{
+      id: 'error',
+      sender: 'System',
+      content: 'Error connecting to support chat. Please verify your channel ID and try again.',
+      timestamp: new Date()
+    }]);
+  }
+  setIsLoading(false);
 };
 
   // Handle message submission
@@ -499,74 +477,76 @@ const handlePackageSelect = (pkg) => {
   return (
     <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-gradient-to-b from-blue-950 to-black rounded-lg shadow-xl flex flex-col overflow-hidden z-50">
       {/* Header */}
-      <div className="p-4 bg-blue-900/20 border-b border-blue-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {showChannelInput ? (
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-cyan-400 hover:text-cyan-300"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="text-cyan-400 hover:text-cyan-300"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          )}
-          <h3 className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            {chatConnected ? 'Live Support' : 'Connect to Chat'}
-          </h3>
-        </div>
+<div className="sticky top-0 z-20">
+  {/* Header Content */}
+  <div className="p-4 bg-blue-900/20 border-b border-blue-800 flex items-center justify-between backdrop-blur-sm">
+    <div className="flex items-center gap-3">
+      {showChannelInput ? (
         <button
           onClick={() => setIsOpen(false)}
-          className="text-zinc-400 hover:text-white transition-colors"
+          className="text-cyan-400 hover:text-cyan-300"
         >
-          ×
+          <ArrowLeft className="h-5 w-5" />
         </button>
-      </div>
-
-     {/* Pinned Package Banner - Add here */}
-    {selectedPackage && chatConnected && (
-  <div className="sticky top-0 p-3 bg-gradient-to-r from-blue-900/95 to-blue-950/95 backdrop-blur-sm border-b border-blue-800 z-10">
-    <div className="flex items-center justify-between mb-2">
-      <div>
-        <div className="text-sm font-medium text-cyan-400">
-          {selectedPackage.planName}
-        </div>
-        <div className="text-xs text-zinc-400">
-          ${selectedPackage.price}
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
+      ) : (
         <button
-          onClick={() => {
-            setMessages(prev => [...prev, {
-              id: `pkg-${Date.now()}`,
-              type: 'sell-buttons',
-              sender: 'System',
-              timestamp: new Date()
-            }]);
-          }}
-          className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+          onClick={handleLogout}
+          className="text-cyan-400 hover:text-cyan-300"
+          title="Logout"
         >
-          Change Plan
+          <LogOut className="h-5 w-5" />
         </button>
-        <SellAppButton
-          storeId={selectedPackage.storeId}
-          productId={selectedPackage.productId}
-          planName={selectedPackage.planName}
-          price={selectedPackage.price}
-          className="scale-90"
-        />
+      )}
+      <h3 className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+        {chatConnected ? 'Live Support' : 'Connect to Chat'}
+      </h3>
+    </div>
+    <button
+      onClick={() => setIsOpen(false)}
+      className="text-zinc-400 hover:text-white transition-colors"
+    >
+      ×
+    </button>
+  </div>
+
+  {/* Pinned Package Banner */}
+  {selectedPackage && chatConnected && (
+    <div className="p-3 bg-gradient-to-r from-blue-900/95 to-blue-950/95 backdrop-blur-sm border-b border-blue-800">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-sm font-medium text-cyan-400">
+            {selectedPackage.planName}
+          </div>
+          <div className="text-xs text-zinc-400">
+            ${selectedPackage.price}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setMessages(prev => [...prev, {
+                id: `pkg-${Date.now()}`,
+                type: 'sell-buttons',
+                sender: 'System',
+                timestamp: new Date()
+              }]);
+            }}
+            className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            Change Plan
+          </button>
+          <SellAppButton
+            storeId={selectedPackage.storeId}
+            productId={selectedPackage.productId}
+            planName={selectedPackage.planName}
+            price={selectedPackage.price}
+            className="scale-90"
+          />
+        </div>
       </div>
     </div>
-  </div>
-)}
-
+  )}
+</div>
 
       {/* Channel ID Input */}
       {showChannelInput && (
