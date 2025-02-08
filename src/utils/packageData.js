@@ -21,3 +21,41 @@ export const SELL_APP_PACKAGES = [
     description: "Full-Featured Website with Premium Integrations"
   }
 ];
+
+// Helper function to normalize plan names for comparison
+const normalizePlanName = (name) => {
+  return name
+    .toLowerCase()
+    .replace(/\s+plan$/, '')  // Remove 'plan' from end
+    .replace(/\s+/g, '')      // Remove all spaces
+    .trim();
+};
+
+// Function to find matching package based on plan type
+export const findMatchingPackage = (planType) => {
+  if (!planType) return null;
+  
+  const normalizedInput = normalizePlanName(planType);
+  
+  return SELL_APP_PACKAGES.find(pkg => {
+    const normalizedPackage = normalizePlanName(pkg.planName);
+    return normalizedInput.includes(normalizedPackage) || 
+           normalizedPackage.includes(normalizedInput);
+  });
+};
+
+// Function to validate if a plan type is a quote
+export const isQuoteType = (planType) => {
+  if (!planType) return false;
+  const normalized = planType.toLowerCase().trim();
+  return normalized === 'quote' || 
+         normalized === 'custom quote' || 
+         normalized.includes('quote request');
+};
+
+// Export package names for easy reference
+export const PACKAGE_TYPES = {
+  BASIC: 'Basic Plan',
+  STANDARD: 'Standard Plan',
+  PREMIUM: 'Premium Plan'
+};
