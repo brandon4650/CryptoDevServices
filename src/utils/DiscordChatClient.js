@@ -57,7 +57,10 @@ class DiscordChatClient {
   return {
     valid: true,
     channelId: data.channelId,
-    messages: data.messages?.map(msg => this.formatMessage(msg)) || []
+    messages: data.messages?.map(msg => this.formatMessage({
+      ...msg,
+      embeds: msg.embeds || [] // Ensure embeds are included
+    })) || []
   };
 }
 
@@ -80,42 +83,45 @@ class DiscordChatClient {
     size: attachment.size
   })) || [];
 
-  // Format website user messages
+    // Process embeds if they exist
+  const embeds = msg.embeds || [];
+
+  // Base message object with embeds
+  const baseMessage = {
+    id: msg.id,
+    content: msg.content,
+    timestamp: msg.timestamp,
+    attachments: attachments,
+    embeds: embeds // Add embeds to the message
+  };
+
+   // Format website user messages
   if (msg.author?.id === BOT_USER_ID || msg.fromWebsite) {
     return {
-      id: msg.id,
+      ...baseMessage,
       sender: 'You',
-      content: msg.content,
-      timestamp: msg.timestamp,
       fromWebsite: true,
-      isYou: true,
-      attachments: attachments // Now using array
+      isYou: true
     };
   }
   
   // Format Discord messages
   if (msg.author?.id === YOUR_DISCORD_ID || msg.fromDiscord) {
     return {
-      id: msg.id,
+      ...baseMessage,
       sender: 'CCD Support',
-      content: msg.content,
       avatar: '/images/cryptowebservice.png',
-      timestamp: msg.timestamp,
       fromDiscord: true,
-      isSupport: true,
-      attachments: attachments // Now using array
+      isSupport: true
     };
   }
 
   // Fallback format
   return {
-    id: msg.id,
+    ...baseMessage,
     sender: 'CCD Support',
-    content: msg.content,
     avatar: '/images/cryptowebservice.png',
-    timestamp: msg.timestamp,
-    fromDiscord: true,
-    attachments: attachments // Now using array
+    fromDiscord: true
   };
 }
   async getChannelHistory(channelId) {
