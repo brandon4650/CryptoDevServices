@@ -1,6 +1,7 @@
 export const sendToDiscord = async (formData, type) => {
   try {
     const orderNumber = `${type.charAt(0)}${Date.now()}`;
+    const planType = type === 'quote' ? 'Custom Quote' : type;
 
     const response = await fetch('/api/discord', {
       method: 'POST',
@@ -11,6 +12,7 @@ export const sendToDiscord = async (formData, type) => {
         orderInfo: {
           orderNumber,
           type,
+          planType,
           projectName: formData.projectName,
           email: formData.email,
           details: formData.details,
