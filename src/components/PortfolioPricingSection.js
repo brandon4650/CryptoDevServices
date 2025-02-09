@@ -79,13 +79,16 @@ const PricingCard = ({ tier, price, features, isPopular }) => (
         </li>
       ))}
     </ul>
-    <button className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
-      isPopular 
-        ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90' 
-        : 'border border-cyan-500/50 hover:bg-cyan-500/10'
-    }`}>
+    <Link 
+      to={`/quote?plan=${tier.toLowerCase().replace(' ', '-')}`}
+      className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors ${
+        isPopular 
+          ? 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90' 
+          : 'border border-cyan-500/50 hover:bg-cyan-500/10'
+      }`}
+    >
       Get Started <ArrowRight className="h-4 w-4" />
-    </button>
+    </Link>
   </div>
 );
 
