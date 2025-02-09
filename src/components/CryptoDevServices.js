@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Code, Monitor, Cpu, Rocket, Shield, Globe, Database, 
-  Layers, Terminal, CheckCircle, ArrowRight, Zap, MessageCirlce, FileText
+  Code, 
+  Monitor, 
+  Cpu, 
+  Rocket, 
+  Shield, 
+  Globe, 
+  Database, 
+  Layers, 
+  Terminal, 
+  CheckCircle, 
+  ArrowRight, 
+  Zap, 
+  MessageCircle,  // Fixed spelling here
+  FileText
 } from 'lucide-react';
 import PortfolioPricingSection from './PortfolioPricingSection';
 
