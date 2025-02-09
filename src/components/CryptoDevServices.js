@@ -5,6 +5,7 @@ import {
   Layers, Terminal, CheckCircle, ArrowRight, Zap 
 } from 'lucide-react';
 import PortfolioPricingSection from './PortfolioPricingSection';
+import { FileText } from 'lucide-react';
 
 const CryptoWebDev = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
