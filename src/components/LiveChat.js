@@ -347,6 +347,11 @@ useEffect(() => {
       if (planField?.value) {
         const planType = planField.value.toLowerCase();
         console.log('Plan type found:', planType);
+
+        if (planType.includes('quote')) {
+          console.log('Quote request detected, skipping package selection');
+          setSelectedPackage(null);
+        } else {
         
         // Match basic/standard/premium
         if (planType.includes('basic')) {
