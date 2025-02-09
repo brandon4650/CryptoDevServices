@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Code, Monitor, Cpu, Rocket, Shield, Globe, Database, 
-  Layers, Terminal, CheckCircle, ArrowRight, Zap 
+  Layers, Terminal, CheckCircle, ArrowRight, Zap, MessageCirlce, FileText
 } from 'lucide-react';
 import PortfolioPricingSection from './PortfolioPricingSection';
-import { FileText } from 'lucide-react';
+
 
 const CryptoWebDev = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
