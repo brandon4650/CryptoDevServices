@@ -123,6 +123,114 @@ const CryptoWebDev = () => {
         </div>
       </section>
 
+            // In CryptoDevServices.js, add this after your Services section:
+
+{/* Process Section */}
+<section id="process" className="py-20 px-4">
+  <div className="max-w-7xl mx-auto">
+    <h2 className="text-4xl font-bold text-center mb-6">How It Works</h2>
+    <p className="text-center text-xl text-zinc-300 mb-16 max-w-3xl mx-auto">
+      Our streamlined process makes getting your crypto website quick and hassle-free
+    </p>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {[
+        {
+          step: "1",
+          title: "Choose Your Plan",
+          description: "Select from our Basic, Standard, or Premium packages based on your project needs",
+          icon: <Rocket className="h-8 w-8 text-cyan-400" />,
+          details: [
+            "Review package features",
+            "Compare pricing options",
+            "Select the best fit"
+          ]
+        },
+        {
+          step: "2",
+          title: "Submit Details",
+          description: "Fill out our simple form with your project requirements and preferences",
+          icon: <FileText className="h-8 w-8 text-cyan-400" />,
+          details: [
+            "Provide project name",
+            "Share social links",
+            "Describe special requirements"
+          ]
+        },
+        {
+          step: "3",
+          title: "Connect Support",
+          description: "Get instant access to your dedicated support chat for real-time communication",
+          icon: <MessageCircle className="h-8 w-8 text-cyan-400" />,
+          details: [
+            "Receive channel ID",
+            "Connect to live chat",
+            "Discuss project details"
+          ]
+        },
+        {
+          step: "4",
+          title: "Complete Purchase",
+          description: "Finalize your order through our secure payment system and we'll begin work",
+          icon: <CheckCircle className="h-8 w-8 text-cyan-400" />,
+          details: [
+            "Review final details",
+            "Complete payment",
+            "Start development"
+          ]
+        }
+      ].map((item, index) => (
+        <div 
+          key={index} 
+          className="relative bg-blue-900/20 p-8 rounded-xl hover:bg-blue-900/30 transition-all group"
+        >
+          {/* Step Number */}
+          <div className="absolute -top-4 -left-4 w-8 h-8 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+            {item.step}
+          </div>
+
+          {/* Icon */}
+          <div className="bg-blue-900/40 w-fit p-3 rounded-lg mb-4 group-hover:scale-110 transition-transform">
+            {item.icon}
+          </div>
+
+          {/* Content */}
+          <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
+          <p className="text-zinc-300 mb-4">{item.description}</p>
+
+          {/* Details */}
+          <ul className="space-y-2">
+            {item.details.map((detail, i) => (
+              <li key={i} className="flex items-center gap-2 text-sm text-zinc-400">
+                <div className="h-1 w-1 rounded-full bg-cyan-400"></div>
+                {detail}
+              </li>
+            ))}
+          </ul>
+
+          {/* Connector Line (except for last item) */}
+          {index < 3 && (
+            <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-cyan-600 to-blue-600 transform -translate-y-1/2"></div>
+          )}
+        </div>
+      ))}
+    </div>
+
+    {/* Call to Action */}
+    <div className="mt-16 text-center">
+      <Link 
+        to="/quote" 
+        className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg font-medium text-lg hover:opacity-90 transition-opacity"
+      >
+        Start Your Project <ArrowRight className="h-5 w-5" />
+      </Link>
+      <p className="mt-4 text-zinc-400">
+        Questions? Connect with live support for immediate assistance
+      </p>
+    </div>
+  </div>
+</section>
+
       <PortfolioPricingSection />
     </div>
   );
