@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom';
 import { sendToDiscord } from '../utils/discordWebhook';
 import LiveChat from './LiveChat';
 import { SELL_APP_PACKAGES } from '../utils/packageData';
+import { useSearchParams } from 'react-router-dom';
 
 const QuotePage = () => {
+    const [searchParams] = useSearchParams();
     const [selectedOption, setSelectedOption] = useState('');
     const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
     const [orderComplete, setOrderComplete] = useState(false);
@@ -22,6 +24,18 @@ const QuotePage = () => {
         telegramLink: '',
         discordLink: ''
     });
+
+    useEffect(() => {
+        const plan = searchParams.get('plan');
+        if (plan) {
+            setFormType('plan');
+            // Convert plan parameter to proper format (e.g., "basic-plan" to "Basic Plan")
+            const formattedPlan = plan.split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+            setSelectedOption(formattedPlan);
+        }
+    }, [searchParams]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
