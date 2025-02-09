@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Check, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const PortfolioItem = ({ imageSrc, title, description }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
