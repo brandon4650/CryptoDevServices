@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Info, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { sendToDiscord } from '../utils/discordWebhook';
