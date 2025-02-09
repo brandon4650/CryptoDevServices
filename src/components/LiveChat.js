@@ -347,28 +347,28 @@ useEffect(() => {
       if (planField?.value) {
         const planType = planField.value.toLowerCase();
         console.log('Plan type found:', planType);
-
+        
         if (planType.includes('quote')) {
           console.log('Quote request detected, skipping package selection');
           setSelectedPackage(null);
         } else {
-        
-        // Match basic/standard/premium
-        if (planType.includes('basic')) {
-          console.log('Setting Basic package');
-          setSelectedPackage(SELL_APP_PACKAGES[0]); // Basic
-          console.log('Selected package after set:', SELL_APP_PACKAGES[0]);
-        } else if (planType.includes('standard')) {
-          console.log('Setting Standard package');
-          setSelectedPackage(SELL_APP_PACKAGES[1]); // Standard
-          console.log('Selected package after set:', SELL_APP_PACKAGES[1]);
-        } else if (planType.includes('premium')) {
-          console.log('Setting Premium package');
-          setSelectedPackage(SELL_APP_PACKAGES[2]); // Premium
-          console.log('Selected package after set:', SELL_APP_PACKAGES[2]);
+          // Match basic/standard/premium
+          if (planType.includes('basic')) {
+            console.log('Setting Basic package');
+            setSelectedPackage(SELL_APP_PACKAGES[0]); // Basic
+            console.log('Selected package after set:', SELL_APP_PACKAGES[0]);
+          } else if (planType.includes('standard')) {
+            console.log('Setting Standard package');
+            setSelectedPackage(SELL_APP_PACKAGES[1]); // Standard
+            console.log('Selected package after set:', SELL_APP_PACKAGES[1]);
+          } else if (planType.includes('premium')) {
+            console.log('Setting Premium package');
+            setSelectedPackage(SELL_APP_PACKAGES[2]); // Premium
+            console.log('Selected package after set:', SELL_APP_PACKAGES[2]);
+          }
+          console.log('Plan type found:', planType);
+          console.log('Chat connected status at package set:', chatConnected);
         }
-        console.log('Plan type found:', planType);
-        console.log('Chat connected status at package set:', chatConnected);
       }
     }
 
