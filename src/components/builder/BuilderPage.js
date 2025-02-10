@@ -59,7 +59,52 @@ const BuilderPage = () => {
             { title: 'Scalable', description: 'Built for growth' }
           ]
         };
-      // Add more default data for other component types
+      case 'TOKENOMICS':
+        return {
+          title: 'Tokenomics',
+          supply: '1,000,000',
+          distribution: [
+            { label: 'Presale', value: 60 },
+            { label: 'Liquidity', value: 30 },
+            { label: 'Team', value: 10 }
+          ]
+        };
+      case 'ROADMAP':
+        return {
+          title: 'Our Roadmap',
+          phases: [
+            { title: 'Phase 1', items: ['Launch', 'Marketing', 'Community Building'] },
+            { title: 'Phase 2', items: ['Exchange Listings', 'Partnerships', 'Development'] }
+          ]
+        };
+      case 'TEAM':
+        return {
+          title: 'Our Team',
+          description: 'Meet the people behind the project',
+          members: [
+            { name: 'John Doe', role: 'CEO', description: 'Crypto veteran with 10 years experience' },
+            { name: 'Jane Smith', role: 'CTO', description: 'Blockchain developer and security expert' }
+          ]
+        };
+      case 'PARTNERS':
+        return {
+          title: 'Our Partners',
+          description: 'Trusted by leading companies in the space',
+          partners: [
+            { name: 'Partner 1', link: '#' },
+            { name: 'Partner 2', link: '#' }
+          ]
+        };
+      case 'SOCIALS':
+        return {
+          title: 'Join Our Community',
+          description: 'Connect with us on social media',
+          links: [
+            { platform: 'Twitter', url: '#' },
+            { platform: 'Telegram', url: '#' },
+            { platform: 'Discord', url: '#' }
+          ]
+        };
       default:
         return {};
     }
