@@ -8,7 +8,10 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
       ...section,
       data: {
         ...section.data,
-        [field]: value
+        [field]: value,
+        backgroundImage: field === 'backgroundImage' ? value : section.data.backgroundImage,
+        backgroundPosition: field === 'backgroundPosition' ? value : section.data.backgroundPosition,
+        backgroundSize: field === 'backgroundSize' ? value : section.data.backgroundSize,
       }
     });
   };
