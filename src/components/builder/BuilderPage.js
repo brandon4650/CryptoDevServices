@@ -10,6 +10,9 @@ const BuilderPage = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [previewMode, setPreviewMode] = useState('DESKTOP');
   const [isFullPreview, setIsFullPreview] = useState(false);
+  const [pageBackground, setPageBackground] = useState(null);
+  const [pageBackgroundPosition, setPageBackgroundPosition] = useState({ x: 0, y: 0 });
+  const [pageBackgroundSize, setPageBackgroundSize] = useState({ width: '100%', height: '100%' });
 
   const handleAddComponent = (type) => {
     const newSection = {
