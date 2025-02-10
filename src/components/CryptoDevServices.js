@@ -54,7 +54,6 @@ const CryptoWebDev = () => {
         >
           Try Builder <ArrowRight className="h-4 w-4" />
         </Link>
-       </div>    
       </div>
 
       {/* Mobile Menu Button */}
@@ -71,57 +70,57 @@ const CryptoWebDev = () => {
     </div>
 
     {/* Mobile Menu Dropdown */}
-{isMenuOpen && (
-  <div className="md:hidden absolute left-0 right-0 top-16 bg-blue-950/95 backdrop-blur-sm border-t border-blue-800/50">
-    <div className="flex flex-col px-4 py-4 space-y-4">
-      <a 
-        href="#services" 
-        onClick={() => setIsMenuOpen(false)}
-        className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-      >
-        Services
-      </a>
-      <a 
-        href="#process" 
-        onClick={() => setIsMenuOpen(false)}
-        className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-      >
-        Process
-      </a>
-      <a 
-        href="#portfolio" 
-        onClick={() => setIsMenuOpen(false)}
-        className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-      >
-        Portfolio
-      </a>
-      <a 
-        href="#pricing" 
-        onClick={() => setIsMenuOpen(false)}
-        className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-      >
-        Pricing
-      </a>
-      <Link 
-        to="/quote" 
-        onClick={() => setIsMenuOpen(false)}
-        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center mt-2"
-      >
-        Request Quote
-      </Link>
-      {/* Add Builder Link */}
-      <Link 
-        to="/builder" 
-        onClick={() => setIsMenuOpen(false)}
-        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center"
-      >
-        Try Builder <ArrowRight className="inline h-4 w-4 ml-2" />
-      </Link>
-    </div>
-  </div>
-)}
+    {isMenuOpen && (
+      <div className="md:hidden absolute left-0 right-0 top-16 bg-blue-950/95 backdrop-blur-sm border-t border-blue-800/50">
+        <div className="flex flex-col px-4 py-4 space-y-4">
+          <a 
+            href="#services" 
+            onClick={() => setIsMenuOpen(false)}
+            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+          >
+            Services
+          </a>
+          <a 
+            href="#process" 
+            onClick={() => setIsMenuOpen(false)}
+            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+          >
+            Process
+          </a>
+          <a 
+            href="#portfolio" 
+            onClick={() => setIsMenuOpen(false)}
+            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+          >
+            Portfolio
+          </a>
+          <a 
+            href="#pricing" 
+            onClick={() => setIsMenuOpen(false)}
+            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+          >
+            Pricing
+          </a>
+          <Link 
+            to="/quote" 
+            onClick={() => setIsMenuOpen(false)}
+            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center mt-2"
+          >
+            Request Quote
+          </Link>
+          <Link 
+            to="/builder" 
+            onClick={() => setIsMenuOpen(false)}
+            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center"
+          >
+            Try Builder <ArrowRight className="inline h-4 w-4 ml-2" />
+          </Link>
+        </div>
+      </div>
+    )}
   </div>
 </nav>
+
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative">
         <div className="max-w-6xl mx-auto text-center">
