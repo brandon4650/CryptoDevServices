@@ -23,104 +23,109 @@ import PortfolioPricingSection from './PortfolioPricingSection';
 
 const CryptoWebDev = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
-<div className="min-h-screen bg-gradient-to-b from-blue-950 to-black text-white">
-{/* Navigation */}
-<nav className="fixed w-full bg-blue-950/90 backdrop-blur-sm z-50">
-  <div className="max-w-7xl mx-auto px-4">
-    <div className="flex items-center justify-between h-16">
-      <div className="flex items-center">
-        <Terminal className="h-8 w-8 text-cyan-500" />
-        <span className="ml-2 text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-          CryptoCraft.Dev
-        </span>
-      </div>
-      
-      {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center space-x-8">
-        <a href="#services" className="hover:text-cyan-400 transition-colors">Services</a>
-        <a href="#process" className="hover:text-cyan-400 transition-colors">Process</a>
-        <a href="#portfolio" className="hover:text-cyan-400 transition-colors">Portfolio</a>
-        <a href="#pricing" className="hover:text-cyan-400 transition-colors">Pricing</a>
-        <Link 
-          to="/quote" 
-          className="bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-        >
-          Request Quote <ArrowRight className="h-4 w-4" />
-        </Link>
-        <Link 
-          to="/builder" 
-          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-        >
-          Try Builder <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
+    <div> {/* Add this wrapper */}
+      <div className="min-h-screen bg-gradient-to-b from-blue-950 to-black text-white">
+        {/* Navigation */}
+        <nav className="fixed w-full bg-blue-950/90 backdrop-blur-sm z-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center">
+                <Terminal className="h-8 w-8 text-cyan-500" />
+                <span className="ml-2 text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                  CryptoCraft.Dev
+                </span>
+              </div>
 
-      {/* Mobile Menu Button */}
-      <button 
-        className="md:hidden text-cyan-400 hover:text-cyan-300 transition-colors" 
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-      >
-        {isMenuOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <Layers className="h-6 w-6" />
-        )}
-      </button>
-    </div>
+              {/* Desktop Navigation */}
+              <div className="hidden md:flex items-center space-x-8">
+                <a href="#services" className="hover:text-cyan-400 transition-colors">Services</a>
+                <a href="#process" className="hover:text-cyan-400 transition-colors">Process</a>
+                <a href="#portfolio" className="hover:text-cyan-400 transition-colors">Portfolio</a>
+                <a href="#pricing" className="hover:text-cyan-400 transition-colors">Pricing</a>
+                <Link 
+                  to="/quote" 
+                  className="bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  Request Quote <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link 
+                  to="/builder" 
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  Try Builder <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
 
-    {/* Mobile Menu Dropdown */}
-    {isMenuOpen && (
-      <div className="md:hidden absolute left-0 right-0 top-16 bg-blue-950/95 backdrop-blur-sm border-t border-blue-800/50">
-        <div className="flex flex-col px-4 py-4 space-y-4">
-          <a 
-            href="#services" 
-            onClick={() => setIsMenuOpen(false)}
-            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-          >
-            Services
-          </a>
-          <a 
-            href="#process" 
-            onClick={() => setIsMenuOpen(false)}
-            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-          >
-            Process
-          </a>
-          <a 
-            href="#portfolio" 
-            onClick={() => setIsMenuOpen(false)}
-            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-          >
-            Portfolio
-          </a>
-          <a 
-            href="#pricing" 
-            onClick={() => setIsMenuOpen(false)}
-            className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
-          >
-            Pricing
-          </a>
-          <Link 
-            to="/quote" 
-            onClick={() => setIsMenuOpen(false)}
-            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center mt-2"
-          >
-            Request Quote
-          </Link>
-              
-          <Link 
-            to="/builder" 
-            onClick={() => setIsMenuOpen(false)}
-            className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center"
-          >
-            Try Builder <ArrowRight className="inline h-4 w-4 ml-2" />
-          </Link>
-        </div>
+              {/* Mobile Menu Button */}
+              <button 
+                className="md:hidden text-cyan-400 hover:text-cyan-300 transition-colors" 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                {isMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Layers className="h-6 w-6" />
+                )}
+              </button>
+            </div>
+
+            {/* Mobile Menu Dropdown */}
+            {isMenuOpen && (
+              <div className="md:hidden absolute left-0 right-0 top-16 bg-blue-950/95 backdrop-blur-sm border-t border-blue-800/50">
+                <div className="flex flex-col px-4 py-4 space-y-4">
+                  <a 
+                    href="#services" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+                  >
+                    Services
+                  </a>
+                  <a 
+                    href="#process" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+                  >
+                    Process
+                  </a>
+                  <a 
+                    href="#portfolio" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+                  >
+                    Portfolio
+                  </a>
+                  <a 
+                    href="#pricing" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-zinc-300 hover:text-cyan-400 transition-colors py-2"
+                  >
+                    Pricing
+                  </a>
+                  <Link 
+                    to="/quote" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center mt-2"
+                  >
+                    Request Quote
+                  </Link>
+                  <Link 
+                    to="/builder" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center"
+                  >
+                    Try Builder <ArrowRight className="inline h-4 w-4 ml-2" />
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        </nav>
       </div>
-    )}
-  </div>
-</nav>
+    </div> // Closing wrapper div
+  );
+};
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative">
