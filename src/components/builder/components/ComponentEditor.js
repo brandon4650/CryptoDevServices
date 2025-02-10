@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Plus, Minus } from 'lucide-react';
+import ImageManager from './ImageManager';
 
 const ComponentEditor = ({ section, onUpdate, onClose }) => {
   const updateField = (field, value) => {
@@ -12,10 +13,27 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
     });
   };
 
+    const BackgroundSettings = () => (
+    <div className="mb-6 pb-6 border-b border-blue-800/50">
+      <h4 className="text-sm font-medium text-gray-300 mb-4">Background Settings</h4>
+      <ImageManager
+        backgroundImage={section.data.backgroundImage}
+        position={section.data.backgroundPosition || { x: 0, y: 0 }}
+        size={section.data.backgroundSize || { width: '100%', height: '100%' }}
+        onImageChange={(image) => updateField('backgroundImage', image)}
+        onPositionChange={(position) => updateField('backgroundPosition', position)}
+        onSizeChange={(size) => updateField('backgroundSize', size)}
+        isFullBackground={false}
+      />
+    </div>
+  );
+
   const renderEditor = () => {
     switch (section.type) {
       case 'HERO':
         return (
+          <>
+          <BackgroundSettings />
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -67,10 +85,13 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
               </div>
             )}
           </div>
+         </>
         );
 
 case 'TOKEN_INFO':
   return (
+    <>
+      <BackgroundSettings />
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -124,10 +145,13 @@ case 'TOKEN_INFO':
         />
       </div>
     </div>
+   </>
   );
 
 case 'CONTRACT_ADDRESS':
   return (
+    <>
+      <BackgroundSettings />
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -155,10 +179,13 @@ case 'CONTRACT_ADDRESS':
         />
       </div>
     </div>
+   </>
   );
 
       case 'FEATURES':
         return (
+          <>
+      <BackgroundSettings />
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -213,9 +240,13 @@ case 'CONTRACT_ADDRESS':
               </button>
             </div>
           </div>
+         </>
         );
+
       case 'TOKENOMICS':
   return (
+    <>
+      <BackgroundSettings />
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -283,9 +314,12 @@ case 'CONTRACT_ADDRESS':
         </button>
       </div>
     </div>
+   </>
   );
        case 'ROADMAP':
   return (
+    <>
+      <BackgroundSettings />
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -373,11 +407,14 @@ case 'CONTRACT_ADDRESS':
         </button>
       </div>
     </div>
+   </>
   );
 
 
       case 'TEAM':
         return (
+          <>
+      <BackgroundSettings />
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -458,10 +495,13 @@ case 'CONTRACT_ADDRESS':
               </button>
             </div>
           </div>
+         </>
         );
 
       case 'PARTNERS':
         return (
+          <>
+      <BackgroundSettings />
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -531,10 +571,13 @@ case 'CONTRACT_ADDRESS':
               </button>
             </div>
           </div>
+          </>
         );
 
       case 'SOCIALS':
         return (
+          <>
+      <BackgroundSettings />
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -604,6 +647,7 @@ case 'CONTRACT_ADDRESS':
               </button>
             </div>
           </div>
+         </>
         );
 
       default:
