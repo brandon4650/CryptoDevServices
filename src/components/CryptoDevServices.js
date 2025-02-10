@@ -24,7 +24,7 @@ import PortfolioPricingSection from './PortfolioPricingSection';
 const CryptoWebDev = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-950 to-black text-white relative">
+
 {/* Navigation */}
 <nav className="fixed w-full bg-blue-950/90 backdrop-blur-sm z-50">
   <div className="max-w-7xl mx-auto px-4">
