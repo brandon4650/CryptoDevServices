@@ -652,9 +652,11 @@ case 'CONTRACT_ADDRESS':
 
       default:
         return (
+          <BackgroundSettings />
           <div className="text-center text-gray-400 py-8">
             No editor available for this component type
           </div>
+         </>
         );
     }
   };
