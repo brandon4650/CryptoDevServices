@@ -12,8 +12,10 @@ const ImageManager = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({ width: 0, height: 0 });
+  const [isBgMode, setIsBgMode] = useState(isFullBackground);
   const [sizeScale, setSizeScale] = useState(100);
-  const [isBgMode, setIsBgMode] = useState(true);
   const [originalImageSize, setOriginalImageSize] = useState(null);
   const imageRef = useRef(null);
   const containerRef = useRef(null);
@@ -23,30 +25,101 @@ const ImageManager = ({
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        onImageChange(dataUrl);
+        
+        // Set initial size and store original dimensions
         const img = new Image();
         img.onload = () => {
           setOriginalImageSize({ width: img.width, height: img.height });
-          onImageChange(e.target.result);
-          // Set initial position to center
           const containerWidth = containerRef.current?.offsetWidth || 800;
-          const containerHeight = containerRef.current?.offsetHeight || 600;
-          onPositionChange({ 
-            x: (containerWidth - img.width) / 2,
-            y: (containerHeight - img.height) / 2
-          });
+          const scale = containerWidth / img.width;
+          const newSize = {
+            width: `${Math.min(img.width, containerWidth)}px`,
+            height: `${Math.min(img.height * scale, containerWidth)}px`
+          };
+          onSizeChange(newSize);
           setSizeScale(100);
-          onSizeChange({
-            width: `${img.width}px`,
-            height: `${img.height}px`
-          });
+          
+          // Center the image initially
+          const container = containerRef.current;
+          if (container) {
+            const newPos = {
+              x: (container.offsetWidth - parseInt(newSize.width)) / 2,
+              y: (container.offsetHeight - parseInt(newSize.height)) / 2
+            };
+            onPositionChange(newPos);
+          }
         };
-        img.src = e.target.result;
+        img.src = dataUrl;
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSizeChange = (newScale) => {
+  const handleDragStart = (e) => {
+    if (isBgMode && !isFullBackground) return;
+    e.preventDefault();
+    setIsDragging(true);
+    const rect = isFullBackground ? containerRef.current.getBoundingClientRect() : imageRef.current.getBoundingClientRect();
+    setDragStart({
+      x: e.clientX - (isFullBackground ? position.x : rect.left),
+      y: e.clientY - (isFullBackground ? position.y : rect.top)
+    });
+  };
+
+  const handleDrag = (e) => {
+    if (isDragging) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      if (isFullBackground) {
+        // For full background, allow unlimited movement
+        onPositionChange({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y
+        });
+      } else if (!isBgMode) {
+        // For free positioning, constrain to container
+        const newX = e.clientX - dragStart.x - containerRect.left;
+        const newY = e.clientY - dragStart.y - containerRect.top;
+        onPositionChange({
+          x: Math.max(0, Math.min(newX, containerRect.width - parseInt(size.width))),
+          y: Math.max(0, Math.min(newY, containerRect.height - parseInt(size.height)))
+        });
+      }
+    }
+  };
+
+  const handleResizeStart = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+    setResizeStart({
+      width: parseInt(size.width),
+      height: parseInt(size.height),
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  const handleResize = (e) => {
+    if (isResizing) {
+      const deltaX = e.clientX - resizeStart.x;
+      const aspectRatio = resizeStart.width / resizeStart.height;
+      
+      let newWidth = Math.max(50, resizeStart.width + deltaX);
+      if (isFullBackground) {
+        // For full background, maintain minimum coverage
+        newWidth = Math.max(newWidth, containerRef.current.offsetWidth);
+      }
+      
+      const newHeight = newWidth / aspectRatio;
+      onSizeChange({
+        width: `${newWidth}px`,
+        height: `${newHeight}px`
+      });
+    }
+  };
+
+  const handleSizeScale = (newScale) => {
     setSizeScale(newScale);
     if (originalImageSize) {
       const newWidth = (originalImageSize.width * newScale) / 100;
@@ -58,37 +131,31 @@ const ImageManager = ({
     }
   };
 
-  const handleDragStart = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
-  };
-
-  const handleDrag = (e) => {
-    if (isDragging) {
-      const newX = e.clientX - dragStart.x;
-      const newY = e.clientY - dragStart.y;
-      onPositionChange({ x: newX, y: newY });
-    }
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
+  const handleRemoveImage = () => {
+    onImageChange(null);
+    onPositionChange({ x: 0, y: 0 });
+    onSizeChange({ width: '100%', height: '100%' });
+    setSizeScale(100);
+    setOriginalImageSize(null);
   };
 
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleDrag);
-      window.addEventListener('mouseup', handleDragEnd);
+    if (isDragging || isResizing) {
+      window.addEventListener('mousemove', isDragging ? handleDrag : handleResize);
+      window.addEventListener('mouseup', () => {
+        setIsDragging(false);
+        setIsResizing(false);
+      });
+      
       return () => {
-        window.removeEventListener('mousemove', handleDrag);
-        window.removeEventListener('mouseup', handleDragEnd);
+        window.removeEventListener('mousemove', isDragging ? handleDrag : handleResize);
+        window.removeEventListener('mouseup', () => {
+          setIsDragging(false);
+          setIsResizing(false);
+        });
       };
     }
-  }, [isDragging]);
+  }, [isDragging, isResizing]);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -107,7 +174,7 @@ const ImageManager = ({
           
           {backgroundImage && (
             <button
-              onClick={() => onImageChange(null)}
+              onClick={handleRemoveImage}
               className="px-4 py-2 bg-red-900/30 hover:bg-red-900/40 rounded-lg text-red-400 transition-colors flex items-center gap-2"
             >
               <Trash2 className="w-4 h-4" />
@@ -140,8 +207,8 @@ const ImageManager = ({
               min="10"
               max="200"
               value={sizeScale}
-              onChange={(e) => handleSizeChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-blue-900/30 rounded-lg appearance-none cursor-pointer"
+              onChange={(e) => handleSizeScale(parseInt(e.target.value))}
+              className="w-full h-2 bg-blue-900/30 rounded-lg appearance-none cursor-pointer accent-cyan-500"
             />
           </div>
         )}
@@ -150,28 +217,39 @@ const ImageManager = ({
       {backgroundImage && (
         <div 
           className="relative bg-blue-900/20 rounded-lg overflow-hidden"
-          style={{ height: '200px' }}
+          style={{
+            height: '200px',
+            cursor: isDragging ? 'grabbing' : 'grab'
+          }}
+          onMouseDown={isFullBackground ? handleDragStart : undefined}
         >
-          <div 
-            className="absolute inset-0"
-            style={{
+          <img
+            ref={imageRef}
+            src={backgroundImage}
+            alt="Background"
+            className={`${isBgMode || isFullBackground ? 'w-full h-full object-cover' : ''}`}
+            style={isBgMode || isFullBackground ? {
+              transform: `translate(${position.x}px, ${position.y}px)`,
+              width: size.width,
+              height: size.height
+            } : {
+              position: 'absolute',
               cursor: isDragging ? 'grabbing' : 'grab',
+              top: position.y,
+              left: position.x,
+              width: size.width,
+              height: size.height
             }}
-            onMouseDown={handleDragStart}
-          >
-            <img
-              ref={imageRef}
-              src={backgroundImage}
-              alt="Background"
-              className={isBgMode ? 'w-full h-full object-cover' : ''}
-              style={{
-                position: 'absolute',
-                transform: `translate(${position.x}px, ${position.y}px)`,
-                width: size.width,
-                height: size.height,
-                transition: isDragging ? 'none' : 'transform 0.1s ease-out'
-              }}
-            />
+            onMouseDown={!isFullBackground && !isBgMode ? handleDragStart : undefined}
+          />
+          
+          <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity">
+            <button
+              onMouseDown={handleResizeStart}
+              className="absolute bottom-2 right-2 p-1 bg-blue-900/80 rounded text-white hover:bg-blue-800"
+            >
+              <Maximize className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
