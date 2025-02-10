@@ -19,7 +19,7 @@ CONTRACT_ADDRESS: {
   label: 'Contract Address',
   description: 'Display contract address with copy button',
   icon: '📋'
-}
+},
   FEATURES: {
     type: 'features',
     label: 'Features Grid',
