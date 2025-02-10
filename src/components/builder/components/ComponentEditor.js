@@ -69,6 +69,94 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
           </div>
         );
 
+case 'TOKEN_INFO':
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Token Price
+        </label>
+        <input
+          type="text"
+          value={section.data.price}
+          onChange={(e) => updateField('price', e.target.value)}
+          className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+          placeholder="e.g. $0.00001234"
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          24h Change
+        </label>
+        <input
+          type="text"
+          value={section.data.change24h}
+          onChange={(e) => updateField('change24h', e.target.value)}
+          className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+          placeholder="e.g. -8.05%"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Market Cap
+        </label>
+        <input
+          type="text"
+          value={section.data.marketCap}
+          onChange={(e) => updateField('marketCap', e.target.value)}
+          className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+          placeholder="e.g. $7.32K"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          24h Volume
+        </label>
+        <input
+          type="text"
+          value={section.data.volume24h}
+          onChange={(e) => updateField('volume24h', e.target.value)}
+          className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+          placeholder="e.g. $218.44"
+        />
+      </div>
+    </div>
+  );
+
+case 'CONTRACT_ADDRESS':
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Label
+        </label>
+        <input
+          type="text"
+          value={section.data.label}
+          onChange={(e) => updateField('label', e.target.value)}
+          className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+          placeholder="e.g. Contract Address (CA):"
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Contract Address
+        </label>
+        <input
+          type="text"
+          value={section.data.address}
+          onChange={(e) => updateField('address', e.target.value)}
+          className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+          placeholder="Enter contract address"
+        />
+      </div>
+    </div>
+  );
+
       case 'FEATURES':
         return (
           <div className="space-y-4">
