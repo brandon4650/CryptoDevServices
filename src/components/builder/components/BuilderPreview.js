@@ -34,6 +34,45 @@ const BuilderPreview = ({
             )}
           </div>
         );
+case 'TOKEN_INFO':
+  return (
+    <div className="flex items-center justify-center gap-8 py-4 px-4 bg-[#1a1a1a]/50">
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400">Price:</span>
+        <span className="text-white">{section.data.price}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400">24h:</span>
+        <span className={section.data.change24h?.startsWith('-') ? 'text-red-500' : 'text-green-500'}>
+          {section.data.change24h}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400">Market Cap:</span>
+        <span className="text-white">{section.data.marketCap}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400">24h Volume:</span>
+        <span className="text-white">{section.data.volume24h}</span>
+      </div>
+    </div>
+  );
+
+case 'CONTRACT_ADDRESS':
+  return (
+    <div className="flex flex-col items-center justify-center py-8 px-4">
+      <div className="text-xl text-[#f0b90b] mb-4">{section.data.label}</div>
+      <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg p-3">
+        <span className="text-gray-300">{section.data.address}</span>
+        <button 
+          onClick={() => navigator.clipboard.writeText(section.data.address)}
+          className="px-4 py-1 bg-[#f0b90b] text-black rounded hover:bg-[#f0b90b]/80 transition-colors"
+        >
+          Copy
+        </button>
+      </div>
+    </div>
+  );
 
       case 'FEATURES':
         return (
