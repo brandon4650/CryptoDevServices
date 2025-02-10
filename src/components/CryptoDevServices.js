@@ -113,7 +113,7 @@ const CryptoWebDev = () => {
             to="/builder" 
             onClick={() => setIsMenuOpen(false)}
             className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-3 rounded-lg font-medium transition-opacity text-center"
-         >
+          >
             Try Builder <ArrowRight className="inline h-4 w-4 ml-2" />
           </Link>
         </div>
