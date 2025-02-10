@@ -66,3 +66,85 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
                 />
               </div>
             )}
+          </div>
+        );
+
+      case 'FEATURES':
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Section Title
+              </label>
+              <input
+                type="text"
+                value={section.data.title}
+                onChange={(e) => updateField('title', e.target.value)}
+                className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Features
+              </label>
+              {section.data.features.map((feature, index) => (
+                <div key={index} className="mb-4 p-4 bg-blue-900/20 rounded-lg">
+                  <input
+                    type="text"
+                    value={feature.title}
+                    onChange={(e) => {
+                      const newFeatures = [...section.data.features];
+                      newFeatures[index].title = e.target.value;
+                      updateField('features', newFeatures);
+                    }}
+                    className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500 mb-2"
+                    placeholder="Feature Title"
+                  />
+                  <textarea
+                    value={feature.description}
+                    onChange={(e) => {
+                      const newFeatures = [...section.data.features];
+                      newFeatures[index].description = e.target.value;
+                      updateField('features', newFeatures);
+                    }}
+                    className="w-full bg-blue-900/30 border border-blue-800/50 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    placeholder="Feature Description"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="text-center text-gray-400 py-8">
+            No editor available for this component type
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="w-80 bg-blue-900/20 border border-blue-800/50 rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b border-blue-800/50 flex items-center justify-between">
+        <h3 className="font-medium text-white">Edit Component</h3>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-white transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Editor Content */}
+      <div className="p-4">
+        {renderEditor()}
+      </div>
+    </div>
+  );
+};
+
+export default ComponentEditor;
