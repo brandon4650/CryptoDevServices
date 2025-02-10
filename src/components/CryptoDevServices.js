@@ -314,6 +314,7 @@ const CryptoWebDev = () => {
 </section>
 
       <PortfolioPricingSection />
+      </div>
     </div>
   );
 };
