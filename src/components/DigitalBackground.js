@@ -14,74 +14,104 @@ const DigitalBackground = () => {
     const handleResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      createNodes(); // Recreate nodes on resize
     };
-    handleResize();
-    window.addEventListener('resize', handleResize);
 
     const createNodes = () => {
       const nodes = [];
-      for (let i = 0; i < 100; i++) {
-        nodes.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 1,
-          vy: (Math.random() - 0.5) * 1,
-          radius: Math.random() * 3 + 2,
-          color: `rgba(34, 211, 238, ${Math.random() * 0.7 + 0.3})`
-        });
+      // Create a hexagonal grid pattern
+      const spacing = 150; // Space between nodes
+      const rows = Math.ceil(canvas.height / spacing);
+      const cols = Math.ceil(canvas.width / spacing);
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = col * spacing + (row % 2) * spacing / 2;
+          const y = row * spacing;
+          
+          nodes.push({
+            baseX: x,
+            baseY: y,
+            x: x,
+            y: y,
+            vx: 0,
+            vy: 0,
+            radius: 3,
+            color: `rgba(34, 211, 238, ${0.3 + Math.random() * 0.3})`,
+            angle: Math.random() * Math.PI * 2,
+            speed: 0.02 + Math.random() * 0.02,
+            range: 20 + Math.random() * 20
+          });
+        }
       }
       nodesRef.current = nodes;
     };
-    createNodes();
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       nodesRef.current.forEach((node, i) => {
-        node.x += node.vx;
-        node.y += node.vy;
+        // Gentle floating motion around base position
+        node.angle += node.speed;
+        node.x = node.baseX + Math.cos(node.angle) * node.range;
+        node.y = node.baseY + Math.sin(node.angle) * node.range;
 
-        if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
-        if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
-
+        // Draw node with glow effect
         ctx.shadowBlur = 15;
-        ctx.shadowColor = 'rgba(34, 211, 238, 0.8)';
+        ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
         ctx.fillStyle = node.color;
         ctx.fill();
         ctx.shadowBlur = 0;
 
+        // Connect to nearby nodes
         nodesRef.current.forEach((otherNode, j) => {
           if (i !== j) {
             const dx = otherNode.x - node.x;
             const dy = otherNode.y - node.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < 200) {
+            if (distance < 150) {
+              // Calculate opacity based on distance and scroll position
+              const scrollFactor = 1 - (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight));
+              const opacity = (0.15 * (1 - distance / 150)) * scrollFactor;
+
               ctx.beginPath();
               ctx.moveTo(node.x, node.y);
               ctx.lineTo(otherNode.x, otherNode.y);
-              ctx.strokeStyle = `rgba(34, 211, 238, ${0.3 * (1 - distance / 200)})`;
-              ctx.lineWidth = 2;
+              ctx.strokeStyle = `rgba(34, 211, 238, ${opacity})`;
+              ctx.lineWidth = 1;
               ctx.stroke();
+
+              // Add small connecting dots
+              const midX = (node.x + otherNode.x) / 2;
+              const midY = (node.y + otherNode.y) / 2;
+              ctx.beginPath();
+              ctx.arc(midX, midY, 1, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(34, 211, 238, ${opacity * 2})`;
+              ctx.fill();
             }
           }
         });
 
+        // Subtle reaction to mouse
         const dx = mouse.x - node.x;
         const dy = mouse.y - node.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < 150) {
-          node.x += dx * 0.02;
-          node.y += dy * 0.02;
+        if (distance < 100) {
+          node.x += dx * 0.01;
+          node.y += dy * 0.01;
         }
       });
 
       animationFrameId = window.requestAnimationFrame(animate);
     };
 
+    handleResize();
     animate();
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -90,7 +120,12 @@ const DigitalBackground = () => {
   }, [mouse]);
 
   const handleMouseMove = (e) => {
-    setMouse({ x: e.clientX, y: e.clientY });
+    // Convert page coordinates to viewport coordinates
+    const rect = canvasRef.current.getBoundingClientRect();
+    setMouse({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
   };
 
   return (
@@ -104,9 +139,10 @@ const DigitalBackground = () => {
         left: 0,
         width: '100%',
         height: '100%',
-        zIndex: 1,  // Changed to positive to appear above the gradient
+        zIndex: 0, // Place it between background and content
         background: 'transparent',
-        mixBlendMode: 'screen'
+        mixBlendMode: 'screen',
+        opacity: 0.7 // Slightly reduced opacity to not interfere with content
       }}
     />
   );
