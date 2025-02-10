@@ -59,6 +59,19 @@ const BuilderPage = () => {
             { title: 'Scalable', description: 'Built for growth' }
           ]
         };
+        case 'TOKEN_INFO':
+  return {
+    price: '$0.000001234',
+    change24h: '-8.05%',
+    marketCap: '$7.32K',
+    volume24h: '$218.44'
+  };
+
+case 'CONTRACT_ADDRESS':
+  return {
+    label: 'Contract Address (CA):',
+    address: '0x1234...5678'
+  };
       case 'TOKENOMICS':
         return {
           title: 'Tokenomics',
