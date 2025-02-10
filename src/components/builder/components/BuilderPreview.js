@@ -260,19 +260,35 @@ case 'SOCIALS':
         >
           {sections.map((section, index) => (
             <div 
-              key={section.id}
-              className={`relative group ${
-                selectedSection === section.id ? 'ring-2 ring-cyan-500' : ''
-              }`}
-             style={{
-               backgroundImage: section.data.backgroundImage ? `url(${section.data.backgroundImage})` : undefined,
-               backgroundPosition: section.data.backgroundPosition ? 
-                `${section.data.backgroundPosition.x}px ${section.data.backgroundPosition.y}px` : 'center',
-               backgroundSize: section.data.backgroundSize ? 
-                `${section.data.backgroundSize.width} ${section.data.backgroundSize.height}` : 'cover',
-               backgroundRepeat: 'no-repeat'
-             }}
-            >
+  key={section.id}
+  className={`relative group ${
+    selectedSection === section.id ? 'ring-2 ring-cyan-500' : ''
+  }`}
+  style={{
+    backgroundImage: section.data.backgroundImage && section.data.isBgMode 
+      ? `url(${section.data.backgroundImage})` 
+      : 'none',
+    backgroundPosition: section.data.backgroundImage && section.data.isBgMode 
+      ? `${section.data.backgroundPosition?.x || 0}px ${section.data.backgroundPosition?.y || 0}px`
+      : 'center',
+    backgroundSize: section.data.backgroundImage && section.data.isBgMode
+      ? `${section.data.backgroundSize?.width || '100%'} ${section.data.backgroundSize?.height || '100%'}`
+      : 'cover'
+  }}
+>
+  {section.data.backgroundImage && !section.data.isBgMode && (
+    <img
+      src={section.data.backgroundImage}
+      alt=""
+      className="absolute pointer-events-none"
+      style={{
+        top: section.data.backgroundPosition?.y || 0,
+        left: section.data.backgroundPosition?.x || 0,
+        width: section.data.backgroundSize?.width || 'auto',
+        height: section.data.backgroundSize?.height || 'auto'
+      }}
+    />
+  )}
               {/* Section Controls */}
               <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
