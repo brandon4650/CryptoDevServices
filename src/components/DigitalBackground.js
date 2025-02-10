@@ -38,8 +38,7 @@ const DigitalBackground = () => {
 
     // Animation
     const animate = () => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       nodesRef.current.forEach((node, i) => {
         // Update position
@@ -103,21 +102,30 @@ const DigitalBackground = () => {
   };
 
   return (
-  <canvas
-    ref={canvasRef}
-    onMouseMove={handleMouseMove}
-    className="fixed top-0 left-0 w-full h-full"
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      zIndex: -1, // Changed to -1
-      background: 'rgb(15 23 42)' // Your original blue-950 color
-    }}
-  />
-);
+    <>
+      {/* Base background */}
+      <div 
+        className="fixed inset-0 w-full h-full bg-blue-950" 
+        style={{ zIndex: -2 }}
+      />
+      
+      {/* Network canvas */}
+      <canvas
+        ref={canvasRef}
+        onMouseMove={handleMouseMove}
+        className="fixed top-0 left-0 w-full h-full"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: -1,
+          background: 'transparent'
+        }}
+      />
+    </>
+  );
 };
 
 export default DigitalBackground;
