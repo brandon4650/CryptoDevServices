@@ -48,12 +48,12 @@ const CryptoWebDev = () => {
         >
           Request Quote <ArrowRight className="h-4 w-4" />
         </Link>
-            <Link 
-    to="/builder" 
-    className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-  >
-    Try Builder <ArrowRight className="h-4 w-4" />
-  </Link>
+        <Link 
+          to="/builder" 
+          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+        >
+          Try Builder <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
       {/* Mobile Menu Button */}
