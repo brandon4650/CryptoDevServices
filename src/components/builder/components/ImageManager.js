@@ -14,7 +14,7 @@ const ImageManager = ({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ width: 0, height: 0 });
-  const [isBgMode, setIsBgMode] = useState(true);
+  const [isBgMode, setIsBgMode] = useState(isFullBackground);
   const imageRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -23,54 +23,68 @@ const ImageManager = ({
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        onImageChange(e.target.result);
-        // Set initial size based on uploaded image
+        const dataUrl = e.target.result;
+        onImageChange(dataUrl);
+        
+        // Set initial size for the image
         const img = new Image();
         img.onload = () => {
           const containerWidth = containerRef.current?.offsetWidth || 800;
           const scale = containerWidth / img.width;
-          onSizeChange({
+          const newSize = {
             width: `${Math.min(img.width, containerWidth)}px`,
             height: `${Math.min(img.height * scale, containerWidth)}px`
-          });
+          };
+          onSizeChange(newSize);
+          // Center the image initially
+          const container = containerRef.current;
+          if (container) {
+            const newPos = {
+              x: (container.offsetWidth - parseInt(newSize.width)) / 2,
+              y: (container.offsetHeight - parseInt(newSize.height)) / 2
+            };
+            onPositionChange(newPos);
+          }
         };
-        img.src = e.target.result;
+        img.src = dataUrl;
       };
       reader.readAsDataURL(file);
     }
   };
-  
-  const handleRemoveImage = () => {
-    onImageChange(null);
-    onPositionChange({ x: 0, y: 0 });
-    onSizeChange({ width: '100%', height: '100%' });
-  };
 
   const handleDragStart = (e) => {
-    if (isBgMode) return;
+    if (isBgMode && !isFullBackground) return;
     e.preventDefault();
     setIsDragging(true);
-    const imageRect = imageRef.current.getBoundingClientRect();
+    const rect = isFullBackground ? containerRef.current.getBoundingClientRect() : imageRef.current.getBoundingClientRect();
     setDragStart({
-      x: e.clientX - imageRect.left,
-      y: e.clientY - imageRect.top
+      x: e.clientX - (isFullBackground ? position.x : rect.left),
+      y: e.clientY - (isFullBackground ? position.y : rect.top)
     });
   };
 
   const handleDrag = (e) => {
-    if (isDragging && !isBgMode) {
+    if (isDragging) {
       const containerRect = containerRef.current.getBoundingClientRect();
-      const newX = e.clientX - dragStart.x - containerRect.left;
-      const newY = e.clientY - dragStart.y - containerRect.top;
-      onPositionChange({ 
-        x: Math.max(0, Math.min(newX, containerRect.width - parseInt(size.width))),
-        y: Math.max(0, Math.min(newY, containerRect.height - parseInt(size.height)))
-      });
+      if (isFullBackground) {
+        // For full background, allow unlimited movement
+        onPositionChange({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y
+        });
+      } else if (!isBgMode) {
+        // For free positioning, constrain to container
+        const newX = e.clientX - dragStart.x - containerRect.left;
+        const newY = e.clientY - dragStart.y - containerRect.top;
+        onPositionChange({
+          x: Math.max(0, Math.min(newX, containerRect.width - parseInt(size.width))),
+          y: Math.max(0, Math.min(newY, containerRect.height - parseInt(size.height)))
+        });
+      }
     }
   };
 
   const handleResizeStart = (e) => {
-    if (isBgMode) return;
     e.preventDefault();
     setIsResizing(true);
     setResizeStart({
@@ -82,19 +96,28 @@ const ImageManager = ({
   };
 
   const handleResize = (e) => {
-    if (isResizing && !isBgMode) {
+    if (isResizing) {
       const deltaX = e.clientX - resizeStart.x;
-      const deltaY = e.clientY - resizeStart.y;
       const aspectRatio = resizeStart.width / resizeStart.height;
       
-      const newWidth = Math.max(50, resizeStart.width + deltaX);
-      const newHeight = Math.max(50, newWidth / aspectRatio);
+      let newWidth = Math.max(50, resizeStart.width + deltaX);
+      if (isFullBackground) {
+        // For full background, maintain minimum coverage
+        newWidth = Math.max(newWidth, containerRef.current.offsetWidth);
+      }
       
+      const newHeight = newWidth / aspectRatio;
       onSizeChange({
         width: `${newWidth}px`,
         height: `${newHeight}px`
       });
     }
+  };
+
+  const handleRemoveImage = () => {
+    onImageChange(null);
+    onPositionChange({ x: 0, y: 0 });
+    onSizeChange({ width: '100%', height: '100%' });
   };
 
   useEffect(() => {
@@ -141,7 +164,7 @@ const ImageManager = ({
           )}
         </div>
 
-        {backgroundImage && (
+        {backgroundImage && !isFullBackground && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsBgMode(!isBgMode)}
@@ -160,15 +183,21 @@ const ImageManager = ({
         <div 
           className="relative bg-blue-900/20 rounded-lg overflow-hidden"
           style={{
-            height: '200px'
+            height: '200px',
+            cursor: isDragging ? 'grabbing' : 'grab'
           }}
+          onMouseDown={isFullBackground ? handleDragStart : undefined}
         >
           <img
             ref={imageRef}
             src={backgroundImage}
             alt="Background"
-            className={`${isBgMode ? 'w-full h-full object-cover' : ''}`}
-            style={isBgMode ? {} : {
+            className={`${isBgMode || isFullBackground ? 'w-full h-full object-cover' : ''}`}
+            style={isBgMode || isFullBackground ? {
+              transform: `translate(${position.x}px, ${position.y}px)`,
+              width: size.width,
+              height: size.height
+            } : {
               position: 'absolute',
               cursor: isDragging ? 'grabbing' : 'grab',
               top: position.y,
@@ -176,19 +205,17 @@ const ImageManager = ({
               width: size.width,
               height: size.height
             }}
-            onMouseDown={handleDragStart}
+            onMouseDown={!isFullBackground && !isBgMode ? handleDragStart : undefined}
           />
           
-          {!isBgMode && (
-            <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity">
-              <button
-                onMouseDown={handleResizeStart}
-                className="absolute bottom-2 right-2 p-1 bg-blue-900/80 rounded text-white hover:bg-blue-800"
-              >
-                <Maximize className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity">
+            <button
+              onMouseDown={handleResizeStart}
+              className="absolute bottom-2 right-2 p-1 bg-blue-900/80 rounded text-white hover:bg-blue-800"
+            >
+              <Maximize className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>
