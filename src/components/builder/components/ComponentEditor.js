@@ -286,8 +286,7 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
               <input
                 type="text"
                 value={section.data.title}
-                onChange={(e) => updateField('title', e.target.value
-    }
+                onChange={(e) => updateField('title', e.target.value)}
   };
 
   return (
