@@ -5,7 +5,7 @@ import CryptoWebDev from './components/CryptoDevServices';
 import QuotePage from './components/QuotePage';
 import LiveChat from './components/LiveChat';
 import { initializeChat, chatClient } from './utils/DiscordChatClient';
-
+import BuilderPage from './components/builder/BuilderPage';
 
 function App() {
   const [chatInitialized, setChatInitialized] = useState(false);
@@ -48,6 +48,7 @@ function App() {
         />
         <Route path="/quote" element={<QuotePage />} />
         <Route path="/chat" element={<LiveChat initialOpen={true} chatInitialized={chatInitialized} />} />
+        <Route path="/builder" element={<BuilderPage />} />
       </Routes>
       {/* Render LiveChat globally */}
       {!window.location.pathname.includes('/chat') && chatInitialized && <LiveChat />}
