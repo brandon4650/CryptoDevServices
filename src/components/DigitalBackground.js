@@ -37,8 +37,8 @@ const DigitalBackground = () => {
     };
 
     const animate = () => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear the entire canvas each frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       nodesRef.current.forEach((node, i) => {
         // Update position
