@@ -54,6 +54,7 @@ const CryptoWebDev = () => {
         >
           Try Builder <ArrowRight className="h-4 w-4" />
         </Link>
+       </div>    
       </div>
 
       {/* Mobile Menu Button */}
