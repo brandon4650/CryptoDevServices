@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import BuilderPanel from './components/BuilderPanel';
 import BuilderPreview from './components/BuilderPreview';
 import ComponentEditor from './components/ComponentEditor';
+import ImageManager from './components/ImageManager';
 import { Eye, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -10,6 +11,8 @@ const BuilderPage = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [previewMode, setPreviewMode] = useState('DESKTOP');
   const [isFullPreview, setIsFullPreview] = useState(false);
+  
+  // Image management state
   const [pageBackground, setPageBackground] = useState(null);
   const [pageBackgroundPosition, setPageBackgroundPosition] = useState({ x: 0, y: 0 });
   const [pageBackgroundSize, setPageBackgroundSize] = useState({ width: '100%', height: '100%' });
@@ -51,7 +54,10 @@ const BuilderPage = () => {
           title: 'Welcome to Our Site',
           subtitle: 'Discover the future of crypto',
           hasButton: true,
-          buttonText: 'Get Started'
+          buttonText: 'Get Started',
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'FEATURES':
         return {
@@ -60,21 +66,29 @@ const BuilderPage = () => {
             { title: 'Secure', description: 'Built with security in mind' },
             { title: 'Fast', description: 'Lightning-fast transactions' },
             { title: 'Scalable', description: 'Built for growth' }
-          ]
+          ],
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
         };
-        case 'TOKEN_INFO':
-  return {
-    price: '$0.000001234',
-    change24h: '-8.05%',
-    marketCap: '$7.32K',
-    volume24h: '$218.44'
-  };
-
-case 'CONTRACT_ADDRESS':
-  return {
-    label: 'Contract Address (CA):',
-    address: '0x1234...5678'
-  };
+      case 'TOKEN_INFO':
+        return {
+          price: '$0.000001234',
+          change24h: '-8.05%',
+          marketCap: '$7.32K',
+          volume24h: '$218.44',
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
+        };
+      case 'CONTRACT_ADDRESS':
+        return {
+          label: 'Contract Address (CA):',
+          address: '0x1234...5678',
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
+        };
       case 'TOKENOMICS':
         return {
           title: 'Tokenomics',
@@ -83,7 +97,10 @@ case 'CONTRACT_ADDRESS':
             { label: 'Presale', value: 60 },
             { label: 'Liquidity', value: 30 },
             { label: 'Team', value: 10 }
-          ]
+          ],
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'ROADMAP':
         return {
@@ -91,7 +108,10 @@ case 'CONTRACT_ADDRESS':
           phases: [
             { title: 'Phase 1', items: ['Launch', 'Marketing', 'Community Building'] },
             { title: 'Phase 2', items: ['Exchange Listings', 'Partnerships', 'Development'] }
-          ]
+          ],
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'TEAM':
         return {
@@ -100,7 +120,10 @@ case 'CONTRACT_ADDRESS':
           members: [
             { name: 'John Doe', role: 'CEO', description: 'Crypto veteran with 10 years experience' },
             { name: 'Jane Smith', role: 'CTO', description: 'Blockchain developer and security expert' }
-          ]
+          ],
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'PARTNERS':
         return {
@@ -109,7 +132,10 @@ case 'CONTRACT_ADDRESS':
           partners: [
             { name: 'Partner 1', link: '#' },
             { name: 'Partner 2', link: '#' }
-          ]
+          ],
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'SOCIALS':
         return {
@@ -119,7 +145,10 @@ case 'CONTRACT_ADDRESS':
             { platform: 'Twitter', url: '#' },
             { platform: 'Telegram', url: '#' },
             { platform: 'Discord', url: '#' }
-          ]
+          ],
+          backgroundImage: null,
+          backgroundPosition: { x: 0, y: 0 },
+          backgroundSize: { width: '100%', height: '100%' }
         };
       default:
         return {};
@@ -127,7 +156,15 @@ case 'CONTRACT_ADDRESS':
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div 
+      className="min-h-screen bg-gray-900 relative"
+      style={{
+        backgroundImage: pageBackground ? `url(${pageBackground})` : undefined,
+        backgroundPosition: `${pageBackgroundPosition.x}px ${pageBackgroundPosition.y}px`,
+        backgroundSize: `${pageBackgroundSize.width} ${pageBackgroundSize.height}`,
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
       {/* Header */}
       <header className="bg-blue-900/50 border-b border-blue-800/50">
         <div className="max-w-7xl mx-auto px-4">
@@ -148,6 +185,24 @@ case 'CONTRACT_ADDRESS':
             </button>
           </div>
         </div>
+        
+        {/* Background Manager */}
+        {!isFullPreview && (
+          <div className="border-t border-blue-800/50 p-4">
+            <div className="max-w-7xl mx-auto">
+              <h3 className="text-sm font-medium text-gray-300 mb-2">Page Background</h3>
+              <ImageManager
+                backgroundImage={pageBackground}
+                position={pageBackgroundPosition}
+                size={pageBackgroundSize}
+                onImageChange={setPageBackground}
+                onPositionChange={setPageBackgroundPosition}
+                onSizeChange={setPageBackgroundSize}
+                isFullBackground={true}
+              />
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Builder Interface */}
