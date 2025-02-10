@@ -8,6 +8,18 @@ const COMPONENTS = {
     description: 'Main landing section with title and CTA',
     icon: '🚀'
   },
+  TOKEN_INFO: {
+  type: 'TOKEN_INFO',
+  label: 'Token Information',
+  description: 'Display token price, market cap, and volume',
+  icon: '💰'
+},
+CONTRACT_ADDRESS: {
+  type: 'CONTRACT_ADDRESS',
+  label: 'Contract Address',
+  description: 'Display contract address with copy button',
+  icon: '📋'
+}
   FEATURES: {
     type: 'features',
     label: 'Features Grid',
