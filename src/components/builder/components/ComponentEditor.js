@@ -32,14 +32,16 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
     <div className="mb-6 pb-6 border-b border-blue-800/50">
       <h4 className="text-sm font-medium text-gray-300 mb-4">Background Settings</h4>
       <ImageManager
-        backgroundImage={section.data.backgroundImage}
-        position={section.data.backgroundPosition || { x: 0, y: 0 }}
-        size={section.data.backgroundSize || { width: '100%', height: '100%' }}
-        onImageChange={(image) => updateField('backgroundImage', image)}
-        onPositionChange={(position) => updateField('backgroundPosition', position)}
-        onSizeChange={(size) => updateField('backgroundSize', size)}
-        isFullBackground={false}
-      />
+  backgroundImage={section.data.backgroundImage}
+  position={section.data.backgroundPosition || { x: 0, y: 0 }}
+  size={section.data.backgroundSize || { width: '100%', height: '100%' }}
+  onImageChange={(image) => updateField('backgroundImage', image)}
+  onPositionChange={(position) => updateField('backgroundPosition', position)}
+  onSizeChange={(size) => updateField('backgroundSize', size)}
+  onUpdateField={updateField}  // Add this
+  section={section}            // Add this
+  isFullBackground={false}
+/>
     </div>
   );
 
