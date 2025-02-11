@@ -8,7 +8,7 @@ const DEFAULT_WELCOME_MESSAGE = {
   id: 'welcome',
   sender: 'CCD Support',
   avatar: '/images/cryptowebservice.png',
-  content: 'Hello! Welcome to our live support chat. To get started, please enter your Channel ID below. We\'ll be with you shortly to assist with any questions or concerns.',
+  content: 'Hello! Welcome to our live support chat. To get started, please enter your Channel ID above. We\'ll be with you shortly to assist with any questions or concerns.',
   timestamp: new Date()
 };
 
