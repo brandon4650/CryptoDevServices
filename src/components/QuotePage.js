@@ -368,6 +368,243 @@ const QuotePage = () => {
                                     />
                                 </div>
                             </div>
+                               {/* Token/Project Details - For both forms */}
+<div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Token Name {formType === 'plan' ? '*' : '(if available)'}
+            </label>
+            <input
+                type="text"
+                name="tokenName"
+                required={formType === 'plan'}
+                value={formData.tokenName}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+                placeholder="Enter token name"
+            />
+        </div>
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Token Symbol {formType === 'plan' ? '*' : '(if available)'}
+            </label>
+            <input
+                type="text"
+                name="tokenSymbol"
+                required={formType === 'plan'}
+                value={formData.tokenSymbol}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+                placeholder="Enter token symbol"
+            />
+        </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Blockchain/Chain {formType === 'plan' ? '*' : '(if decided)'}
+            </label>
+            <select
+                name="chain"
+                required={formType === 'plan'}
+                value={formData.chain}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            >
+                <option value="">Select chain...</option>
+                <option value="BSC">BSC (BNB Chain)</option>
+                <option value="ETH">Ethereum</option>
+                <option value="POLYGON">Polygon</option>
+                <option value="OTHER">Other</option>
+            </select>
+        </div>
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Contract Address {formType === 'plan' ? '*' : '(if available)'}
+            </label>
+            <input
+                type="text"
+                name="contractAddress"
+                required={formType === 'plan'}
+                value={formData.contractAddress}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+                placeholder="Enter contract address"
+            />
+        </div>
+    </div>
+
+    {/* Timeline Fields */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Expected Launch Date {formType === 'plan' ? '*' : ''}
+            </label>
+            <input
+                type="date"
+                name="launchDate"
+                required={formType === 'plan'}
+                value={formData.launchDate}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            />
+        </div>
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Website Deadline *
+            </label>
+            <input
+                type="date"
+                name="deadline"
+                required
+                value={formData.deadline}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            />
+        </div>
+    </div>
+
+    {/* Technical Requirements */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Technical Requirements *
+        </label>
+        <div className="space-y-3 mb-4">
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="technicalRequirements.priceTracking"
+                    checked={formData.technicalRequirements.priceTracking}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>Live Price Tracking</label>
+            </div>
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="technicalRequirements.chart"
+                    checked={formData.technicalRequirements.chart}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>Trading Chart Integration</label>
+            </div>
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="technicalRequirements.swapInterface"
+                    checked={formData.technicalRequirements.swapInterface}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>Swap Interface</label>
+            </div>
+        </div>
+        <textarea
+            name="technicalRequirements.customFeatures"
+            value={formData.technicalRequirements.customFeatures}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white h-32"
+            placeholder="Any other specific technical requirements or features..."
+        />
+    </div>
+
+    {/* Marketing & Integrations */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Desired Integrations
+        </label>
+        <div className="space-y-3 mb-4">
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="desiredIntegrations.coinGecko"
+                    checked={formData.desiredIntegrations.coinGecko}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>CoinGecko Integration</label>
+            </div>
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="desiredIntegrations.dexTools"
+                    checked={formData.desiredIntegrations.dexTools}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>DexTools Integration</label>
+            </div>
+        </div>
+        <input
+            type="text"
+            name="desiredIntegrations.other"
+            value={formData.desiredIntegrations.other}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            placeholder="Other integrations needed..."
+        />
+    </div>
+
+    {/* Reference Sites */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Reference Websites
+        </label>
+        <textarea
+            name="referenceSites"
+            value={formData.referenceSites}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white h-32"
+            placeholder="List any websites you'd like to use as inspiration..."
+        />
+    </div>
+
+    {/* Quote-specific Fields */}
+    {formType === 'quote' && (
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Budget Range *
+            </label>
+            <select
+                name="budgetRange"
+                required
+                value={formData.budgetRange}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            >
+                <option value="">Select a range...</option>
+                <option value="100-300">$100 - $300</option>
+                <option value="300-500">$300 - $500</option>
+                <option value="500-1000">$500 - $1000</option>
+                <option value="1000+">$1000+</option>
+            </select>
+        </div>
+    )}
+
+    {/* Hosting Preferences */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Hosting Preference *
+        </label>
+        <select
+            name="hostingPreference"
+            required
+            value={formData.hostingPreference}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+        >
+            <option value="">Select hosting preference...</option>
+            <option value="our-hosting">Use Your Hosting Service</option>
+            <option value="own-hosting">I Have My Own Hosting</option>
+            <option value="undecided">Undecided/Need Consultation</option>
+        </select>
+    </div>
+</div>
+
 
                             <button
                                 type="button"
@@ -456,32 +693,223 @@ const QuotePage = () => {
                         </div>
 
                         <div>
-                            <label className="block text-lg font-medium mb-2">
-                                Social Links (Recommended)
-                            </label>
-                            <div className="space-y-4">
-                                <input
-                                    type="url"
-                                    name="twitterLink"
-                                    value={formData.twitterLink}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
-                                    placeholder="Twitter/X Profile Link"
-                                />
-                                <input
-                                    type="url"
-                                    name="telegramLink"
-                                    value={formData.telegramLink}
-                                    onChange={handleInputChange}
-                                    className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
-                                    placeholder="Telegram Group Link"
-                                />
-                            </div>
-                        </div>
+    <label className="block text-lg font-medium mb-2">
+        Social Links (Recommended)
+    </label>
+    <div className="space-y-4">
+        <input
+            type="url"
+            name="twitterLink"
+            value={formData.twitterLink}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            placeholder="Twitter/X Profile Link"
+        />
+        <input
+            type="url"
+            name="telegramLink"
+            value={formData.telegramLink}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            placeholder="Telegram Group Link"
+        />
+    </div>
+</div>
 
-                        <button
-                            type="button"
-                            onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
+{/* Token/Project Details */}
+<div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Token Name (if available)
+            </label>
+            <input
+                type="text"
+                name="tokenName"
+                value={formData.tokenName}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+                placeholder="Enter token name"
+            />
+        </div>
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Token Symbol (if available)
+            </label>
+            <input
+                type="text"
+                name="tokenSymbol"
+                value={formData.tokenSymbol}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+                placeholder="Enter token symbol"
+            />
+        </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Blockchain/Chain (if decided)
+            </label>
+            <select
+                name="chain"
+                value={formData.chain}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            >
+                <option value="">Select chain...</option>
+                <option value="BSC">BSC (BNB Chain)</option>
+                <option value="ETH">Ethereum</option>
+                <option value="POLYGON">Polygon</option>
+                <option value="OTHER">Other</option>
+            </select>
+        </div>
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Contract Address (if available)
+            </label>
+            <input
+                type="text"
+                name="contractAddress"
+                value={formData.contractAddress}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+                placeholder="Enter contract address"
+            />
+        </div>
+    </div>
+
+    {/* Budget Range (Quote-specific) */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Budget Range *
+        </label>
+        <select
+            name="budgetRange"
+            required
+            value={formData.budgetRange}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+        >
+            <option value="">Select a range...</option>
+            <option value="100-300">$100 - $300</option>
+            <option value="300-500">$300 - $500</option>
+            <option value="500-1000">$500 - $1000</option>
+            <option value="1000+">$1000+</option>
+        </select>
+    </div>
+
+    {/* Timeline Fields */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Expected Launch Date
+            </label>
+            <input
+                type="date"
+                name="launchDate"
+                value={formData.launchDate}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            />
+        </div>
+        <div>
+            <label className="block text-lg font-medium mb-2">
+                Preferred Website Deadline
+            </label>
+            <input
+                type="date"
+                name="deadline"
+                value={formData.deadline}
+                onChange={handleInputChange}
+                className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+            />
+        </div>
+    </div>
+
+    {/* Technical Requirements */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Desired Features
+        </label>
+        <div className="space-y-3 mb-4">
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="technicalRequirements.priceTracking"
+                    checked={formData.technicalRequirements.priceTracking}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>Live Price Tracking</label>
+            </div>
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="technicalRequirements.chart"
+                    checked={formData.technicalRequirements.chart}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>Trading Chart Integration</label>
+            </div>
+            <div className="flex items-center gap-3">
+                <input
+                    type="checkbox"
+                    name="technicalRequirements.swapInterface"
+                    checked={formData.technicalRequirements.swapInterface}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 rounded border-blue-900/40"
+                />
+                <label>Swap Interface</label>
+            </div>
+        </div>
+        <textarea
+            name="technicalRequirements.customFeatures"
+            value={formData.technicalRequirements.customFeatures}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white h-32"
+            placeholder="Any other specific features or requirements..."
+        />
+    </div>
+
+    {/* Reference Sites */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Reference Websites
+        </label>
+        <textarea
+            name="referenceSites"
+            value={formData.referenceSites}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white h-32"
+            placeholder="List any websites you'd like to use as inspiration..."
+        />
+    </div>
+
+    {/* Hosting Preferences */}
+    <div>
+        <label className="block text-lg font-medium mb-2">
+            Hosting Preference
+        </label>
+        <select
+            name="hostingPreference"
+            value={formData.hostingPreference}
+            onChange={handleInputChange}
+            className="w-full bg-blue-900/20 border border-blue-900/40 rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 text-white"
+        >
+            <option value="">Select hosting preference...</option>
+            <option value="our-hosting">Use Your Hosting Service</option>
+            <option value="own-hosting">I Have My Own Hosting</option>
+            <option value="undecided">Undecided/Need Consultation</option>
+        </select>
+    </div>
+</div>
+
+<button
+    type="button"
+    onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
                             className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
                         >
                             <Plus className="h-5 w-5" />
