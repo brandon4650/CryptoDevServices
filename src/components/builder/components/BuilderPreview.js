@@ -90,166 +90,190 @@ const BuilderPreview = ({
           </div>
         );
 
-      case "CONTRACT_ADDRESS":
-        return (
-          <div className="flex flex-col items-center justify-center py-8 px-4">
-            <div className="text-xl text-[#f0b90b] mb-4">
-              {section.data.label}
-            </div>
-            <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg p-3">
-              <span className="text-gray-300">{section.data.address}</span>
-              <button
-                onClick={() =>
-                  navigator.clipboard.writeText(section.data.address)
-                }
-                className="px-4 py-1 bg-[#f0b90b] text-black rounded hover:bg-[#f0b90b]/80 transition-colors"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-        );
+    case "CONTRACT_ADDRESS":
+  return (
+    <div className={`${baseClasses} flex flex-col items-center justify-center py-8 px-4`}>
+      <div className="text-xl text-[#f0b90b] mb-4">
+        {section.data.label}
+      </div>
+      <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg p-3">
+        <span className="text-gray-300">{section.data.address}</span>
+        <button
+          className={getButtonClasses()}
+          onClick={() => navigator.clipboard.writeText(section.data.address)}
+        >
+          Copy
+        </button>
+      </div>
+    </div>
+  );
 
-      case "FEATURES":
-        return (
-          <div className="py-20 px-4">
-            <h2 className="text-3xl font-bold text-white text-center mb-12">
-              {section.data.title}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {section.data.features.map((feature, idx) => (
-                <div
-                  key={idx}
-                  className="bg-blue-900/30 rounded-lg p-6 hover:bg-blue-900/40 transition-colors"
+case "FEATURES":
+  return (
+    <div className={`${baseClasses} py-20 px-4`}>
+      <h2 className="text-3xl font-bold text-white text-center mb-12">
+        {section.data.title}
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {section.data.features.map((feature, idx) => (
+          <div
+            key={idx}
+            className="bg-blue-900/30 rounded-lg p-6 hover:bg-blue-900/40 transition-colors"
+            style={{
+              backgroundColor: section.data.styles?.backgroundColor || 'rgba(30, 58, 138, 0.3)'
+            }}
+          >
+            <h3 className="text-xl font-semibold text-white mb-3">
+              {feature.title}
+            </h3>
+            <p className="text-gray-300">{feature.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+case "TOKENOMICS":
+  return (
+    <div className={`${baseClasses} py-20 px-4`}>
+      <h2 className="text-3xl font-bold text-white text-center mb-12">
+        {section.data.title}
+      </h2>
+      <div className="flex flex-wrap justify-center gap-8 max-w-4xl mx-auto">
+        {section.data.distribution.map((item, idx) => (
+          <div
+            key={idx}
+            className="text-center bg-blue-900/30 rounded-lg p-6 w-48"
+            style={{
+              backgroundColor: section.data.styles?.backgroundColor || 'rgba(30, 58, 138, 0.3)'
+            }}
+          >
+            <div className="text-4xl font-bold text-cyan-400">
+              {item.value}%
+            </div>
+            <div className="mt-2 text-gray-300">{item.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+case "ROADMAP":
+  return (
+    <div className={`${baseClasses} py-20 px-4`}>
+      <h2 className="text-3xl font-bold text-white text-center mb-12">
+        {section.data.title}
+      </h2>
+      <div className="max-w-4xl mx-auto space-y-8">
+        {section.data.phases?.map((phase, idx) => (
+          <div
+            key={idx}
+            className="bg-blue-900/30 rounded-lg p-6"
+            style={{
+              backgroundColor: section.data.styles?.backgroundColor || 'rgba(30, 58, 138, 0.3)'
+            }}
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">
+              {phase.title}
+            </h3>
+            <ul className="space-y-2">
+              {phase.items?.map((item, itemIdx) => (
+                <li
+                  key={itemIdx}
+                  className="text-gray-300 flex items-center gap-2"
                 >
-                  <h3 className="text-xl font-semibold text-white mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-300">{feature.description}</p>
-                </div>
+                  <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                  {item}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
-        );
+        ))}
+      </div>
+    </div>
+  );
 
-      case "TOKENOMICS":
-        return (
-          <div className="py-20 px-4">
-            <h2 className="text-3xl font-bold text-white text-center mb-12">
-              {section.data.title}
-            </h2>
-            <div className="flex flex-wrap justify-center gap-8 max-w-4xl mx-auto">
-              {section.data.distribution.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="text-center bg-blue-900/30 rounded-lg p-6 w-48"
-                >
-                  <div className="text-4xl font-bold text-cyan-400">
-                    {item.value}%
-                  </div>
-                  <div className="mt-2 text-gray-300">{item.label}</div>
-                </div>
-              ))}
-            </div>
+case "TEAM":
+  return (
+    <div className={`${baseClasses} py-20 px-4`}>
+      <h2 className="text-3xl font-bold text-white text-center mb-4">
+        {section.data.title}
+      </h2>
+      <p className="text-gray-300 text-center max-w-2xl mx-auto mb-12">
+        {section.data.description}
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {section.data.members?.map((member, idx) => (
+          <div
+            key={idx}
+            className="bg-blue-900/30 rounded-lg p-6"
+            style={{
+              backgroundColor: section.data.styles?.backgroundColor || 'rgba(30, 58, 138, 0.3)'
+            }}
+          >
+            <h3 className="text-xl font-semibold text-white mb-1">
+              {member.name}
+            </h3>
+            <p className="text-cyan-400 text-sm mb-4">{member.role}</p>
+            <p className="text-gray-300">{member.description}</p>
           </div>
-        );
-      case "ROADMAP":
-        return (
-          <div className="py-20 px-4">
-            <h2 className="text-3xl font-bold text-white text-center mb-12">
-              {section.data.title}
-            </h2>
-            <div className="max-w-4xl mx-auto space-y-8">
-              {section.data.phases?.map((phase, idx) => (
-                <div key={idx} className="bg-blue-900/30 rounded-lg p-6">
-                  <h3 className="text-xl font-semibold text-white mb-4">
-                    {phase.title}
-                  </h3>
-                  <ul className="space-y-2">
-                    {phase.items?.map((item, itemIdx) => (
-                      <li
-                        key={itemIdx}
-                        className="text-gray-300 flex items-center gap-2"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        ))}
+      </div>
+    </div>
+  );
 
-      case "TEAM":
-        return (
-          <div className="py-20 px-4">
-            <h2 className="text-3xl font-bold text-white text-center mb-4">
-              {section.data.title}
-            </h2>
-            <p className="text-gray-300 text-center max-w-2xl mx-auto mb-12">
-              {section.data.description}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {section.data.members?.map((member, idx) => (
-                <div key={idx} className="bg-blue-900/30 rounded-lg p-6">
-                  <h3 className="text-xl font-semibold text-white mb-1">
-                    {member.name}
-                  </h3>
-                  <p className="text-cyan-400 text-sm mb-4">{member.role}</p>
-                  <p className="text-gray-300">{member.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+case "PARTNERS":
+  return (
+    <div className={`${baseClasses} py-20 px-4`}>
+      <h2 className="text-3xl font-bold text-white text-center mb-4">
+        {section.data.title}
+      </h2>
+      <p className="text-gray-300 text-center max-w-2xl mx-auto mb-12">
+        {section.data.description}
+      </p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+        {section.data.partners?.map((partner, idx) => (
+          <a
+            key={idx}
+            href={partner.link}
+            className="bg-blue-900/30 rounded-lg p-6 hover:bg-blue-900/40 transition-colors text-center"
+            style={{
+              backgroundColor: section.data.styles?.backgroundColor || 'rgba(30, 58, 138, 0.3)'
+            }}
+          >
+            <div className="text-white font-medium">{partner.name}</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 
-      case "PARTNERS":
-        return (
-          <div className="py-20 px-4">
-            <h2 className="text-3xl font-bold text-white text-center mb-4">
-              {section.data.title}
-            </h2>
-            <p className="text-gray-300 text-center max-w-2xl mx-auto mb-12">
-              {section.data.description}
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {section.data.partners?.map((partner, idx) => (
-                <a
-                  key={idx}
-                  href={partner.link}
-                  className="bg-blue-900/30 rounded-lg p-6 hover:bg-blue-900/40 transition-colors text-center"
-                >
-                  <div className="text-white font-medium">{partner.name}</div>
-                </a>
-              ))}
-            </div>
-          </div>
-        );
+case "SOCIALS":
+  return (
+    <div className={`${baseClasses} py-20 px-4`}>
+      <h2 className="text-3xl font-bold text-white text-center mb-4">
+        {section.data.title}
+      </h2>
+      <p className="text-gray-300 text-center max-w-2xl mx-auto mb-12">
+        {section.data.description}
+      </p>
+      <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
+        {section.data.links?.map((link, idx) => (
+          <a
+            key={idx}
+            href={link.url}
+            className={`${getButtonClasses()} hover:bg-blue-900/40`}
+            style={{
+              backgroundColor: section.data.styles?.backgroundColor || 'rgba(30, 58, 138, 0.3)'
+            }}
+          >
+            {link.platform}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 
-      case "SOCIALS":
-        return (
-          <div className="py-20 px-4">
-            <h2 className="text-3xl font-bold text-white text-center mb-4">
-              {section.data.title}
-            </h2>
-            <p className="text-gray-300 text-center max-w-2xl mx-auto mb-12">
-              {section.data.description}
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 max-w-2xl mx-auto">
-              {section.data.links?.map((link, idx) => (
-                <a
-                  key={idx}
-                  href={link.url}
-                  className="px-6 py-3 bg-blue-900/30 hover:bg-blue-900/40 rounded-lg text-white transition-colors"
-                >
-                  {link.platform}
-                </a>
-              ))}
-            </div>
-          </div>
-        );
 
       // Add more section type previews as needed
       default:
