@@ -123,14 +123,37 @@ const QuotePage = () => {
 
             // Reset form data
             setFormData({
-                projectName: '',
-                email: '',
-                details: '',
-                additionalInfo: '',
-                twitterLink: '',
-                telegramLink: '',
-                discordLink: ''
-            });
+    projectName: '',
+    email: '',
+    details: '',
+    additionalInfo: '',
+    twitterLink: '',
+    telegramLink: '',
+    discordLink: '',
+    technicalRequirements: {
+        priceTracking: false,
+        chart: false,
+        swapInterface: false,
+        customFeatures: ''
+    },
+    desiredIntegrations: {
+        coinGecko: false,
+        dexTools: false,
+        other: ''
+    },
+    contractAddress: '',
+    launchDate: '',
+    deadline: '',
+    tokenName: '',
+    tokenSymbol: '',
+    chain: '',
+    marketingPlan: '',
+    budgetRange: '',
+    referenceSites: '',
+    hostingPreference: '',
+    colorScheme: '',
+    existingSite: ''
+});
         } else {
             throw new Error(result.error || 'Failed to submit');
         }
