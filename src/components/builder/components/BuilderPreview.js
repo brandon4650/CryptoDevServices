@@ -294,25 +294,26 @@ const BuilderPreview = ({
         }`}
         style={{
           ...(section.data.backgroundImage && section.data.isBgMode && {
-            backgroundImage: `url(${section.data.backgroundImage})`,
-            backgroundPosition: `${section.data.backgroundPosition?.x || 0}px ${section.data.backgroundPosition?.y || 0}px`,
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat'
+            backgroundImage: `url("${section.data.backgroundImage}")`,
+            backgroundPosition: section.data.backgroundPosition
+              ? `${section.data.backgroundPosition.x}px ${section.data.backgroundPosition.y}px`
+              : "center",
+            backgroundSize: section.data.backgroundSize?.width || "cover",
+            backgroundRepeat: "no-repeat"
           })
         }}
       >
-        {/* Free positioning mode image */}
         {section.data.backgroundImage && !section.data.isBgMode && (
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 pointer-events-none">
             <img
               src={section.data.backgroundImage}
               alt=""
+              className="absolute"
               style={{
-                position: 'absolute',
-                top: section.data.backgroundPosition?.y || 0,
-                left: section.data.backgroundPosition?.x || 0,
-                width: section.data.backgroundSize?.width,
-                height: section.data.backgroundSize?.height
+                top: `${section.data.backgroundPosition?.y || 0}px`,
+                left: `${section.data.backgroundPosition?.x || 0}px`,
+                width: section.data.backgroundSize?.width || "100%",
+                height: section.data.backgroundSize?.height || "100%"
               }}
             />
           </div>
@@ -349,7 +350,7 @@ const BuilderPreview = ({
         </div>
 
         {/* Section Content */}
-        <div className="relative z-10">
+        <div className="relative">
           {renderSection(section)}
         </div>
       </div>
