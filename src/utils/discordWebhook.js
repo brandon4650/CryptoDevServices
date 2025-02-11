@@ -2,6 +2,47 @@ export const sendToDiscord = async (formData, type) => {
   try {
     const orderNumber = `${type.charAt(0)}${Date.now()}`;
     const planType = type === 'quote' ? 'Custom Quote' : type;
+
+    // Create a formatted message for Discord
+    const formattedDetails = `
+**Project Details**
+${formData.details}
+
+**Technical Requirements**
+- Price Tracking: ${formData.technicalRequirements.priceTracking ? 'Yes' : 'No'}
+- Trading Chart: ${formData.technicalRequirements.chart ? 'Yes' : 'No'}
+- Swap Interface: ${formData.technicalRequirements.swapInterface ? 'Yes' : 'No'}
+- Custom Features: ${formData.technicalRequirements.customFeatures}
+
+**Token Information**
+- Name: ${formData.tokenName || 'Not provided'}
+- Symbol: ${formData.tokenSymbol || 'Not provided'}
+- Chain: ${formData.chain || 'Not provided'}
+- Contract: ${formData.contractAddress || 'Not provided'}
+
+**Timeline**
+- Launch Date: ${formData.launchDate || 'Not specified'}
+- Website Deadline: ${formData.deadline || 'Not specified'}
+
+**Integrations**
+- CoinGecko: ${formData.desiredIntegrations.coinGecko ? 'Yes' : 'No'}
+- DexTools: ${formData.desiredIntegrations.dexTools ? 'Yes' : 'No'}
+- Other: ${formData.desiredIntegrations.other || 'None'}
+
+**Additional Information**
+${formData.additionalInfo || 'None provided'}
+
+**Reference Sites**
+${formData.referenceSites || 'None provided'}
+
+**Hosting Preference**
+${formData.hostingPreference || 'Not specified'}
+
+**Social Links**
+- Twitter: ${formData.twitterLink || 'Not provided'}
+- Telegram: ${formData.telegramLink || 'Not provided'}
+${type === 'quote' ? `\n**Budget Range**\n${formData.budgetRange || 'Not specified'}` : ''}`;
+
     const response = await fetch('/api/discord', {
       method: 'POST',
       headers: {
@@ -12,47 +53,9 @@ export const sendToDiscord = async (formData, type) => {
           orderNumber,
           type,
           planType,
-          // Basic Info
           projectName: formData.projectName,
           email: formData.email,
-          details: formData.details,
-          
-          // Social Links
-          twitterLink: formData.twitterLink,
-          telegramLink: formData.telegramLink,
-          
-          // Token Details
-          tokenName: formData.tokenName,
-          tokenSymbol: formData.tokenSymbol,
-          chain: formData.chain,
-          contractAddress: formData.contractAddress,
-          
-          // Timeline
-          launchDate: formData.launchDate,
-          deadline: formData.deadline,
-          
-          // Technical Requirements
-          technicalRequirements: {
-            priceTracking: formData.technicalRequirements.priceTracking,
-            chart: formData.technicalRequirements.chart,
-            swapInterface: formData.technicalRequirements.swapInterface,
-            customFeatures: formData.technicalRequirements.customFeatures
-          },
-          
-          // Integrations
-          desiredIntegrations: {
-            coinGecko: formData.desiredIntegrations.coinGecko,
-            dexTools: formData.desiredIntegrations.dexTools,
-            other: formData.desiredIntegrations.other
-          },
-          
-          // Additional Info
-          budgetRange: formData.budgetRange,
-          referenceSites: formData.referenceSites,
-          hostingPreference: formData.hostingPreference,
-          additionalInfo: formData.additionalInfo,
-          
-          // Discord Channel Info
+          details: formattedDetails, // Send the formatted details
           categoryId: '1336065020907229184',
           guildId: '1129935594986942464',
           supportRoleId: '1129935594999529715',
@@ -60,16 +63,12 @@ export const sendToDiscord = async (formData, type) => {
         }
       })
     });
-    
+
     const data = await response.json();
     if (!response.ok) {
-      console.error('Server error:', data);
       throw new Error(data.error || 'Server error occurred');
     }
-    if (!data.success) {
-      console.error('Operation failed:', data);
-      throw new Error(data.error || 'Operation failed');
-    }
+    
     return {
       success: true,
       orderNumber: data.orderNumber,
