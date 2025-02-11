@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+// Update component imports to look in the components directory
 import BuilderPanel from './components/BuilderPanel';
 import BuilderPreview from './components/BuilderPreview';
 import ComponentEditor from './components/ComponentEditor';
 import StyleSettings from './components/StyleSettings';
 import NavbarEditor from './components/NavbarEditor';
 import ImageManager from './components/ImageManager';
+// Update StyleContext import to go up two levels to src/contexts
 import { StyleProvider, useStyle } from '../../contexts/StyleContext';
 import { Eye, ArrowLeft, Palette } from 'lucide-react';
 import { Link } from 'react-router-dom';
