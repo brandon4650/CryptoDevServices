@@ -25,6 +25,7 @@ import GameModal from './GameModal';
 
 const CryptoWebDev = ({ onGameOpen }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isGameOpen, setIsGameOpen] = useState(false);
   return (
 <div className="min-h-screen bg-gradient-to-b from-blue-950 to-black text-white">
 {/* Navigation */}
