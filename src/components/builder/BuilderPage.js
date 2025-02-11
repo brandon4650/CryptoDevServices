@@ -224,6 +224,15 @@ const BuilderPageContent = () => {
         )}
       </header>
 
+{/* Disclaimer Banner */}
+      <div className="bg-yellow-500/10 border-b border-yellow-500/20">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <p className="text-yellow-300/90 text-sm text-center">
+            ⚠️ This is a preview/mockup tool to demonstrate basic layout and design concepts. Final implementation may vary in features and appearance.
+          </p>
+        </div>
+      </div>
+
       {/* Builder Interface */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex gap-8">
