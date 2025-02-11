@@ -23,39 +23,32 @@ const QuotePage = () => {
     twitterLink: '',
     telegramLink: '',
     discordLink: '',
-    // New fields
-    contractAddress: '',
-    launchDate: '',
-    deadline: '',
+    // Make sure to initialize all nested objects
     technicalRequirements: {
         priceTracking: false,
         chart: false,
         swapInterface: false,
         customFeatures: ''
     },
-    // Coin/Token Details
-    tokenName: '',
-    tokenSymbol: '',
-    chain: '', // e.g., BSC, ETH, etc.
-    // Marketing & Integration
-    marketingPlan: '',
     desiredIntegrations: {
         coinGecko: false,
         dexTools: false,
         other: ''
     },
-    // Budget (for quote only)
+    // Other new fields
+    contractAddress: '',
+    launchDate: '',
+    deadline: '',
+    tokenName: '',
+    tokenSymbol: '',
+    chain: '',
+    marketingPlan: '',
     budgetRange: '',
-    // Reference sites
     referenceSites: '',
-    // Hosting preferences
     hostingPreference: '',
-    // Design preferences
     colorScheme: '',
-    // Existing site (if any)
     existingSite: ''
 });
-
     useEffect(() => {
         const plan = searchParams.get('plan');
         if (plan) {
