@@ -111,6 +111,13 @@ const CryptoWebDev = ({ onGameOpen }) => {
           >
             Pricing
           </a>
+              <button
+                    onClick={onGameOpen}
+                    className="text-zinc-300 hover:text-cyan-400 transition-colors py-2 flex items-center gap-2"
+                  >
+                    <GameController className="h-4 w-4" />
+                    Bored?
+                  </button>
           <Link 
             to="/quote" 
             onClick={() => setIsMenuOpen(false)}
