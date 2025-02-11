@@ -323,6 +323,7 @@ const BuilderPreview = ({
 
         {/* Section Content with semi-transparent background */}
         <div className="relative" style={{ zIndex: 1 }}>
+        <div className="bg-gray-900/50">
       {renderSection(section)}
     </div>
 
