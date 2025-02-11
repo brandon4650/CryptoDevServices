@@ -175,8 +175,8 @@ const CryptoWebDev = () => {
               },
               {
                 icon: <Monitor className="h-8 w-8 text-cyan-400" />,
-                title: "Dapp Development",
-                description: "Full-stack decentralized application development with modern frameworks."
+                title: "Web3 Website Development",
+                description: "Building modern, blockchain-enabled websites with Web3 connectivity for seamless crypto interactions."
               },
               {
                 icon: <Database className="h-8 w-8 text-cyan-400" />,
