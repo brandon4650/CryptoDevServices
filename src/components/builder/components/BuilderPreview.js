@@ -1,14 +1,14 @@
-import React from "react";
+import React from 'react';
+import { useStyle } from '../contexts/StyleContext';
 import {
   Smartphone,
   Monitor,
   Tablet,
-  X,
   ChevronUp,
   ChevronDown,
   Settings,
   Trash2,
-} from "lucide-react";
+} from 'lucide-react';
 
 const PreviewModes = {
   DESKTOP: { width: "100%", label: "Desktop" },
@@ -23,13 +23,36 @@ const BuilderPreview = ({
   onMoveSection,
   onSelectSection,
   selectedSection,
+  navbarData
 }) => {
+  const { globalStyles, getButtonClasses, getFontClasses, getBackgroundStyle } = useStyle();
+
+  const renderNavbar = () => (
+    <nav className="bg-blue-900/50 border-b border-blue-800/50 p-4">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="text-xl font-bold text-white">{navbarData.title}</div>
+        <div className="flex items-center gap-6">
+          {navbarData.items?.map((item, index) => (
+            <a
+              key={index}
+              href={item.url}
+              className="text-gray-300 hover:text-white transition-colors"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </nav>
+  );
+
   const renderSection = (section) => {
-    // Return preview HTML based on section type
+    const baseClasses = `${getFontClasses()} relative`;
+    
     switch (section.type) {
       case "HERO":
         return (
-          <div className="text-center py-20 px-4">
+          <div className={`${baseClasses} text-center py-20 px-4`}>
             <h1 className="text-4xl md:text-5xl font-bold text-white">
               {section.data.title}
             </h1>
@@ -37,28 +60,22 @@ const BuilderPreview = ({
               {section.data.subtitle}
             </p>
             {section.data.hasButton && (
-              <button className="mt-8 px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg text-white text-lg font-medium hover:opacity-90 transition-opacity">
+              <button className={`mt-8 ${getButtonClasses()}`}>
                 {section.data.buttonText}
               </button>
             )}
           </div>
         );
-      case "TOKEN_INFO":
+     case "TOKEN_INFO":
         return (
-          <div className="flex items-center justify-center gap-8 py-4 px-4 bg-[#1a1a1a]/50">
+          <div className={`${baseClasses} flex items-center justify-center gap-8 py-4 px-4 bg-[#1a1a1a]/50`}>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Price:</span>
               <span className="text-white">{section.data.price}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">24h:</span>
-              <span
-                className={
-                  section.data.change24h?.startsWith("-")
-                    ? "text-red-500"
-                    : "text-green-500"
-                }
-              >
+              <span className={section.data.change24h?.startsWith("-") ? "text-red-500" : "text-green-500"}>
                 {section.data.change24h}
               </span>
             </div>
@@ -240,7 +257,7 @@ const BuilderPreview = ({
     }
   };
 
-return (
+  return (
     <div className="flex-1 bg-blue-900/10 rounded-lg overflow-hidden">
       {/* Preview Header */}
       <div className="bg-blue-900/20 border-b border-blue-800/50 p-4">
@@ -283,53 +300,62 @@ return (
       {/* Preview Area */}
       <div className="p-4 overflow-auto h-[calc(100vh-10rem)]">
         <div
-          className="bg-gray-900 min-h-[800px] mx-auto transition-all duration-300 overflow-hidden"
-          style={{ width: PreviewModes[previewMode].width }}
+          className="min-h-[800px] mx-auto transition-all duration-300 overflow-hidden"
+          style={{ 
+            width: PreviewModes[previewMode].width,
+            ...getBackgroundStyle('main')
+          }}
         >
-          {sections.map((section, index) => (
-  <div
-    key={section.id}
-    className={`relative group ${
-      selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
-    }`}
-  >
-    <div className="relative">
-      <div className="bg-gray-900/50">
-        {renderSection(section)}
-      </div>
-    </div>
+          {/* Navbar */}
+          {renderNavbar()}
 
-    {/* Controls Layer */}
-    <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <button
-        onClick={() => onMoveSection(index, "up")}
-        className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
-        disabled={index === 0}
-      >
-        <ChevronUp className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onMoveSection(index, "down")}
-        className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
-        disabled={index === sections.length - 1}
-      >
-        <ChevronDown className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onSelectSection(section.id)}
-        className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
-      >
-        <Settings className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onRemoveSection(section.id)}
-        className="p-1 bg-red-900/80 hover:bg-red-800 rounded text-white"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-    </div>
-  </div>
-))}
+          {/* Sections */}
+          {sections.map((section, index) => (
+            <div
+              key={section.id}
+              className={`relative group ${
+                selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
+              }`}
+              style={section.data.backgroundImage ? {
+                backgroundImage: `url(${section.data.backgroundImage})`,
+                backgroundPosition: `${section.data.backgroundPosition?.x}px ${section.data.backgroundPosition?.y}px`,
+                backgroundSize: `${section.data.backgroundSize?.width} ${section.data.backgroundSize?.height}`,
+                backgroundRepeat: 'no-repeat'
+              } : undefined}
+            >
+              {renderSection(section)}
+
+              {/* Controls Layer */}
+              <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => onMoveSection(index, "up")}
+                  className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
+                  disabled={index === 0}
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onMoveSection(index, "down")}
+                  className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
+                  disabled={index === sections.length - 1}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onSelectSection(section.id)}
+                  className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onRemoveSection(section.id)}
+                  className="p-1 bg-red-900/80 hover:bg-red-800 rounded text-white"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
 
           {sections.length === 0 && (
             <div className="h-[800px] flex items-center justify-center text-gray-400">
