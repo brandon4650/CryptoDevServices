@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import PortfolioPricingSection from './PortfolioPricingSection';
+import GameModal from './GameModal';
 
 
 const CryptoWebDev = () => {
