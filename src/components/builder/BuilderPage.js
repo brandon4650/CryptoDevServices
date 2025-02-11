@@ -5,7 +5,7 @@ import ComponentEditor from './components/ComponentEditor';
 import StyleSettings from './components/StyleSettings';
 import NavbarEditor from './components/NavbarEditor';
 import ImageManager from './components/ImageManager';
-import { StyleProvider, useStyle } from './contexts/StyleContext';
+import { StyleProvider, useStyle } from '../../contexts/StyleContext';
 import { Eye, ArrowLeft, Palette } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
