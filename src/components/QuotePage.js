@@ -62,12 +62,26 @@ const QuotePage = () => {
     }, [searchParams]);
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+    const { name, value } = e.target;
+    
+    // Handle nested object properties
+    if (name.includes('.')) {
+        const [parent, child] = name.split('.');
+        setFormData(prev => ({
+            ...prev,
+            [parent]: {
+                ...prev[parent],
+                [child]: value
+            }
+        }));
+    } else {
+        // Handle regular fields
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
-    };
+    }
+};
 
     const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
