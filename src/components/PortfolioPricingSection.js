@@ -115,8 +115,7 @@ const PortfolioPricingSection = () => {
         "How to Buy Guide",
         "Contract Address with Copy Feature",
         "Basic Social Links",
-        "3-4 Content Sections",
-        "5 Days Delivery"
+        "3-4 Content Sections"
       ]
     },
     {
@@ -131,8 +130,7 @@ const PortfolioPricingSection = () => {
         "Animated Sections",
         "Custom Graphics",
         "Team Information",
-        "Extended Roadmap",
-        "3 Days Delivery"
+        "Extended Roadmap"
       ]
     },
     {
@@ -146,8 +144,7 @@ const PortfolioPricingSection = () => {
         "Bubble Scanner Integration",
         "Detailed Token Analytics",
         "Regular Content Updates",
-        "Priority Support",
-        "24h Delivery"
+        "Priority Support"
       ]
     }
   ];
