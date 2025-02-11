@@ -4,25 +4,18 @@ import ImageManager from './ImageManager';
 
 const ComponentEditor = ({ section, onUpdate, onClose }) => {
   const updateField = (field, value) => {
-  // Create a new data object with the updated field
   const newData = {
     ...section.data,
     [field]: value,
-    // Keep track of the isBgMode flag
-    isBgMode: field === 'backgroundImage' ? true : section.data.isBgMode
   };
 
-  // If updating background image settings, ensure we maintain all related properties
-  if (field === 'backgroundImage' || field === 'backgroundPosition' || field === 'backgroundSize') {
-    // If setting a new background image, initialize with default values
-    if (field === 'backgroundImage') {
-      newData.backgroundPosition = { x: 0, y: 0 };
-      newData.backgroundSize = { width: '100%', height: '100%' };
-      newData.isBgMode = true;
-    }
+  // If setting a new background image, initialize with default values
+  if (field === 'backgroundImage') {
+    newData.backgroundPosition = { x: 0, y: 0 };
+    newData.backgroundSize = { width: '100%', height: '100%' };
+    // Don't force isBgMode - let it be controlled by UI
   }
 
-  // Log the update for debugging
   console.log('Updating section:', {
     field,
     value,
