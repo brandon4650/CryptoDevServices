@@ -1,5 +1,5 @@
 import React from 'react';
-import { useStyle } from '../contexts/StyleContext';
+import { useStyle } from '../../../contexts/StyleContext';
 
 const FONT_STYLES = {
   'inherit': 'Inherit from Global',
