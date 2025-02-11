@@ -107,8 +107,8 @@ const QuotePage = () => {
                 "Simple Roadmap Display",
                 "How to Buy Guide",
                 "Contract Address with Copy Feature",
-                "Basic Social Links",
-                "5 Days Delivery"
+                "Basic Social Links"
+
             ]
         },
         {
@@ -121,8 +121,7 @@ const QuotePage = () => {
                 "Price Track of Coin",
                 "Advanced Design Elements",
                 "Animated Sections",
-                "Custom Graphics",
-                "3 Days Delivery"
+                "Custom Graphics"
             ]
         },
         {
@@ -134,8 +133,7 @@ const QuotePage = () => {
                 "Bubble Check Feature",
                 "Rug Checker Integration",
                 "Partnership Display",
-                "Constant Updates",
-                "24h Delivery"
+                "Constant Updates"
             ]
         }
     ];
