@@ -146,14 +146,14 @@ const BuilderPage = () => {
 
   return (
     <div 
-      className="min-h-screen bg-gray-900 relative"
-      style={{
-        backgroundImage: pageBackground ? `url(${pageBackground})` : undefined,
-        backgroundPosition: `${pageBackgroundPosition.x}px ${pageBackgroundPosition.y}px`,
-        backgroundSize: `${pageBackgroundSize.width} ${pageBackgroundSize.height}`,
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
+  className="min-h-screen bg-gray-900 relative"
+  style={{
+    backgroundImage: pageBackground ? `url(${pageBackground})` : undefined,
+    backgroundPosition: `${pageBackgroundPosition.x}px ${pageBackgroundPosition.y}px`,
+    backgroundSize: `${pageBackgroundSize.width} ${pageBackgroundSize.height}`,
+    backgroundRepeat: 'no-repeat'
+  }}
+>
       {/* Header */}
       <header className="bg-blue-900/50 border-b border-blue-800/50">
         <div className="max-w-7xl mx-auto px-4">
