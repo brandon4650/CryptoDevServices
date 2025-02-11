@@ -16,7 +16,8 @@ import {
   MessageCircle,  // Fixed spelling here
   FileText, 
   Menu, 
-  X
+  X, 
+  GameController
 } from 'lucide-react';
 import PortfolioPricingSection from './PortfolioPricingSection';
 import GameModal from './GameModal';
