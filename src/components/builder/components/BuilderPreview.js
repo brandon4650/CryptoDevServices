@@ -240,7 +240,7 @@ const BuilderPreview = ({
     }
   };
 
-  return (
+ return (
     <div className="flex-1 bg-blue-900/10 rounded-lg overflow-hidden">
       {/* Preview Header */}
       <div className="bg-blue-900/20 border-b border-blue-800/50 p-4">
@@ -281,89 +281,90 @@ const BuilderPreview = ({
       </div>
 
       {/* Preview Area */}
-<div className="p-4 overflow-auto h-[calc(100vh-10rem)]">
-  <div
-    className="bg-gray-900 min-h-[800px] mx-auto transition-all duration-300 overflow-hidden"
-    style={{ width: PreviewModes[previewMode].width }}
-  >
-    {sections.map((section, index) => (
-  <div
-    key={section.id}
-    className={`relative group ${
-      selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
-    }`}
-  >
-    {/* Background Layer */}
-    <div className="absolute inset-0" style={{ zIndex: 0 }}>
-      {section.data.backgroundImage && section.data.isBgMode ? (
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url("${section.data.backgroundImage}")`,
-            backgroundPosition: `${section.data.backgroundPosition?.x || 0}px ${section.data.backgroundPosition?.y || 0}px`,
-            backgroundSize: section.data.backgroundSize?.width || 'cover',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-      ) : section.data.backgroundImage ? (
-        <img
-          src={section.data.backgroundImage}
-          alt=""
-          className="absolute"
-          style={{
-            top: `${section.data.backgroundPosition?.y || 0}px`,
-            left: `${section.data.backgroundPosition?.x || 0}px`,
-            width: section.data.backgroundSize?.width || '100%',
-            height: section.data.backgroundSize?.height || '100%',
-            objectFit: 'contain'
-          }}
-        />
-      ) : null}
-    </div>
+      <div className="p-4 overflow-auto h-[calc(100vh-10rem)]">
+        <div
+          className="bg-gray-900 min-h-[800px] mx-auto transition-all duration-300 overflow-hidden"
+          style={{ width: PreviewModes[previewMode].width }}
+        >
+          {sections.map((section, index) => (
+            <div
+              key={section.id}
+              className={`relative group ${
+                selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
+              }`}
+            >
+              {/* Background Layer */}
+              <div className="absolute inset-0" style={{ zIndex: 0 }}>
+                {section.data.backgroundImage && section.data.isBgMode ? (
+                  <div 
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage: `url("${section.data.backgroundImage}")`,
+                      backgroundPosition: `${section.data.backgroundPosition?.x || 0}px ${section.data.backgroundPosition?.y || 0}px`,
+                      backgroundSize: section.data.backgroundSize?.width || 'cover',
+                      backgroundRepeat: 'no-repeat'
+                    }}
+                  />
+                ) : section.data.backgroundImage ? (
+                  <img
+                    src={section.data.backgroundImage}
+                    alt=""
+                    className="absolute"
+                    style={{
+                      top: `${section.data.backgroundPosition?.y || 0}px`,
+                      left: `${section.data.backgroundPosition?.x || 0}px`,
+                      width: section.data.backgroundSize?.width || '100%',
+                      height: section.data.backgroundSize?.height || '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                ) : null}
+              </div>
 
-        {/* Section Content with semi-transparent background */}
-        <div className="relative" style={{ zIndex: 1 }}>
-        <div className="bg-gray-900/50">
-      {renderSection(section)}
-    </div>
+              {/* Section Content with semi-transparent background */}
+              <div className="relative" style={{ zIndex: 1 }}>
+                <div className="bg-gray-900/50">
+                  {renderSection(section)}
+                </div>
+              </div>
 
-        {/* Section Controls */}
-        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 2 }}>
-          <button
-            onClick={() => onMoveSection(index, "up")}
-            className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
-            disabled={index === 0}
-          >
-            <ChevronUp className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onMoveSection(index, "down")}
-            className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
-            disabled={index === sections.length - 1}
-          >
-            <ChevronDown className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onSelectSection(section.id)}
-            className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onRemoveSection(section.id)}
-            className="p-1 bg-red-900/80 hover:bg-red-800 rounded text-white"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    ))}
+              {/* Section Controls */}
+              <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 2 }}>
+                <button
+                  onClick={() => onMoveSection(index, "up")}
+                  className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
+                  disabled={index === 0}
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onMoveSection(index, "down")}
+                  className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
+                  disabled={index === sections.length - 1}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onSelectSection(section.id)}
+                  className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onRemoveSection(section.id)}
+                  className="p-1 bg-red-900/80 hover:bg-red-800 rounded text-white"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
 
-    {sections.length === 0 && (
-      <div className="h-[800px] flex items-center justify-center text-gray-400">
-        <p>Add components from the panel to start building</p>
-      </div>
-    )}
+          {sections.length === 0 && (
+            <div className="h-[800px] flex items-center justify-center text-gray-400">
+              <p>Add components from the panel to start building</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
