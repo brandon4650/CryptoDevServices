@@ -18,6 +18,7 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
     if (field === 'backgroundImage') {
       newData.backgroundPosition = { x: 0, y: 0 };
       newData.backgroundSize = { width: '100%', height: '100%' };
+      newData.isBgMode = true;
     }
   }
 
