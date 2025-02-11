@@ -23,7 +23,7 @@ import PortfolioPricingSection from './PortfolioPricingSection';
 import GameModal from './GameModal';
 
 
-const CryptoWebDev = () => {
+const CryptoWebDev = ({ onGameOpen }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
 <div className="min-h-screen bg-gradient-to-b from-blue-950 to-black text-white">
@@ -40,10 +40,18 @@ const CryptoWebDev = () => {
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-8">
-        <a href="#services" className="hover:text-cyan-400 transition-colors">Services</a>
-        <a href="#process" className="hover:text-cyan-400 transition-colors">Process</a>
-        <a href="#portfolio" className="hover:text-cyan-400 transition-colors">Portfolio</a>
-        <a href="#pricing" className="hover:text-cyan-400 transition-colors">Pricing</a>
+              <a href="#services" className="hover:text-cyan-400 transition-colors">Services</a>
+              <a href="#process" className="hover:text-cyan-400 transition-colors">Process</a>
+              <a href="#portfolio" className="hover:text-cyan-400 transition-colors">Portfolio</a>
+              <a href="#pricing" className="hover:text-cyan-400 transition-colors">Pricing</a>
+              {/* Add the game button */}
+              <button
+                onClick={onGameOpen}
+                className="hover:text-cyan-400 transition-colors flex items-center gap-2"
+              >
+                <GameController className="h-4 w-4" />
+                Bored?
+              </button>
         <Link 
           to="/quote" 
           className="bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
