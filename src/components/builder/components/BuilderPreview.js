@@ -318,24 +318,31 @@ const BuilderPreview = ({
                 })}
               {/* Non-background mode image */}
               {section.data.backgroundImage && !section.data.isBgMode && (
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ overflow: "hidden" }}
-                >
-                  <img
-                    src={section.data.backgroundImage}
-                    alt=""
-                    className="absolute"
-                    style={{
-                      top: `${section.data.backgroundPosition?.y || 0}px`,
-                      left: `${section.data.backgroundPosition?.x || 0}px`,
-                      width: section.data.backgroundSize?.width || "100%",
-                      height: section.data.backgroundSize?.height || "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div>
-              )}
+  <div 
+    className="absolute inset-0 pointer-events-none"
+    style={{ 
+      overflow: 'hidden',
+      minHeight: '200px', // Add minimum height
+      border: '1px solid red' // Temporary debug border
+    }}
+  >
+    <img
+      src={section.data.backgroundImage}
+      alt=""
+      className="absolute"
+      style={{
+        position: 'absolute',
+        top: `${section.data.backgroundPosition?.y || 0}px`,
+        left: `${section.data.backgroundPosition?.x || 0}px`,
+        width: section.data.backgroundSize?.width || '100%',
+        height: section.data.backgroundSize?.height || '100%',
+        objectFit: 'contain',
+        opacity: 1, // Ensure full opacity
+        zIndex: 1  // Ensure proper stacking
+      }}
+    />
+  </div>
+)}
 
               {/* Section Controls */}
               <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-50">
