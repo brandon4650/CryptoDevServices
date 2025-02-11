@@ -4,15 +4,19 @@ import ImageManager from './ImageManager';
 
 const ComponentEditor = ({ section, onUpdate, onClose }) => {
   const updateField = (field, value) => {
+    const newData = {
+      ...section.data,
+      [field]: value
+    };
+
+    // If we're updating background image settings, save the mode state too
+    if (['backgroundImage', 'backgroundPosition', 'backgroundSize'].includes(field)) {
+      newData.isBgMode = section.data.isBgMode;
+    }
+
     onUpdate({
       ...section,
-      data: {
-        ...section.data,
-        [field]: value,
-        backgroundImage: field === 'backgroundImage' ? value : section.data.backgroundImage,
-        backgroundPosition: field === 'backgroundPosition' ? value : section.data.backgroundPosition,
-        backgroundSize: field === 'backgroundSize' ? value : section.data.backgroundSize,
-      }
+      data: newData
     });
   };
 
