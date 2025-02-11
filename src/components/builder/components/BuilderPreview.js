@@ -293,31 +293,49 @@ const BuilderPreview = ({
                 selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
               }`}
               style={{
-                ...(section.data.backgroundImage && section.data.isBgMode ? {
-                backgroundImage: `url(${section.data.backgroundImage})`,
-                backgroundPosition: `${section.data.backgroundPosition?.x || 0}px ${section.data.backgroundPosition?.y || 0}px`,
-                backgroundSize: section.data.backgroundSize?.width || 'cover',
-                backgroundRepeat: 'no-repeat',
-              } : {})
-            }}
-          >
-              {/* For non-background mode images */}
+                position: "relative",
+                overflow: "hidden",
+                ...(section.data.backgroundImage && section.data.isBgMode
+                  ? {
+                      backgroundImage: `url("${section.data.backgroundImage}")`,
+                      backgroundPosition: section.data.backgroundPosition
+                        ? `${section.data.backgroundPosition.x}px ${section.data.backgroundPosition.y}px`
+                        : "center",
+                      backgroundSize:
+                        section.data.backgroundSize?.width || "cover",
+                      backgroundRepeat: "no-repeat",
+                    }
+                  : {}),
+              }}
+            >
+              {/* Add a debug output */}
+              {section.data.backgroundImage &&
+                console.log("Section background data:", {
+                  image: section.data.backgroundImage,
+                  isBgMode: section.data.isBgMode,
+                  position: section.data.backgroundPosition,
+                  size: section.data.backgroundSize,
+                })}
+              {/* Non-background mode image */}
               {section.data.backgroundImage && !section.data.isBgMode && (
-               <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                 <img
-                   src={section.data.backgroundImage}
-                   alt=""
-                   style={{
-                     position: 'absolute',
-                     top: `${section.data.backgroundPosition?.y || 0}px`,
-                     left: `${section.data.backgroundPosition?.x || 0}px`,
-                     width: section.data.backgroundSize?.width,
-                     height: section.data.backgroundSize?.height,
-                     objectFit: 'unset',
-                   }}
-                 />
-               </div>
-             )}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ overflow: "hidden" }}
+                >
+                  <img
+                    src={section.data.backgroundImage}
+                    alt=""
+                    className="absolute"
+                    style={{
+                      top: `${section.data.backgroundPosition?.y || 0}px`,
+                      left: `${section.data.backgroundPosition?.x || 0}px`,
+                      width: section.data.backgroundSize?.width || "100%",
+                      height: section.data.backgroundSize?.height || "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Section Controls */}
               <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-50">
@@ -350,12 +368,9 @@ const BuilderPreview = ({
               </div>
 
               {/* Section Content */}
-              <div className="relative z-10">
-                {renderSection(section)}
-                </div>
-              </div>
-            ))}
-
+              <div className="relative z-10">{renderSection(section)}</div>
+            </div>
+          ))}
 
           {sections.length === 0 && (
             <div className="h-[800px] flex items-center justify-center text-gray-400">
