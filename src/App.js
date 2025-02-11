@@ -10,6 +10,7 @@ import GameModal from './components/GameModal';
 
 function App() {
   const [chatInitialized, setChatInitialized] = useState(false);
+  const [isGameOpen, setIsGameOpen] = useState(false);
 
   useEffect(() => {
     const startChat = async () => {
@@ -42,7 +43,7 @@ function App() {
           path="/" 
           element={
             <>
-              <CryptoWebDev />
+              <CryptoWebDev onGameOpen={() => setIsGameOpen(true)} />
               <LiveChat chatInitialized={chatInitialized} />
             </>
           } 
@@ -51,6 +52,7 @@ function App() {
         <Route path="/chat" element={<LiveChat initialOpen={true} chatInitialized={chatInitialized} />} />
         <Route path="/builder" element={<BuilderPage />} />
       </Routes>
+      <GameModal isOpen={isGameOpen} onClose={() => setIsGameOpen(false)} />
       {/* Render LiveChat globally */}
       {!window.location.pathname.includes('/chat') && chatInitialized && <LiveChat />}
     </Router>
