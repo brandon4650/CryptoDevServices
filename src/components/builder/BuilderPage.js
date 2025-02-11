@@ -2,15 +2,29 @@ import React, { useState } from 'react';
 import BuilderPanel from './components/BuilderPanel';
 import BuilderPreview from './components/BuilderPreview';
 import ComponentEditor from './components/ComponentEditor';
+import StyleSettings from './components/StyleSettings';
+import NavbarEditor from './components/NavbarEditor';
 import ImageManager from './components/ImageManager';
-import { Eye, ArrowLeft } from 'lucide-react';
+import { StyleProvider, useStyle } from './contexts/StyleContext';
+import { Eye, ArrowLeft, Palette } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const BuilderPage = () => {
+const BuilderPageContent = () => {
+  const { globalStyles, updateGlobalStyles } = useStyle();
   const [sections, setSections] = useState([]);
   const [selectedSection, setSelectedSection] = useState(null);
   const [previewMode, setPreviewMode] = useState('DESKTOP');
   const [isFullPreview, setIsFullPreview] = useState(false);
+  const [showStyleSettings, setShowStyleSettings] = useState(false);
+  
+  // Navbar state
+  const [navbarData, setNavbarData] = useState({
+    title: 'Your Website',
+    items: [
+      { label: 'Home', url: '#' },
+      { label: 'About', url: '#' }
+    ]
+  });
   
   // Image management state
   const [pageBackground, setPageBackground] = useState(null);
@@ -47,12 +61,16 @@ const BuilderPage = () => {
     setSections(newSections);
   };
 
+  const handleUpdateNavbar = (newData) => {
+    setNavbarData(newData);
+  };
+
   const baseImageData = {
-  backgroundImage: null,
-  backgroundPosition: { x: 0, y: 0 },
-  backgroundSize: { width: '100%', height: '100%' },
-  isBgMode: true  // Add this line to track background mode state
-};
+    backgroundImage: null,
+    backgroundPosition: { x: 0, y: 0 },
+    backgroundSize: { width: '100%', height: '100%' },
+    isBgMode: true
+  };
 
   const getDefaultData = (type) => {
     switch (type) {
@@ -146,14 +164,15 @@ const BuilderPage = () => {
 
   return (
     <div 
-  className="min-h-screen bg-gray-900 relative"
-  style={{
-    backgroundImage: pageBackground ? `url(${pageBackground})` : undefined,
-    backgroundPosition: `${pageBackgroundPosition.x}px ${pageBackgroundPosition.y}px`,
-    backgroundSize: `${pageBackgroundSize.width} ${pageBackgroundSize.height}`,
-    backgroundRepeat: 'no-repeat'
-  }}
->
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: pageBackground ? `url(${pageBackground})` : undefined,
+        backgroundPosition: `${pageBackgroundPosition.x}px ${pageBackgroundPosition.y}px`,
+        backgroundSize: `${pageBackgroundSize.width} ${pageBackgroundSize.height}`,
+        backgroundRepeat: 'no-repeat',
+        ...(!pageBackground && { backgroundColor: globalStyles.useGlobalColors ? globalStyles.globalColor : globalStyles.mainBg })
+      }}
+    >
       {/* Header */}
       <header className="bg-blue-900/50 border-b border-blue-800/50">
         <div className="max-w-7xl mx-auto px-4">
@@ -165,13 +184,22 @@ const BuilderPage = () => {
               </Link>
               <span className="text-white font-medium">Website Builder</span>
             </div>
-            <button
-              onClick={() => setIsFullPreview(!isFullPreview)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 rounded-lg text-white"
-            >
-              <Eye className="w-4 h-4" />
-              {isFullPreview ? 'Exit Preview' : 'Preview'}
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowStyleSettings(!showStyleSettings)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-900/30 hover:bg-blue-900/40 rounded-lg text-white"
+              >
+                <Palette className="w-4 h-4" />
+                Style Settings
+              </button>
+              <button
+                onClick={() => setIsFullPreview(!isFullPreview)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:opacity-90 rounded-lg text-white"
+              >
+                <Eye className="w-4 h-4" />
+                {isFullPreview ? 'Exit Preview' : 'Preview'}
+              </button>
+            </div>
           </div>
         </div>
         
@@ -212,19 +240,44 @@ const BuilderPage = () => {
             onMoveSection={handleMoveSection}
             onSelectSection={setSelectedSection}
             selectedSection={selectedSection}
+            navbarData={navbarData}
           />
 
-          {!isFullPreview && selectedSection && (
-            <ComponentEditor
-              section={sections.find(s => s.id === selectedSection)}
-              onUpdate={handleUpdateSection}
-              onClose={() => setSelectedSection(null)}
-            />
+          {!isFullPreview && (
+            <>
+              {selectedSection && (
+                <ComponentEditor
+                  section={sections.find(s => s.id === selectedSection)}
+                  onUpdate={handleUpdateSection}
+                  onClose={() => setSelectedSection(null)}
+                />
+              )}
+              
+              {showStyleSettings && (
+                <div className="w-80 bg-blue-900/20 border border-blue-800/50 rounded-lg overflow-hidden">
+                  <div className="p-4 border-b border-blue-800/50">
+                    <h3 className="font-medium text-white">Global Styles</h3>
+                  </div>
+                  <div className="p-4">
+                    <StyleSettings
+                      globalStyles={globalStyles}
+                      onUpdate={updateGlobalStyles}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
     </div>
   );
 };
+
+const BuilderPage = () => (
+  <StyleProvider>
+    <BuilderPageContent />
+  </StyleProvider>
+);
 
 export default BuilderPage;
