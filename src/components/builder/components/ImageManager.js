@@ -196,18 +196,20 @@ const ImageManager = ({
         </div>
 
         {backgroundImage && !isFullBackground && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsBgMode(!isBgMode)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                isBgMode ? 'bg-cyan-600/50 text-white' : 'bg-blue-900/30 text-gray-300'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span className="text-sm">Background Mode</span>
-            </button>
-          </div>
-        )}
+  <div className="flex items-center gap-2">
+    <button
+      onClick={() => {
+        onUpdateField('isBgMode', !section.data.isBgMode);
+      }}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+        section.data.isBgMode ? 'bg-cyan-600/50 text-white' : 'bg-blue-900/30 text-gray-300'
+      }`}
+    >
+      <LayoutGrid className="w-4 h-4" />
+      <span className="text-sm">Background Mode</span>
+    </button>
+  </div>
+)}
 
         {backgroundImage && (
           <div className="space-y-2">
