@@ -9,13 +9,19 @@ const ComponentEditor = ({ section, onUpdate, onClose }) => {
     [field]: value,
   };
 
-  // If setting a new background image, initialize with default values
+  // Special handling for different field types
   if (field === 'backgroundImage') {
+    // Initialize position and size for new images
     newData.backgroundPosition = { x: 0, y: 0 };
     newData.backgroundSize = { width: '100%', height: '100%' };
-    // Don't force isBgMode - let it be controlled by UI
+    // Set initial background mode
+    newData.isBgMode = true;
+  } else if (field === 'isBgMode') {
+    // Direct toggle of background mode
+    newData.isBgMode = value;
   }
 
+  // Log for debugging
   console.log('Updating section:', {
     field,
     value,
