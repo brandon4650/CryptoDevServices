@@ -30,32 +30,44 @@ const ImageManager = ({
         
         // Set initial size and store original dimensions
         const img = new Image();
-        img.onload = () => {
-          setOriginalImageSize({ width: img.width, height: img.height });
-          const containerWidth = containerRef.current?.offsetWidth || 800;
-          const scale = containerWidth / img.width;
-          const newSize = {
-            width: `${Math.min(img.width, containerWidth)}px`,
-            height: `${Math.min(img.height * scale, containerWidth)}px`
-          };
-          onSizeChange(newSize);
-          setSizeScale(100);
-          
-          // Center the image initially
-          const container = containerRef.current;
-          if (container) {
-            const newPos = {
-              x: (container.offsetWidth - parseInt(newSize.width)) / 2,
-              y: (container.offsetHeight - parseInt(newSize.height)) / 2
-            };
-            onPositionChange(newPos);
-          }
+      img.onload = () => {
+        const containerWidth = containerRef.current?.offsetWidth || 800;
+        const containerHeight = containerRef.current?.offsetHeight || 600;
+        
+        // Calculate initial size while maintaining aspect ratio
+        const aspectRatio = img.width / img.height;
+        let newWidth = containerWidth;
+        let newHeight = newWidth / aspectRatio;
+        
+        // Adjust if height is too large
+        if (newHeight > containerHeight) {
+          newHeight = containerHeight;
+          newWidth = newHeight * aspectRatio;
+        }
+        
+        // Update size
+        const newSize = {
+          width: `${newWidth}px`,
+          height: `${newHeight}px`
         };
-        img.src = dataUrl;
+        onSizeChange(newSize);
+        
+        // Center the image
+        const newPosition = {
+          x: (containerWidth - newWidth) / 2,
+          y: (containerHeight - newHeight) / 2
+        };
+        onPositionChange(newPosition);
+        
+        // Store original size for scaling
+        setOriginalImageSize({ width: img.width, height: img.height });
+        setSizeScale(100);
       };
-      reader.readAsDataURL(file);
-    }
-  };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+};
 
   const handleDragStart = (e) => {
     if (isBgMode && !isFullBackground) return;
