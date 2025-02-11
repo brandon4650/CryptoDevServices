@@ -86,6 +86,13 @@ class DiscordChatClient {
     // Process embeds if they exist
   const embeds = msg.embeds || [];
 
+    // Process content to preserve URLs
+  let content = msg.content;
+  if (content) {
+    // Replace Discord's <url> format with actual URL if present
+    content = content.replace(/<(https?:\/\/[^>]+)>/g, '$1');
+  }
+
   // Base message object with embeds
   const baseMessage = {
     id: msg.id,
