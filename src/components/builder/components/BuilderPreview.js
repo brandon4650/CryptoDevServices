@@ -287,66 +287,47 @@ const BuilderPreview = ({
     style={{ width: PreviewModes[previewMode].width }}
   >
     {sections.map((section, index) => (
-      <div
-        key={section.id}
-        className={`relative group ${
-          selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
-        }`}
-        style={{
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Background Layer */}
-        {section.data.backgroundImage && section.data.isBgMode && (
-          <div 
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url("${section.data.backgroundImage}")`,
-              backgroundPosition: section.data.backgroundPosition
-                ? `${section.data.backgroundPosition.x}px ${section.data.backgroundPosition.y}px`
-                : "center",
-              backgroundSize: section.data.backgroundSize?.width || "cover",
-              backgroundRepeat: "no-repeat",
-              zIndex: 1
-            }}
-          />
-        )}
-
-        {/* Non-background mode image */}
-        {section.data.backgroundImage && !section.data.isBgMode && (
-          <div 
-            className="absolute inset-0 pointer-events-none"
-            style={{ 
-              overflow: 'hidden',
-              minHeight: '200px',
-              zIndex: 1
-            }}
-          >
-            <img
-              src={section.data.backgroundImage}
-              alt=""
-              className="absolute"
-              style={{
-                position: 'absolute',
-                top: `${section.data.backgroundPosition?.y || 0}px`,
-                left: `${section.data.backgroundPosition?.x || 0}px`,
-                width: section.data.backgroundSize?.width || '100%',
-                height: section.data.backgroundSize?.height || '100%',
-                objectFit: 'contain',
-                opacity: 1
-              }}
-            />
-          </div>
-        )}
+  <div
+    key={section.id}
+    className={`relative group ${
+      selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
+    }`}
+  >
+    {/* Background Layer */}
+    <div className="absolute inset-0" style={{ zIndex: 0 }}>
+      {section.data.backgroundImage && section.data.isBgMode ? (
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("${section.data.backgroundImage}")`,
+            backgroundPosition: `${section.data.backgroundPosition?.x || 0}px ${section.data.backgroundPosition?.y || 0}px`,
+            backgroundSize: section.data.backgroundSize?.width || 'cover',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+      ) : section.data.backgroundImage ? (
+        <img
+          src={section.data.backgroundImage}
+          alt=""
+          className="absolute"
+          style={{
+            top: `${section.data.backgroundPosition?.y || 0}px`,
+            left: `${section.data.backgroundPosition?.x || 0}px`,
+            width: section.data.backgroundSize?.width || '100%',
+            height: section.data.backgroundSize?.height || '100%',
+            objectFit: 'contain'
+          }}
+        />
+      ) : null}
+    </div>
 
         {/* Section Content with semi-transparent background */}
-        <div className="relative z-10">
-          <div className="bg-gray-900/50">{renderSection(section)}</div>
-        </div>
+        <div className="relative" style={{ zIndex: 1 }}>
+      {renderSection(section)}
+    </div>
 
         {/* Section Controls */}
-        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-50">
+        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 2 }}>
           <button
             onClick={() => onMoveSection(index, "up")}
             className="p-1 bg-blue-900/80 hover:bg-blue-800 rounded text-white"
