@@ -47,108 +47,97 @@ const BuilderPage = () => {
     setSections(newSections);
   };
 
+  const baseImageData = {
+  backgroundImage: null,
+  backgroundPosition: { x: 0, y: 0 },
+  backgroundSize: { width: '100%', height: '100%' },
+  isBgMode: true  // Add this line to track background mode state
+};
+
   const getDefaultData = (type) => {
     switch (type) {
       case 'HERO':
         return {
+          ...baseImageData,
           title: 'Welcome to Our Site',
           subtitle: 'Discover the future of crypto',
           hasButton: true,
           buttonText: 'Get Started',
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'FEATURES':
         return {
+          ...baseImageData,
           title: 'Our Features',
           features: [
             { title: 'Secure', description: 'Built with security in mind' },
             { title: 'Fast', description: 'Lightning-fast transactions' },
             { title: 'Scalable', description: 'Built for growth' }
-          ],
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
+          ]
         };
       case 'TOKEN_INFO':
         return {
+          ...baseImageData,
           price: '$0.000001234',
           change24h: '-8.05%',
           marketCap: '$7.32K',
           volume24h: '$218.44',
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'CONTRACT_ADDRESS':
         return {
+          ...baseImageData,
           label: 'Contract Address (CA):',
           address: '0x1234...5678',
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
         };
       case 'TOKENOMICS':
         return {
+          ...baseImageData,
           title: 'Tokenomics',
           supply: '1,000,000',
           distribution: [
             { label: 'Presale', value: 60 },
             { label: 'Liquidity', value: 30 },
             { label: 'Team', value: 10 }
-          ],
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
+          ]
         };
       case 'ROADMAP':
         return {
+          ...baseImageData,
           title: 'Our Roadmap',
           phases: [
             { title: 'Phase 1', items: ['Launch', 'Marketing', 'Community Building'] },
             { title: 'Phase 2', items: ['Exchange Listings', 'Partnerships', 'Development'] }
-          ],
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
+          ]
         };
       case 'TEAM':
         return {
+          ...baseImageData,
           title: 'Our Team',
           description: 'Meet the people behind the project',
           members: [
             { name: 'John Doe', role: 'CEO', description: 'Crypto veteran with 10 years experience' },
             { name: 'Jane Smith', role: 'CTO', description: 'Blockchain developer and security expert' }
-          ],
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
+          ]
         };
       case 'PARTNERS':
         return {
+          ...baseImageData,
           title: 'Our Partners',
           description: 'Trusted by leading companies in the space',
           partners: [
             { name: 'Partner 1', link: '#' },
             { name: 'Partner 2', link: '#' }
-          ],
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
+          ]
         };
       case 'SOCIALS':
         return {
+          ...baseImageData,
           title: 'Join Our Community',
           description: 'Connect with us on social media',
           links: [
             { platform: 'Twitter', url: '#' },
             { platform: 'Telegram', url: '#' },
             { platform: 'Discord', url: '#' }
-          ],
-          backgroundImage: null,
-          backgroundPosition: { x: 0, y: 0 },
-          backgroundSize: { width: '100%', height: '100%' }
+          ]
         };
       default:
         return {};
