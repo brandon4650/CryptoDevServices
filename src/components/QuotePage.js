@@ -16,14 +16,45 @@ const QuotePage = () => {
     const [channelId, setChannelId] = useState('');
     const [orderData, setOrderData] = useState(null);
     const [formData, setFormData] = useState({
-        projectName: '',
-        email: '',
-        details: '',
-        additionalInfo: '',
-        twitterLink: '',
-        telegramLink: '',
-        discordLink: ''
-    });
+    projectName: '',
+    email: '',
+    details: '',
+    additionalInfo: '',
+    twitterLink: '',
+    telegramLink: '',
+    discordLink: '',
+    // New fields
+    contractAddress: '',
+    launchDate: '',
+    deadline: '',
+    technicalRequirements: {
+        priceTracking: false,
+        chart: false,
+        swapInterface: false,
+        customFeatures: ''
+    },
+    // Coin/Token Details
+    tokenName: '',
+    tokenSymbol: '',
+    chain: '', // e.g., BSC, ETH, etc.
+    // Marketing & Integration
+    marketingPlan: '',
+    desiredIntegrations: {
+        coinGecko: false,
+        dexTools: false,
+        other: ''
+    },
+    // Budget (for quote only)
+    budgetRange: '',
+    // Reference sites
+    referenceSites: '',
+    // Hosting preferences
+    hostingPreference: '',
+    // Design preferences
+    colorScheme: '',
+    // Existing site (if any)
+    existingSite: ''
+});
 
     useEffect(() => {
         const plan = searchParams.get('plan');
@@ -44,6 +75,25 @@ const QuotePage = () => {
             [name]: value
         }));
     };
+
+    const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    if (name.includes('.')) {
+        const [parent, child] = name.split('.');
+        setFormData(prev => ({
+            ...prev,
+            [parent]: {
+                ...prev[parent],
+                [child]: checked
+            }
+        }));
+    } else {
+        setFormData(prev => ({
+            ...prev,
+            [name]: checked
+        }));
+    }
+};
 
 
     const handleSubmit = async (e) => {
