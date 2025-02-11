@@ -1,5 +1,6 @@
 import React from 'react';
 import { ToggleLeft, ToggleRight } from 'lucide-react';
+import { useStyle } from '../../../contexts/StyleContext';
 
 const FONT_STYLES = {
   'default': 'font-sans',
