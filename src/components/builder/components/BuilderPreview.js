@@ -293,36 +293,31 @@ const BuilderPreview = ({
                 selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
               }`}
               style={{
-                ...(section.data.backgroundImage && section.data.isBgMode
-                  ? {
-                      backgroundImage: `url(${section.data.backgroundImage})`,
-                      backgroundPosition: section.data.backgroundPosition
-                        ? `${section.data.backgroundPosition.x}px ${section.data.backgroundPosition.y}px`
-                        : "center",
-                      backgroundSize:
-                        section.data.backgroundSize?.width || "cover",
-                      backgroundRepeat: "no-repeat",
-                    }
-                  : {}),
-              }}
-            >
-              {/* Image for non-background mode */}
+                ...(section.data.backgroundImage && section.data.isBgMode ? {
+                backgroundImage: `url(${section.data.backgroundImage})`,
+                backgroundPosition: `${section.data.backgroundPosition?.x || 0}px ${section.data.backgroundPosition?.y || 0}px`,
+                backgroundSize: section.data.backgroundSize?.width || 'cover',
+                backgroundRepeat: 'no-repeat',
+              } : {})
+            }}
+          >
+              {/* For non-background mode images */}
               {section.data.backgroundImage && !section.data.isBgMode && (
-                <div className="absolute inset-0 pointer-events-none">
-                  <img
-                    src={section.data.backgroundImage}
-                    alt=""
-                    className="absolute"
-                    style={{
-                      top: `${section.data.backgroundPosition?.y || 0}px`,
-                      left: `${section.data.backgroundPosition?.x || 0}px`,
-                      width: section.data.backgroundSize?.width || "auto",
-                      height: section.data.backgroundSize?.height || "auto",
-                      objectFit: "unset",
-                    }}
-                  />
-                </div>
-              )}
+               <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                 <img
+                   src={section.data.backgroundImage}
+                   alt=""
+                   style={{
+                     position: 'absolute',
+                     top: `${section.data.backgroundPosition?.y || 0}px`,
+                     left: `${section.data.backgroundPosition?.x || 0}px`,
+                     width: section.data.backgroundSize?.width,
+                     height: section.data.backgroundSize?.height,
+                     objectFit: 'unset',
+                   }}
+                 />
+               </div>
+             )}
 
               {/* Section Controls */}
               <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-50">
@@ -354,10 +349,13 @@ const BuilderPreview = ({
                 </button>
               </div>
 
-              {/* Section Content with higher z-index */}
-              <div className="relative z-10">{renderSection(section)}</div>
-            </div>
-          ))}
+              {/* Section Content */}
+              <div className="relative z-10">
+                {renderSection(section)}
+                </div>
+              </div>
+            ))}
+
 
           {sections.length === 0 && (
             <div className="h-[800px] flex items-center justify-center text-gray-400">
