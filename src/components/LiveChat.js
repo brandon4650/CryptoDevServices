@@ -652,17 +652,37 @@ const handlePackageSelect = (pkg) => {
       className={`flex items-start gap-3 ${isBotMessage ? 'flex-row-reverse' : ''}`}
     >
       {isDiscordMessage || message.sender === 'CCD Support' ? (
-        <>
-          <img
-            src="/images/cryptowebservice.png"
-            alt="CCD Support"
-            className="w-8 h-8 rounded-full bg-blue-900/40"
-          />
-          <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
-            <div className="text-sm font-medium mb-1">CCD Support</div>
-            {message.content && (
-              <div className="text-zinc-100 mb-2">{message.content}</div>
-            )}
+  <>
+    <img
+      src="/images/cryptowebservice.png"
+      alt="CCD Support"
+      className="w-8 h-8 rounded-full bg-blue-900/40"
+    />
+    <div className="bg-blue-900/40 p-3 rounded-lg max-w-[70%]">
+      <div className="text-sm font-medium mb-1">CCD Support</div>
+      {message.content && (
+        <div className="text-zinc-100 mb-2">
+          {message.content.split(' ').map((word, index) => {
+            const urlPattern = /^(https?:\/\/[^\s]+)/;
+            if (urlPattern.test(word)) {
+              return (
+                <span key={index}>
+                  <a 
+                    href={word}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 underline break-all"
+                  >
+                    {word}
+                  </a>
+                  {' '}
+                </span>
+              );
+            }
+            return <span key={index}>{word} </span>;
+          })}
+        </div>
+      )}
             {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
               <div key={`${message.id}-attachment-${index}`} className="mt-2">
                 {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
@@ -721,8 +741,28 @@ const handlePackageSelect = (pkg) => {
               {isBotMessage ? 'You' : message.sender}
             </div>
             {message.content && (
-              <div className="text-zinc-100 mb-2">{message.content}</div>
-            )}
+  <div className="text-zinc-100 mb-2">
+    {message.content.split(' ').map((word, index) => {
+      const urlPattern = /^(https?:\/\/[^\s]+)/;
+      if (urlPattern.test(word)) {
+        return (
+          <span key={index}>
+            <a 
+              href={word}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-cyan-400 hover:text-cyan-300 underline break-all"
+            >
+              {word}
+            </a>
+            {' '}
+          </span>
+        );
+      }
+      return <span key={index}>{word} </span>;
+    })}
+  </div>
+)}
             {message.attachments && message.attachments.length > 0 && message.attachments.map((attachment, index) => (
               <div key={`${message.id}-attachment-${index}`} className="mt-2">
                 {attachment.isImage || attachment.filename?.match(/\.(jpg|jpeg|png|gif)$/i) !== null ? (
