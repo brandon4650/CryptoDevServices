@@ -292,16 +292,7 @@ return (
     className={`relative group ${
       selectedSection === section.id ? "ring-2 ring-cyan-500" : ""
     }`}
-    style={{
-      backgroundImage: section.data.backgroundImage ? `url("${section.data.backgroundImage}")` : undefined,
-      backgroundPosition: section.data.backgroundPosition ? 
-        `${section.data.backgroundPosition.x}px ${section.data.backgroundPosition.y}px` : 'center',
-      backgroundSize: section.data.backgroundSize ? 
-        `${section.data.backgroundSize.width} ${section.data.backgroundSize.height}` : 'cover',
-      backgroundRepeat: 'no-repeat'
-    }}
   >
-    {/* Content Layer */}
     <div className="relative">
       <div className="bg-gray-900/50">
         {renderSection(section)}
