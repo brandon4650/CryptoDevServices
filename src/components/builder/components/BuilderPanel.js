@@ -3,7 +3,7 @@ import { Plus, Settings } from 'lucide-react';
 
 const COMPONENTS = {
   HERO: {
-    type: 'hero',
+    type: 'HERO',
     label: 'Hero Section',
     description: 'Main landing section with title and CTA',
     icon: '🚀'
@@ -21,37 +21,37 @@ CONTRACT_ADDRESS: {
   icon: '📋'
 },
   FEATURES: {
-    type: 'features',
+    type: 'FEATURES',
     label: 'Features Grid',
     description: 'Display key features or benefits',
     icon: '✨'
   },
   TOKENOMICS: {
-    type: 'tokenomics',
+    type: 'TOKENOMICS',
     label: 'Tokenomics',
     description: 'Token distribution and metrics',
     icon: '📊'
   },
   ROADMAP: {
-    type: 'roadmap',
+    type: 'ROADMAP',
     label: 'Roadmap',
     description: 'Project timeline and milestones',
     icon: '🗺️'
   },
   TEAM: {
-    type: 'team',
+    type: 'TEAM',
     label: 'Team Section',
     description: 'Team members and roles',
     icon: '👥'
   },
   PARTNERS: {
-    type: 'partners',
+    type: 'PARTNERS',
     label: 'Partners',
     description: 'Partner logos and information',
     icon: '🤝'
   },
   SOCIALS: {
-    type: 'socials',
+    type: 'SOCIALS',
     label: 'Social Links',
     description: 'Social media and community links',
     icon: '🌐'
