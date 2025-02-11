@@ -2,6 +2,12 @@ import React from 'react';
 import { Plus, Settings } from 'lucide-react';
 
 const COMPONENTS = {
+  NAVBAR: {
+    type: 'NAVBAR',
+    label: 'Navigation Bar',
+    description: 'Top navigation with customizable links',
+    icon: '🎯'
+  },
   HERO: {
     type: 'HERO',
     label: 'Hero Section',
@@ -9,17 +15,17 @@ const COMPONENTS = {
     icon: '🚀'
   },
   TOKEN_INFO: {
-  type: 'TOKEN_INFO',
-  label: 'Token Information',
-  description: 'Display token price, market cap, and volume',
-  icon: '💰'
-},
-CONTRACT_ADDRESS: {
-  type: 'CONTRACT_ADDRESS',
-  label: 'Contract Address',
-  description: 'Display contract address with copy button',
-  icon: '📋'
-},
+    type: 'TOKEN_INFO',
+    label: 'Token Information',
+    description: 'Display token price, market cap, and volume',
+    icon: '💰'
+  },
+  CONTRACT_ADDRESS: {
+    type: 'CONTRACT_ADDRESS',
+    label: 'Contract Address',
+    description: 'Display contract address with copy button',
+    icon: '📋'
+  },
   FEATURES: {
     type: 'FEATURES',
     label: 'Features Grid',
@@ -64,7 +70,7 @@ const BuilderPanel = ({ onAddComponent, activeSection, onSelectSection }) => {
       {/* Header */}
       <div className="p-4 border-b border-blue-800/50">
         <h2 className="text-lg font-semibold text-white">Components</h2>
-        <p className="text-sm text-gray-400">Drag or click to add to your page</p>
+        <p className="text-sm text-gray-400">Click to add to your page</p>
       </div>
 
       {/* Components List */}
