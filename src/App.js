@@ -7,6 +7,8 @@ import LiveChat from './components/LiveChat';
 import { initializeChat, chatClient } from './utils/DiscordChatClient';
 import BuilderPage from './components/builder/BuilderPage';
 import GameModal from './components/GameModal';
+import { GameController } from 'lucide-react';
+
 
 function App() {
   const [chatInitialized, setChatInitialized] = useState(false);
