@@ -1,119 +1,106 @@
 // src/pages/Trading/TradingChart.js
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
-  CandlestickChart, Candle, XAxis, YAxis, 
+  ComposedChart, Candle, XAxis, YAxis, 
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 import axios from 'axios';
 
-const fetchComprehensiveCoinData = async (tokenAddress) => {
+const fetchTokenData = async (tokenAddress) => {
   try {
-    // Fetch price and market data from Jupiter
-    const [priceResponse, tokenResponse] = await Promise.all([
-      axios.get(`https://api.jup.ag/price/v2?ids=${tokenAddress}`),
-      axios.get(`https://api.jup.ag/tokens/v1/token/${tokenAddress}`)
-    ]);
-
-    // Fetch historical candlestick data (you might need a specific API for this)
-    const historicalResponse = await axios.get(
-      `https://api.solscan.io/market/history?address=${tokenAddress}&type=candlestick&interval=1d`
+    // Fetch token data from DexScreener
+    const tokenResponse = await axios.get(
+      `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`,
+      {
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }
     );
 
-    const priceData = priceResponse.data[tokenAddress];
-    const tokenData = tokenResponse.data;
+    const pairs = tokenResponse.data.pairs || [];
+    if (pairs.length === 0) {
+      throw new Error('No token data found');
+    }
+
+    const mainPair = pairs[0];
+
+    // Fetch recent transactions
+    const transactionsResponse = await axios.get(
+      `https://api.dexscreener.com/latest/dex/trades/${mainPair.pairAddress}`,
+      {
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }
+    );
+
+    // Process candlestick data
+    const candlestickData = pairs.map(pair => ({
+      time: pair.pairCreatedAt,
+      open: parseFloat(pair.priceChange.m5),
+      high: parseFloat(pair.priceUsd) * 1.05,
+      low: parseFloat(pair.priceUsd) * 0.95,
+      close: parseFloat(pair.priceUsd),
+      volume: parseFloat(pair.volume.h24)
+    }));
 
     return {
-      currentPrice: priceData?.price || 0,
-      marketCap: tokenData?.market_cap || 0,
-      priceChange24h: priceData?.price_24h_change || 0,
-      volume24h: priceData?.volume_24h || 0,
-      candlestickData: historicalResponse.data?.data || []
+      tokenInfo: {
+        name: mainPair.baseToken.name,
+        symbol: mainPair.baseToken.symbol,
+        address: tokenAddress,
+        currentPrice: parseFloat(mainPair.priceUsd),
+        priceChange24h: parseFloat(mainPair.priceChange.h24),
+        volume24h: parseFloat(mainPair.volume.h24),
+        marketCap: parseFloat(mainPair.fdv),
+        liquidity: parseFloat(mainPair.liquidity.usd)
+      },
+      candlestickData,
+      transactions: transactionsResponse.data?.trades || []
     };
   } catch (error) {
-    console.error('Comprehensive data fetch error:', error);
-    return null;
+    console.error('DexScreener API Error:', error);
+    throw error;
   }
-};
-
-const WebSocketTradeStream = (tokenAddress, onTradeUpdate) => {
-  const ws = useRef(null);
-
-  useEffect(() => {
-    // Setup WebSocket connection for real-time trades
-    // This is a placeholder - you'll need to replace with actual WebSocket endpoint
-    ws.current = new WebSocket(`wss://your-solana-websocket-endpoint/${tokenAddress}`);
-
-    ws.current.onmessage = (event) => {
-      const tradeData = JSON.parse(event.data);
-      onTradeUpdate(tradeData);
-    };
-
-    return () => {
-      if (ws.current) ws.current.close();
-    };
-  }, [tokenAddress, onTradeUpdate]);
 };
 
 const TradingChart = () => {
   const [tokenAddress, setTokenAddress] = useState('');
-  const [marketData, setMarketData] = useState({
-    currentPrice: 0,
-    marketCap: 0,
-    priceChange24h: 0,
-    volume24h: 0
-  });
+  const [tokenData, setTokenData] = useState(null);
   const [candlestickData, setCandlestickData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch comprehensive market data
-  const fetchMarketData = async (address) => {
+  const handleTokenFetch = async (e) => {
+    e.preventDefault();
     setIsLoading(true);
+    setError(null);
+
     try {
-      const data = await fetchComprehensiveCoinData(address);
-      if (data) {
-        setMarketData({
-          currentPrice: data.currentPrice,
-          marketCap: data.marketCap,
-          priceChange24h: data.priceChange24h,
-          volume24h: data.volume24h
-        });
-        setCandlestickData(data.candlestickData);
-      }
+      const data = await fetchTokenData(tokenAddress);
+      setTokenData(data.tokenInfo);
+      setCandlestickData(data.candlestickData);
     } catch (err) {
       setError(err.message);
+      setTokenData(null);
+      setCandlestickData([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Real-time trade updates
-  const handleTradeUpdate = (tradeData) => {
-    // Update candlestick data in real-time
-    setCandlestickData(prevData => {
-      const newData = [...prevData];
-      // Logic to update or append new candlestick
-      return newData;
-    });
-  };
-
-  // Initialize WebSocket for real-time updates
-  WebSocketTradeStream(tokenAddress, handleTradeUpdate);
-
-  const handleTokenSubmit = (e) => {
-    e.preventDefault();
-    fetchMarketData(tokenAddress);
-  };
-
   return (
     <div className="w-full bg-blue-900/20 rounded-lg p-4">
       {/* Token Address Input */}
-      <form onSubmit={handleTokenSubmit} className="mb-4 flex space-x-2">
+      <form onSubmit={handleTokenFetch} className="mb-4 flex space-x-2">
         <input 
           type="text"
           value={tokenAddress}
           onChange={(e) => setTokenAddress(e.target.value)}
-          placeholder="Enter Solana Token Address"
+          placeholder="Enter Token Contract Address"
           className="flex-grow p-2 bg-blue-900/40 text-white rounded"
         />
         <button 
@@ -125,42 +112,54 @@ const TradingChart = () => {
         </button>
       </form>
 
-      {/* Market Statistics */}
-      <div className="grid grid-cols-4 gap-4 mb-4">
-        <div>
-          <div className="text-sm text-zinc-400">Price</div>
-          <div className="text-xl font-bold text-cyan-400">
-            ${marketData.currentPrice.toFixed(6)}
+      {/* Error Handling */}
+      {error && (
+        <div className="bg-red-900/30 text-red-300 p-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
+
+      {/* Token Information */}
+      {tokenData && (
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          <div>
+            <div className="text-sm text-zinc-400">Price</div>
+            <div className="text-xl font-bold text-cyan-400">
+              ${tokenData.currentPrice.toFixed(6)}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-zinc-400">24h Change</div>
+            <div className={`text-xl font-bold ${
+              tokenData.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
+            }`}>
+              {tokenData.priceChange24h.toFixed(2)}%
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-zinc-400">24h Volume</div>
+            <div className="text-xl font-bold text-cyan-400">
+              ${(tokenData.volume24h / 1_000_000).toFixed(2)}M
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-zinc-400">Market Cap</div>
+            <div className="text-xl font-bold text-cyan-400">
+              ${(tokenData.marketCap / 1_000_000).toFixed(2)}M
+            </div>
           </div>
         </div>
-        <div>
-          <div className="text-sm text-zinc-400">Market Cap</div>
-          <div className="text-xl font-bold text-cyan-400">
-            ${(marketData.marketCap / 1_000_000).toFixed(2)}M
-          </div>
-        </div>
-        <div>
-          <div className="text-sm text-zinc-400">24h Change</div>
-          <div className={`text-xl font-bold ${
-            marketData.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
-          }`}>
-            {marketData.priceChange24h.toFixed(2)}%
-          </div>
-        </div>
-        <div>
-          <div className="text-sm text-zinc-400">24h Volume</div>
-          <div className="text-xl font-bold text-cyan-400">
-            ${(marketData.volume24h / 1_000_000).toFixed(2)}M
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Candlestick Chart */}
       <div className="h-[600px]">
         <ResponsiveContainer>
-          <CandlestickChart data={candlestickData}>
+          <ComposedChart data={candlestickData}>
             <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
-            <XAxis />
+            <XAxis 
+              dataKey="time"
+              tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
+            />
             <YAxis />
             <Tooltip 
               content={({ payload }) => {
@@ -168,10 +167,11 @@ const TradingChart = () => {
                   const candle = payload[0].payload;
                   return (
                     <div className="bg-blue-900/80 p-4 rounded-lg">
-                      <p>Open: ${candle.open}</p>
-                      <p>High: ${candle.high}</p>
-                      <p>Low: ${candle.low}</p>
-                      <p>Close: ${candle.close}</p>
+                      <p>Open: ${candle.open.toFixed(6)}</p>
+                      <p>High: ${candle.high.toFixed(6)}</p>
+                      <p>Low: ${candle.low.toFixed(6)}</p>
+                      <p>Close: ${candle.close.toFixed(6)}</p>
+                      <p>Volume: ${candle.volume.toFixed(2)}</p>
                     </div>
                   );
                 }
@@ -182,7 +182,7 @@ const TradingChart = () => {
               wickStroke={(d) => d.close > d.open ? 'green' : 'red'}
               fill={(d) => d.close > d.open ? 'green' : 'red'}
             />
-          </CandlestickChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>
