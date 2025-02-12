@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { 
-  ComposedChart, Candle, XAxis, YAxis, 
-  Tooltip, ResponsiveContainer, CartesianGrid
+  ComposedChart, Area, Bar, Line, XAxis, YAxis, 
+  Tooltip, ResponsiveContainer, CartesianGrid, Candlestick
 } from 'recharts';
 
 // Utility function to format numbers
@@ -222,39 +222,39 @@ const TradingChart = () => {
       )}
 
       {/* Candlestick Chart */}
-      <div className="h-[600px]">
-        <ResponsiveContainer>
-          <ComposedChart data={candlestickData}>
-            <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="time"
-              tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
-            />
-            <YAxis />
-            <Tooltip 
-              content={({ payload }) => {
-                if (payload && payload.length) {
-                  const candle = payload[0].payload;
-                  return (
-                    <div className="bg-blue-900/80 p-4 rounded-lg">
-                      <p>Open: ${candle.open.toFixed(6)}</p>
-                      <p>High: ${candle.high.toFixed(6)}</p>
-                      <p>Low: ${candle.low.toFixed(6)}</p>
-                      <p>Close: ${candle.close.toFixed(6)}</p>
-                      <p>Volume: ${formatNumber(candle.volume)}</p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Candle 
-              wickStroke={(d) => d.close > d.open ? 'green' : 'red'}
-              fill={(d) => d.close > d.open ? 'green' : 'red'}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+<div className="h-[600px]">
+  <ResponsiveContainer>
+    <ComposedChart data={candlestickData}>
+      <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
+      <XAxis 
+        dataKey="time"
+        tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
+      />
+      <YAxis />
+      <Tooltip 
+        content={({ payload }) => {
+          if (payload && payload.length) {
+            const candle = payload[0].payload;
+            return (
+              <div className="bg-blue-900/80 p-4 rounded-lg">
+                <p>Open: ${candle.open.toFixed(6)}</p>
+                <p>High: ${candle.high.toFixed(6)}</p>
+                <p>Low: ${candle.low.toFixed(6)}</p>
+                <p>Close: ${candle.close.toFixed(6)}</p>
+                <p>Volume: ${formatNumber(candle.volume)}</p>
+              </div>
+            );
+          }
+          return null;
+        }}
+      />
+      <Candlestick 
+        wickStroke={(d) => d.close > d.open ? 'green' : 'red'}
+        fill={(d) => d.close > d.open ? 'green' : 'red'}
+      />
+    </ComposedChart>
+  </ResponsiveContainer>
+</div>
     </div>
   );
 };
