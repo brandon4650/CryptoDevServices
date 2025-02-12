@@ -5,14 +5,15 @@ const DinoGame = () => {
   const [isJumping, setIsJumping] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
-  const [animationFrame, setAnimationFrame] = useState(0);
+  const [runFrame, setRunFrame] = useState(0);
+  const animationSpeed = useRef(0.15);
   
-  // Game states with enhanced cactus patterns
+  // Game states
   const gameState = useRef({
     dino: {
       x: 50,
       y: 200,
-      width: 30,  // Slightly smaller for tighter jumps
+      width: 30,
       height: 50,
       velocity: 0,
       jumpForce: -15,
@@ -24,10 +25,10 @@ const DinoGame = () => {
     speedMultiplier: 1,
     groundY: 250,
     nextCactusIn: 50,
-    lastPattern: null  // Track last pattern to avoid repeats
+    lastPattern: null
   });
 
-  // Define cactus patterns for variety
+  // Enhanced cactus patterns
   const cactusPatterns = [
     // Single cactus
     () => [{
@@ -36,7 +37,7 @@ const DinoGame = () => {
       width: 20,
       height: 40
     }],
-    // Double cactus close together
+    // Double cactus
     () => [{
       x: 800,
       y: gameState.current.groundY - 40,
@@ -48,7 +49,7 @@ const DinoGame = () => {
       width: 15,
       height: 30
     }],
-    // Triple cactus with gaps
+    // Triple cactus
     () => [{
       x: 800,
       y: gameState.current.groundY - 35,
@@ -65,12 +66,63 @@ const DinoGame = () => {
       width: 15,
       height: 30
     }],
-    // Alternating heights
+    // Wide gap pattern
     () => [{
       x: 800,
       y: gameState.current.groundY - 50,
       width: 20,
       height: 50
+    }, {
+      x: 900,
+      y: gameState.current.groundY - 30,
+      width: 20,
+      height: 30
+    }],
+    // Cluster pattern
+    () => [{
+      x: 800,
+      y: gameState.current.groundY - 45,
+      width: 15,
+      height: 45
+    }, {
+      x: 830,
+      y: gameState.current.groundY - 35,
+      width: 15,
+      height: 35
+    }, {
+      x: 860,
+      y: gameState.current.groundY - 40,
+      width: 15,
+      height: 40
+    }],
+    // Alternating heights
+    () => [{
+      x: 800,
+      y: gameState.current.groundY - 30,
+      width: 15,
+      height: 30
+    }, {
+      x: 850,
+      y: gameState.current.groundY - 45,
+      width: 15,
+      height: 45
+    }, {
+      x: 900,
+      y: gameState.current.groundY - 35,
+      width: 15,
+      height: 35
+    }],
+    // Long jump pattern
+    () => [{
+      x: 800,
+      y: gameState.current.groundY - 30,
+      width: 20,
+      height: 30
+    }, {
+      x: 840,
+      y: gameState.current.groundY - 35,
+      width: 20,
+      height: 35
     }, {
       x: 880,
       y: gameState.current.groundY - 30,
@@ -79,64 +131,90 @@ const DinoGame = () => {
     }]
   ];
 
-  const drawStickFigure = (ctx, x, y, frame) => {
-    ctx.strokeStyle = '#22d3ee';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-
-    // Head
-    ctx.arc(x + 15, y + 10, 8, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Body
-    ctx.beginPath();
-    ctx.moveTo(x + 15, y + 18);
-    ctx.lineTo(x + 15, y + 35);
-    ctx.stroke();
-
-    // Arms
-    if (isJumping) {
-      // Arms up during jump
+  // Running animation frames
+  const runningFrames = [
+    // Frame 1 - mid stride
+    (ctx, x, y) => {
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 2;
+      // Head
       ctx.beginPath();
+      ctx.arc(x + 15, y + 10, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      // Body with forward lean
+      ctx.beginPath();
+      ctx.moveTo(x + 15, y + 18);
+      ctx.lineTo(x + 17, y + 35);
+      // Arms with running motion
+      ctx.moveTo(x + 15, y + 25);
+      ctx.lineTo(x + 25, y + 20);
+      ctx.moveTo(x + 15, y + 25);
+      ctx.lineTo(x + 5, y + 30);
+      // Legs with running motion
+      ctx.moveTo(x + 17, y + 35);
+      ctx.lineTo(x + 25, y + 45);
+      ctx.moveTo(x + 17, y + 35);
+      ctx.lineTo(x + 5, y + 42);
+      ctx.stroke();
+    },
+    // Frame 2 - full stride
+    (ctx, x, y) => {
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 2;
+      // Head
+      ctx.beginPath();
+      ctx.arc(x + 15, y + 10, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      // Body with forward lean
+      ctx.beginPath();
+      ctx.moveTo(x + 15, y + 18);
+      ctx.lineTo(x + 17, y + 35);
+      // Arms with alternate running motion
+      ctx.moveTo(x + 15, y + 25);
+      ctx.lineTo(x + 5, y + 20);
+      ctx.moveTo(x + 15, y + 25);
+      ctx.lineTo(x + 25, y + 30);
+      // Legs with alternate running motion
+      ctx.moveTo(x + 17, y + 35);
+      ctx.lineTo(x + 5, y + 45);
+      ctx.moveTo(x + 17, y + 35);
+      ctx.lineTo(x + 25, y + 42);
+      ctx.stroke();
+    }
+  ];
+
+  const drawStickFigure = (ctx, x, y) => {
+    if (isJumping) {
+      // Jump animation
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 2;
+      // Head
+      ctx.beginPath();
+      ctx.arc(x + 15, y + 10, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      // Body leaning forward
+      ctx.beginPath();
+      ctx.moveTo(x + 15, y + 18);
+      ctx.lineTo(x + 18, y + 35);
+      // Arms up and back
       ctx.moveTo(x + 15, y + 25);
       ctx.lineTo(x + 5, y + 15);
       ctx.moveTo(x + 15, y + 25);
       ctx.lineTo(x + 25, y + 15);
+      // Legs tucked
+      ctx.moveTo(x + 18, y + 35);
+      ctx.lineTo(x + 12, y + 45);
+      ctx.lineTo(x + 8, y + 42);
+      ctx.moveTo(x + 18, y + 35);
+      ctx.lineTo(x + 22, y + 45);
+      ctx.lineTo(x + 26, y + 42);
       ctx.stroke();
     } else {
-      // Running arm animation
-      const armSwing = Math.sin(frame * 0.5) * 10;
-      ctx.beginPath();
-      ctx.moveTo(x + 15, y + 25);
-      ctx.lineTo(x + 5 + armSwing, y + 30);
-      ctx.moveTo(x + 15, y + 25);
-      ctx.lineTo(x + 25 - armSwing, y + 30);
-      ctx.stroke();
-    }
-
-    // Legs
-    if (isJumping) {
-      // Legs bent during jump
-      ctx.beginPath();
-      ctx.moveTo(x + 15, y + 35);
-      ctx.lineTo(x + 10, y + 45);
-      ctx.lineTo(x + 5, y + 40);
-      ctx.moveTo(x + 15, y + 35);
-      ctx.lineTo(x + 20, y + 45);
-      ctx.lineTo(x + 25, y + 40);
-      ctx.stroke();
-    } else {
-      // Running leg animation
-      const legSwing = Math.sin(frame * 0.5) * 10;
-      ctx.beginPath();
-      ctx.moveTo(x + 15, y + 35);
-      ctx.lineTo(x + 10 + legSwing, y + 48);
-      ctx.moveTo(x + 15, y + 35);
-      ctx.lineTo(x + 20 - legSwing, y + 48);
-      ctx.stroke();
+      // Running animation
+      const frameIndex = Math.floor(runFrame) % 2;
+      runningFrames[frameIndex](ctx, x, y);
     }
   };
-
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -161,16 +239,50 @@ const DinoGame = () => {
 
     const drawCactus = (cactus) => {
       ctx.fillStyle = '#22d3ee';
-      // Main stem
-      ctx.fillRect(cactus.x + cactus.width/3, cactus.y, cactus.width/3, cactus.height);
-      // Branches
-      ctx.fillRect(cactus.x, cactus.y + cactus.height/3, cactus.width, cactus.height/4);
-      // Optional top detail
-      ctx.fillRect(cactus.x + cactus.width/4, cactus.y + 5, cactus.width/2, 3);
+      // Enhanced cactus design
+      ctx.beginPath();
+      // Main stem with curve
+      ctx.moveTo(cactus.x + cactus.width/3, cactus.y + cactus.height);
+      ctx.quadraticCurveTo(
+        cactus.x + cactus.width/2,
+        cactus.y + cactus.height/2,
+        cactus.x + cactus.width/3,
+        cactus.y
+      );
+      ctx.lineTo(cactus.x + cactus.width*2/3, cactus.y);
+      ctx.quadraticCurveTo(
+        cactus.x + cactus.width/2,
+        cactus.y + cactus.height/2,
+        cactus.x + cactus.width*2/3,
+        cactus.y + cactus.height
+      );
+      ctx.fill();
+      
+      // Side branches
+      ctx.beginPath();
+      ctx.ellipse(
+        cactus.x + cactus.width/4,
+        cactus.y + cactus.height/3,
+        cactus.width/2,
+        cactus.height/6,
+        0,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    };
+
+    const drawParallaxBackground = () => {
+      ctx.fillStyle = '#1e3a8a20';
+      for (let i = 0; i < 20; i++) {
+        const x = ((Date.now() * (0.2 + i * 0.1)) % canvas.width) - 50;
+        const y = 50 + i * 10;
+        const size = 1 + i * 0.2;
+        ctx.fillRect(x, y, size, size);
+      }
     };
 
     const spawnCactusPattern = () => {
-      // Choose a random pattern, but not the same as last time
       let patternIndex;
       do {
         patternIndex = Math.floor(Math.random() * cactusPatterns.length);
@@ -184,6 +296,9 @@ const DinoGame = () => {
     const updateGame = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
+      // Draw background
+      drawParallaxBackground();
+
       // Update dino
       if (isJumping) {
         gameState.current.dino.velocity += gameState.current.dino.gravity;
@@ -196,9 +311,13 @@ const DinoGame = () => {
         }
       }
 
-      // Update animation and speed
-      setAnimationFrame(prev => prev + 0.2);
-      const newSpeedMultiplier = 1 + (score / 500);
+      // Update running animation
+      if (!isJumping) {
+        setRunFrame(prev => (prev + animationSpeed.current) % 2);
+      }
+
+      // Update speed based on score with smoother progression
+      const newSpeedMultiplier = 1 + (score / 750); // Slower speed increase
       gameState.current.gameSpeed = gameState.current.baseSpeed * newSpeedMultiplier;
 
       // Update and draw cactuses
@@ -215,7 +334,7 @@ const DinoGame = () => {
       if (gameState.current.nextCactusIn <= 0) {
         spawnCactusPattern();
         // Adjust spawn rate based on speed
-        gameState.current.nextCactusIn = Math.random() * (120 - gameState.current.gameSpeed * 2) + 80;
+        gameState.current.nextCactusIn = Math.random() * (120 - gameState.current.gameSpeed * 2) + 100;
       }
 
       // Check collisions
@@ -234,12 +353,7 @@ const DinoGame = () => {
       ctx.stroke();
 
       // Draw stick figure
-      drawStickFigure(
-        ctx, 
-        gameState.current.dino.x, 
-        gameState.current.dino.y, 
-        animationFrame
-      );
+      drawStickFigure(ctx, gameState.current.dino.x, gameState.current.dino.y);
 
       // Update score
       frameCount++;
@@ -263,7 +377,6 @@ const DinoGame = () => {
     };
 
     const checkCollision = (dino, cactus) => {
-      // Add some padding to make collision detection more forgiving
       const padding = 5;
       return dino.x + padding < cactus.x + cactus.width &&
              dino.x + dino.width - padding > cactus.x &&
