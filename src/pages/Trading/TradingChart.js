@@ -1,257 +1,190 @@
 // src/pages/Trading/TradingChart.js
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
-  ComposedChart, Area, Bar, Line, XAxis, YAxis, 
+  CandlestickChart, Candle, XAxis, YAxis, 
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
-import { 
-  calculateIndicators 
-} from '../../utils/indicators';
-import { 
-  calculateMarketCap, 
-  calculateVolume24h, 
-  calculatePriceChange24h 
-} from '../../utils/marketCalculations';
-import MarketStats from './components/MarketStats';
-import ChartControls from './components/ChartControls';
-import TradingVolume from './components/TradingVolume';
+import axios from 'axios';
 
-const fetchTokenData = async (tokenAddress) => {
+const fetchComprehensiveCoinData = async (tokenAddress) => {
   try {
-    // Fetch token price from Jupiter's new price API
-    let currentPrice = 0;
-    let tokenInfo = null;
+    // Fetch price and market data from Jupiter
+    const [priceResponse, tokenResponse] = await Promise.all([
+      axios.get(`https://api.jup.ag/price/v2?ids=${tokenAddress}`),
+      axios.get(`https://api.jup.ag/tokens/v1/token/${tokenAddress}`)
+    ]);
 
-    try {
-      // Fetch price
-      const priceResponse = await fetch(
-        `https://api.jup.ag/price/v2?ids=${tokenAddress}`
-      );
-      const priceData = await priceResponse.json();
-      currentPrice = priceData[tokenAddress]?.price || 0;
+    // Fetch historical candlestick data (you might need a specific API for this)
+    const historicalResponse = await axios.get(
+      `https://api.solscan.io/market/history?address=${tokenAddress}&type=candlestick&interval=1d`
+    );
 
-      // Fetch token metadata
-      const metadataResponse = await fetch(
-        `https://api.jup.ag/tokens/v1/token/${tokenAddress}`
-      );
-      tokenInfo = await metadataResponse.json();
-    } catch (error) {
-      console.warn('Jupiter API fetch failed:', error);
-    }
-
-    // Generate simulated historical data
-    const trades = Array.from({ length: 50 }, (_, index) => ({
-      timestamp: Date.now() - (50 - index) * 1000 * 60 * 60, // Spread over last 50 hours
-      price: currentPrice * (1 + (Math.random() - 0.5) * 0.2), // Add some price variation
-      volume: Math.random() * 10000,
-      type: Math.random() > 0.5 ? 'buy' : 'sell'
-    }));
+    const priceData = priceResponse.data[tokenAddress];
+    const tokenData = tokenResponse.data;
 
     return {
-      trades,
-      metadata: {
-        name: tokenInfo?.name || 'Unknown Token',
-        symbol: tokenInfo?.symbol || tokenAddress.substring(0, 6),
-        currentPrice: currentPrice,
-        marketCap: tokenInfo?.market_cap || 0
-      }
+      currentPrice: priceData?.price || 0,
+      marketCap: tokenData?.market_cap || 0,
+      priceChange24h: priceData?.price_24h_change || 0,
+      volume24h: priceData?.volume_24h || 0,
+      candlestickData: historicalResponse.data?.data || []
     };
   } catch (error) {
-    console.error('Token Data Fetch Error:', {
-      message: error.message,
-      stack: error.stack
-    });
+    console.error('Comprehensive data fetch error:', error);
     return null;
   }
 };
 
-const generateMockData = (count = 50) => {
-  const basePrice = 0.00001;
-  return Array.from({ length: count }, (_, index) => ({
-    timestamp: Date.now() - (count - index) * 1000 * 60,
-    price: basePrice * (1 + Math.sin(index * 0.1) * 0.1),
-    volume: Math.random() * 10000,
-    type: Math.random() > 0.5 ? 'buy' : 'sell'
-  }));
+const WebSocketTradeStream = (tokenAddress, onTradeUpdate) => {
+  const ws = useRef(null);
+
+  useEffect(() => {
+    // Setup WebSocket connection for real-time trades
+    // This is a placeholder - you'll need to replace with actual WebSocket endpoint
+    ws.current = new WebSocket(`wss://your-solana-websocket-endpoint/${tokenAddress}`);
+
+    ws.current.onmessage = (event) => {
+      const tradeData = JSON.parse(event.data);
+      onTradeUpdate(tradeData);
+    };
+
+    return () => {
+      if (ws.current) ws.current.close();
+    };
+  }, [tokenAddress, onTradeUpdate]);
 };
 
 const TradingChart = () => {
   const [tokenAddress, setTokenAddress] = useState('');
-  const [tradeData, setTradeData] = useState(generateMockData());
-  const [tokenMetadata, setTokenMetadata] = useState(null);
-  const [marketInfo, setMarketInfo] = useState({
-    price: tradeData[tradeData.length - 1]?.price || 0,
+  const [marketData, setMarketData] = useState({
+    currentPrice: 0,
     marketCap: 0,
-    volume24h: 0,
-    priceChange24h: 0
+    priceChange24h: 0,
+    volume24h: 0
   });
+  const [candlestickData, setCandlestickData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Memoize calculations
-  const indicators = useMemo(() => 
-    calculateIndicators(tradeData), [tradeData]);
-
-  // Function to fetch data for a given token
-  const handleTokenDataFetch = async (address) => {
-    if (!address) return;
-
+  // Fetch comprehensive market data
+  const fetchMarketData = async (address) => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      const result = await fetchTokenData(address);
-      
-      if (result) {
-        setTradeData(result.trades);
-        setTokenMetadata(result.metadata);
-        
-        // Update market info
-        setMarketInfo({
-          price: result.metadata.currentPrice,
-          marketCap: result.metadata.marketCap,
-          volume24h: calculateVolume24h(result.trades),
-          priceChange24h: calculatePriceChange24h(result.trades)
+      const data = await fetchComprehensiveCoinData(address);
+      if (data) {
+        setMarketData({
+          currentPrice: data.currentPrice,
+          marketCap: data.marketCap,
+          priceChange24h: data.priceChange24h,
+          volume24h: data.volume24h
         });
-      } else {
-        // Fallback to mock data
-        const mockData = generateMockData(100);
-        setTradeData(mockData);
-        setError('No data found for this token');
+        setCandlestickData(data.candlestickData);
       }
-    } catch (error) {
-      console.error('Data fetching error:', error);
-      const mockData = generateMockData(100);
-      setTradeData(mockData);
-      setError(error.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle token address input
-  const handleTokenAddressSubmit = (e) => {
+  // Real-time trade updates
+  const handleTradeUpdate = (tradeData) => {
+    // Update candlestick data in real-time
+    setCandlestickData(prevData => {
+      const newData = [...prevData];
+      // Logic to update or append new candlestick
+      return newData;
+    });
+  };
+
+  // Initialize WebSocket for real-time updates
+  WebSocketTradeStream(tokenAddress, handleTradeUpdate);
+
+  const handleTokenSubmit = (e) => {
     e.preventDefault();
-    handleTokenDataFetch(tokenAddress);
+    fetchMarketData(tokenAddress);
   };
 
   return (
     <div className="w-full bg-blue-900/20 rounded-lg p-4">
       {/* Token Address Input */}
-      <form 
-        onSubmit={handleTokenAddressSubmit} 
-        className="mb-4 flex items-center space-x-2"
-      >
+      <form onSubmit={handleTokenSubmit} className="mb-4 flex space-x-2">
         <input 
-          type="text" 
+          type="text"
           value={tokenAddress}
           onChange={(e) => setTokenAddress(e.target.value)}
-          placeholder="Enter Solana Token Contract Address"
-          className="flex-grow px-4 py-2 bg-blue-900/40 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          placeholder="Enter Solana Token Address"
+          className="flex-grow p-2 bg-blue-900/40 text-white rounded"
         />
         <button 
           type="submit" 
           disabled={isLoading}
-          className="bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50"
+          className="bg-cyan-600 px-4 py-2 rounded text-white"
         >
-          {isLoading ? 'Fetching...' : 'Fetch Token Data'}
+          {isLoading ? 'Loading...' : 'Fetch Data'}
         </button>
       </form>
 
-      {/* Token Metadata Display */}
-      {tokenMetadata && (
-        <div className="mb-4 bg-blue-900/30 p-3 rounded-lg">
-          <h3 className="text-xl font-bold text-cyan-400">
-            {tokenMetadata.name} ({tokenMetadata.symbol})
-          </h3>
-          <p className="text-zinc-300">Current Price: ${tokenMetadata.currentPrice.toFixed(6)}</p>
+      {/* Market Statistics */}
+      <div className="grid grid-cols-4 gap-4 mb-4">
+        <div>
+          <div className="text-sm text-zinc-400">Price</div>
+          <div className="text-xl font-bold text-cyan-400">
+            ${marketData.currentPrice.toFixed(6)}
+          </div>
         </div>
-      )}
-
-      {/* Error Handling */}
-      {error && (
-        <div className="bg-red-900/30 text-red-300 p-3 rounded-lg mb-4">
-          {error}
+        <div>
+          <div className="text-sm text-zinc-400">Market Cap</div>
+          <div className="text-xl font-bold text-cyan-400">
+            ${(marketData.marketCap / 1_000_000).toFixed(2)}M
+          </div>
         </div>
-      )}
+        <div>
+          <div className="text-sm text-zinc-400">24h Change</div>
+          <div className={`text-xl font-bold ${
+            marketData.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
+          }`}>
+            {marketData.priceChange24h.toFixed(2)}%
+          </div>
+        </div>
+        <div>
+          <div className="text-sm text-zinc-400">24h Volume</div>
+          <div className="text-xl font-bold text-cyan-400">
+            ${(marketData.volume24h / 1_000_000).toFixed(2)}M
+          </div>
+        </div>
+      </div>
 
-      <MarketStats stats={marketInfo} />
-      <ChartControls />
-      
+      {/* Candlestick Chart */}
       <div className="h-[600px]">
         <ResponsiveContainer>
-          <ComposedChart data={tradeData}>
-            <CartesianGrid 
-              stroke="#323232" 
-              strokeDasharray="3 3" 
-            />
-            
-            {/* Price Chart */}
-            <Area
-              type="monotone"
-              dataKey="price"
-              fill="rgba(34, 211, 238, 0.2)"
-              stroke="#22d3ee"
-            />
-            
-            {/* Volume Bars */}
-            <Bar
-              dataKey="volume"
-              fill="#22d3ee"
-              opacity={0.3}
-              yAxisId="volume"
-            />
-
-            {/* Price Line */}
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke="#ff0000"
-              dot={false}
-            />
-
-            {/* Axes */}
-            <XAxis 
-              dataKey="timestamp"
-              tickFormatter={(timestamp) => new Date(timestamp).toLocaleTimeString()}
-            />
-            <YAxis 
-              label={{ 
-                value: 'Price', 
-                angle: -90, 
-                position: 'insideLeft' 
-              }}
-            />
-            <YAxis 
-              yAxisId="volume" 
-              orientation="right" 
-              label={{ 
-                value: 'Volume', 
-                angle: 90, 
-                position: 'insideRight' 
-              }}
-            />
-            
+          <CandlestickChart data={candlestickData}>
+            <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
+            <XAxis />
+            <YAxis />
             <Tooltip 
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload;
+              content={({ payload }) => {
+                if (payload && payload.length) {
+                  const candle = payload[0].payload;
                   return (
-                    <div className="bg-blue-900/80 p-4 rounded-lg shadow-lg">
-                      <p className="text-white">Price: ${data.price.toFixed(9)}</p>
-                      <p className="text-zinc-300">Volume: {data.volume.toLocaleString()}</p>
-                      <p className="text-zinc-300">Timestamp: {new Date(data.timestamp).toLocaleString()}</p>
+                    <div className="bg-blue-900/80 p-4 rounded-lg">
+                      <p>Open: ${candle.open}</p>
+                      <p>High: ${candle.high}</p>
+                      <p>Low: ${candle.low}</p>
+                      <p>Close: ${candle.close}</p>
                     </div>
                   );
                 }
                 return null;
               }}
             />
-          </ComposedChart>
+            <Candle 
+              wickStroke={(d) => d.close > d.open ? 'green' : 'red'}
+              fill={(d) => d.close > d.open ? 'green' : 'red'}
+            />
+          </CandlestickChart>
         </ResponsiveContainer>
       </div>
-      
-      <TradingVolume data={tradeData} />
     </div>
   );
 };
