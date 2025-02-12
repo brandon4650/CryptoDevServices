@@ -11,8 +11,8 @@ import MarketStats from './components/MarketStats';
 import ChartControls from './components/ChartControls';
 import TradingVolume from './components/TradingVolume';
 
-const BITQUERY_API_ENDPOINT = 'https://graphql.bitquery.io';
-const BITQUERY_API_KEY = 'BQYhWUv9MCDPvMsNn3Udg3A8MZRmXMZk'; // Consider moving to environment variables
+const BITQUERY_API_ENDPOINT = process.env.REACT_APP_BITQUERY_API_ENDPOINT || 'https://graphql.bitquery.io';
+const BITQUERY_API_KEY = process.env.REACT_APP_BITQUERY_API_KEY;
 
 const fetchBitqueryData = async (tokenAddress) => {
   const query = {
