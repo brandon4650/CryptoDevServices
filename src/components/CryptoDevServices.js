@@ -65,6 +65,12 @@ const CryptoWebDev = ({ onGameOpen }) => {
         >
           Try Builder <ArrowRight className="h-4 w-4" />
         </Link>
+            <Link 
+  to="/trading" 
+  className="text-cyan-400 hover:text-cyan-300 transition-colors"
+>
+  Trading
+</Link>
       </div>
 
       {/* Mobile Menu Button */}
