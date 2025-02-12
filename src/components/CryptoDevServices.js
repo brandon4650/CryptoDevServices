@@ -50,7 +50,7 @@ const CryptoWebDev = ({ onGameOpen }) => {
                 onClick={onGameOpen}
                 className="hover:text-cyan-400 transition-colors flex items-center gap-2"
               >
-                <GameController className="h-4 w-4" />
+                <Gamepad2 className="h-4 w-4" />
                 Bored?
               </button>
         <Link 
@@ -116,7 +116,7 @@ const CryptoWebDev = ({ onGameOpen }) => {
                     onClick={onGameOpen}
                     className="text-zinc-300 hover:text-cyan-400 transition-colors py-2 flex items-center gap-2"
                   >
-                    <GameController className="h-4 w-4" />
+                    <Gamepad2 className="h-4 w-4" />
                     Bored?
                   </button>
           <Link 
