@@ -1,7 +1,6 @@
-// pages/Trading/index.js
+// src/pages/Trading/index.js
 import React from 'react';
-import TradingChart from './components/TradingChart';
-import RealTimeChart from '../../components/RealTimeChart';
+import TradingChart from './TradingChart';
 
 const TradingPage = () => {
   return (
