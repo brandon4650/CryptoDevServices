@@ -8,7 +8,7 @@ import { initializeChat, chatClient } from './utils/DiscordChatClient';
 import BuilderPage from './components/builder/BuilderPage';
 import GameModal from './components/GameModal';
 import { Gamepad2 } from 'lucide-react';
-
+import TradingPage from './pages/Trading';
 
 function App() {
   const [chatInitialized, setChatInitialized] = useState(false);
@@ -53,6 +53,7 @@ function App() {
         <Route path="/quote" element={<QuotePage />} />
         <Route path="/chat" element={<LiveChat initialOpen={true} chatInitialized={chatInitialized} />} />
         <Route path="/builder" element={<BuilderPage />} />
+        <Route path="/trading" element={<TradingPage />} />
       </Routes>
       
       <GameModal isOpen={isGameOpen} onClose={() => setIsGameOpen(false)} />
