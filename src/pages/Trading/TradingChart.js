@@ -4,93 +4,53 @@ import {
   ComposedChart, Area, Bar, Line, XAxis, YAxis, 
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
-import WebSocketService from '../../services/WebSocketService';
-import { calculateIndicators } from '../../utils/indicators';
-import { calculateMarketCap, calculateVolume24h, calculatePriceChange24h } from '../../utils/marketCalculations';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { 
+  calculateIndicators 
+} from '../../utils/indicators';
+import { 
+  calculateMarketCap, 
+  calculateVolume24h, 
+  calculatePriceChange24h 
+} from '../../utils/marketCalculations';
 import MarketStats from './components/MarketStats';
 import ChartControls from './components/ChartControls';
 import TradingVolume from './components/TradingVolume';
 
-const fetchBitqueryData = async (tokenAddress) => {
-  const apiKey = process.env.REACT_APP_BITQUERY_API_KEY?.trim();
-  
-  if (!apiKey) {
-    console.error('Bitquery API key is missing');
-    return [];
-  }
+// Solana RPC endpoint (you can replace with your preferred provider)
+const SOLANA_RPC_ENDPOINT = process.env.REACT_APP_SOLANA_RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com';
 
-  const query = {
-    query: `
-      query ($network: Network!, $address: String!) {
-        ethereum(network: $network) {
-          dexTrades(
-            baseCurrency: {is: $address}
-            options: {limit: 100, desc: "block.height"}
-          ) {
-            block {
-              height
-              timestamp {
-                time(format: "%Y-%m-%d %H:%M:%S")
-              }
-            }
-            trade {
-              price
-              amount
-              side
-            }
-            transaction {
-              hash
-            }
-          }
-        }
-      }
-    `,
-    variables: {
-      network: "ethereum",
-      address: tokenAddress
-    }
-  };
-
+const fetchSolanaTokenData = async (tokenAddress) => {
   try {
-    console.log('Fetching data for token:', tokenAddress);
+    // Validate the token address
+    const connection = new Connection(SOLANA_RPC_ENDPOINT, 'confirmed');
+    const mintPublicKey = new PublicKey(tokenAddress);
 
-    const response = await fetch('https://graphql.bitquery.io', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(query)
+    // Fetch token data from Jupiter Aggregator
+    const jupiterResponse = await fetch(`https://price.jup.ag/v4/price?ids=${tokenAddress}`);
+    const priceData = await jupiterResponse.json();
+
+    // Fetch recent transactions (simplified example)
+    const signatures = await connection.getSignaturesForAddress(mintPublicKey, {
+      limit: 100
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Bitquery API Response Error:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      });
-      throw new Error(`API fetch failed: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    // Check for GraphQL errors
-    if (result.errors) {
-      console.error('GraphQL Errors:', result.errors);
-      return [];
-    }
+    // Transform transaction data
+    const trades = await Promise.all(signatures.map(async (sig) => {
+      const transaction = await connection.getTransaction(sig.signature);
+      
+      return {
+        timestamp: transaction?.blockTime ? transaction.blockTime * 1000 : Date.now(),
+        price: priceData.data[tokenAddress]?.price || 0,
+        volume: transaction?.meta?.postTokenBalances?.reduce((sum, balance) => 
+          sum + (balance.uiTokenAmount?.amount || 0), 0) || 0,
+        type: 'trade' // Simplified, actual type detection would be more complex
+      };
+    }));
 
-    // Transform Bitquery data to our expected format
-    return result.data.ethereum.dexTrades.map(trade => ({
-      timestamp: new Date(trade.block.timestamp.time).getTime(),
-      price: trade.trade.price,
-      volume: trade.trade.amount,
-      type: trade.trade.side.toLowerCase(),
-      txHash: trade.transaction.hash
-    })).reverse(); // Reverse to get chronological order
+    return trades.filter(trade => trade.price > 0);
   } catch (error) {
-    console.error('Detailed Bitquery API error:', {
+    console.error('Solana Token Data Fetch Error:', {
       message: error.message,
       stack: error.stack
     });
@@ -108,21 +68,8 @@ const generateMockData = (count = 50) => {
   }));
 };
 
-const CustomTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-blue-900/80 p-4 rounded-lg shadow-lg">
-        <p className="text-white">Price: ${data.price.toFixed(9)}</p>
-        <p className="text-zinc-300">Volume: {data.volume.toLocaleString()}</p>
-        <p className="text-zinc-300">Timestamp: {new Date(data.timestamp).toLocaleString()}</p>
-      </div>
-    );
-  }
-  return null;
-};
-
-const TradingChart = ({ tokenAddress = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' }) => { // Uniswap token as default
+const TradingChart = () => {
+  const [tokenAddress, setTokenAddress] = useState('');
   const [tradeData, setTradeData] = useState(generateMockData());
   const [marketInfo, setMarketInfo] = useState({
     price: tradeData[tradeData.length - 1]?.price || 0,
@@ -130,50 +77,74 @@ const TradingChart = ({ tokenAddress = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F9
     volume24h: 0,
     priceChange24h: 0
   });
-  const wsRef = useRef(null);
 
   // Memoize calculations
   const indicators = useMemo(() => 
     calculateIndicators(tradeData), [tradeData]);
 
-  // Initialize data fetching
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // First, try Bitquery API
-        const apiData = await fetchBitqueryData(tokenAddress);
+  // Function to fetch data for a given token
+  const fetchTokenData = async (address) => {
+    if (!address) return;
+
+    try {
+      // Fetch Solana token data
+      const apiData = await fetchSolanaTokenData(address);
+      
+      if (apiData.length > 0) {
+        setTradeData(apiData);
         
-        if (apiData.length > 0) {
-          setTradeData(apiData);
-          
-          // Update market info from API data
-          const lastTrade = apiData[apiData.length - 1];
-          setMarketInfo({
-            price: lastTrade.price,
-            marketCap: calculateMarketCap(lastTrade.price),
-            volume24h: calculateVolume24h(apiData),
-            priceChange24h: calculatePriceChange24h(apiData)
-          });
-        } else {
-          // Fallback to mock data
-          const mockData = generateMockData(100);
-          setTradeData(mockData);
-        }
-      } catch (error) {
-        console.error('Data fetching error:', error);
+        // Update market info from API data
+        const lastTrade = apiData[apiData.length - 1];
+        setMarketInfo({
+          price: lastTrade.price,
+          marketCap: calculateMarketCap(lastTrade.price),
+          volume24h: calculateVolume24h(apiData),
+          priceChange24h: calculatePriceChange24h(apiData)
+        });
+      } else {
         // Fallback to mock data
         const mockData = generateMockData(100);
         setTradeData(mockData);
       }
-    };
+    } catch (error) {
+      console.error('Data fetching error:', error);
+      // Fallback to mock data
+      const mockData = generateMockData(100);
+      setTradeData(mockData);
+    }
+  };
 
-    fetchData();
-  }, [tokenAddress]);
+  // Handle token address input
+  const handleTokenAddressSubmit = (e) => {
+    e.preventDefault();
+    fetchTokenData(tokenAddress);
+  };
 
   return (
     <div className="w-full bg-blue-900/20 rounded-lg p-4">
+      {/* Token Address Input */}
+      <form 
+        onSubmit={handleTokenAddressSubmit} 
+        className="mb-4 flex items-center space-x-2"
+      >
+        <input 
+          type="text" 
+          value={tokenAddress}
+          onChange={(e) => setTokenAddress(e.target.value)}
+          placeholder="Enter Solana Token Contract Address"
+          className="flex-grow px-4 py-2 bg-blue-900/40 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+        <button 
+          type="submit" 
+          className="bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-white transition-colors"
+        >
+          Fetch Token Data
+        </button>
+      </form>
+
       <MarketStats stats={marketInfo} />
       <ChartControls />
+      
       <div className="h-[600px]">
         <ResponsiveContainer>
           <ComposedChart data={tradeData}>
@@ -228,10 +199,25 @@ const TradingChart = ({ tokenAddress = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F9
               }}
             />
             
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip 
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-blue-900/80 p-4 rounded-lg shadow-lg">
+                      <p className="text-white">Price: ${data.price.toFixed(9)}</p>
+                      <p className="text-zinc-300">Volume: {data.volume.toLocaleString()}</p>
+                      <p className="text-zinc-300">Timestamp: {new Date(data.timestamp).toLocaleString()}</p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+      
       <TradingVolume data={tradeData} />
     </div>
   );
