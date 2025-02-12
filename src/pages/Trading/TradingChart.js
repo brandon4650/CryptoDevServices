@@ -1,14 +1,30 @@
 // src/pages/Trading/TradingChart.js
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import axios from 'axios';
 import { 
   ComposedChart, Candle, XAxis, YAxis, 
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
-import axios from 'axios';
+
+// Utility function to format numbers (similar to your bot's implementation)
+const formatNumber = (num) => {
+  if (!num || num === "N/A") return 'N/A';
+  
+  num = parseFloat(num);
+  if (isNaN(num)) return 'N/A';
+  
+  if (num < 0.00001) return num.toExponential(4);
+  if (num < 0.001) return num.toFixed(8);
+  if (num < 1) return num.toFixed(6);
+  if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+  if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+  if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+  return num.toFixed(2);
+};
 
 const fetchTokenData = async (tokenAddress) => {
   try {
-    // Fetch token data from DexScreener
+    // Fetch token pairs data
     const tokenResponse = await axios.get(
       `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`,
       {
@@ -26,8 +42,8 @@ const fetchTokenData = async (tokenAddress) => {
 
     const mainPair = pairs[0];
 
-    // Fetch recent transactions
-    const transactionsResponse = await axios.get(
+    // Fetch trades data
+    const tradesResponse = await axios.get(
       `https://api.dexscreener.com/latest/dex/trades/${mainPair.pairAddress}`,
       {
         headers: {
@@ -47,6 +63,21 @@ const fetchTokenData = async (tokenAddress) => {
       volume: parseFloat(pair.volume.h24)
     }));
 
+    // Extract transaction data
+    const trades = tradesResponse.data?.trades || [];
+    const last24Hours = Date.now() - (24 * 60 * 60 * 1000);
+    const recentTrades = trades.filter(trade => 
+      new Date(trade.timestamp).getTime() > last24Hours
+    );
+
+    const buys = recentTrades.filter(trade => 
+      trade.type.toLowerCase() === 'buy'
+    ).length;
+    
+    const sells = recentTrades.filter(trade => 
+      trade.type.toLowerCase() === 'sell'
+    ).length;
+
     return {
       tokenInfo: {
         name: mainPair.baseToken.name,
@@ -56,10 +87,16 @@ const fetchTokenData = async (tokenAddress) => {
         priceChange24h: parseFloat(mainPair.priceChange.h24),
         volume24h: parseFloat(mainPair.volume.h24),
         marketCap: parseFloat(mainPair.fdv),
-        liquidity: parseFloat(mainPair.liquidity.usd)
+        liquidity: parseFloat(mainPair.liquidity.usd),
+        transactions: {
+          buys,
+          sells,
+          totalTxns: buys + sells,
+          buyRatio: ((buys / (buys + sells)) * 100).toFixed(2)
+        }
       },
       candlestickData,
-      transactions: transactionsResponse.data?.trades || []
+      recentTrades: trades.slice(0, 5)
     };
   } catch (error) {
     console.error('DexScreener API Error:', error);
@@ -100,7 +137,7 @@ const TradingChart = () => {
           type="text"
           value={tokenAddress}
           onChange={(e) => setTokenAddress(e.target.value)}
-          placeholder="Enter Token Contract Address"
+          placeholder="Enter Solana Token Contract Address"
           className="flex-grow p-2 bg-blue-900/40 text-white rounded"
         />
         <button 
@@ -125,7 +162,7 @@ const TradingChart = () => {
           <div>
             <div className="text-sm text-zinc-400">Price</div>
             <div className="text-xl font-bold text-cyan-400">
-              ${tokenData.currentPrice.toFixed(6)}
+              ${formatNumber(tokenData.currentPrice)}
             </div>
           </div>
           <div>
@@ -139,13 +176,37 @@ const TradingChart = () => {
           <div>
             <div className="text-sm text-zinc-400">24h Volume</div>
             <div className="text-xl font-bold text-cyan-400">
-              ${(tokenData.volume24h / 1_000_000).toFixed(2)}M
+              ${formatNumber(tokenData.volume24h)}
             </div>
           </div>
           <div>
             <div className="text-sm text-zinc-400">Market Cap</div>
             <div className="text-xl font-bold text-cyan-400">
-              ${(tokenData.marketCap / 1_000_000).toFixed(2)}M
+              ${formatNumber(tokenData.marketCap)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Stats */}
+      {tokenData?.transactions && (
+        <div className="grid grid-cols-3 gap-4 mb-4 bg-blue-900/30 p-4 rounded-lg">
+          <div>
+            <div className="text-sm text-zinc-400">Total Transactions</div>
+            <div className="text-xl font-bold text-cyan-400">
+              {tokenData.transactions.totalTxns}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-zinc-400">Buys</div>
+            <div className="text-xl font-bold text-green-500">
+              {tokenData.transactions.buys}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-zinc-400">Buy Ratio</div>
+            <div className="text-xl font-bold text-cyan-400">
+              {tokenData.transactions.buyRatio}%
             </div>
           </div>
         </div>
@@ -171,7 +232,7 @@ const TradingChart = () => {
                       <p>High: ${candle.high.toFixed(6)}</p>
                       <p>Low: ${candle.low.toFixed(6)}</p>
                       <p>Close: ${candle.close.toFixed(6)}</p>
-                      <p>Volume: ${candle.volume.toFixed(2)}</p>
+                      <p>Volume: ${formatNumber(candle.volume)}</p>
                     </div>
                   );
                 }
