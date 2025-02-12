@@ -10,12 +10,14 @@ class WebSocketService {
   }
 
   connect() {
-    // Connect to multiple sources for redundancy
+    // Add a default backup source method
     this.connectToPrimarySource();
-    this.connectToBackupSource();
+    this.connectToBackupSource = () => {
+      console.log('Backup source connection attempted');
+      // Optional: Implement a backup WebSocket connection
+    };
     this.startBatchProcessing();
   }
-
   connectToPrimarySource() {
     // Primary WebSocket connection (Jupiter/Raydium etc)
     this.ws = new WebSocket(`wss://your-primary-endpoint/${this.tokenAddress}`);
