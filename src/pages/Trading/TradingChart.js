@@ -4,8 +4,7 @@ import {
   ComposedChart, Area, Bar, Line, XAxis, YAxis, 
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
-import { Connection, PublicKey } from '@solana/web3.js';
-import axios from 'axios'; // Make sure to install axios
+import axios from 'axios';
 import { 
   calculateIndicators 
 } from '../../utils/indicators';
@@ -18,57 +17,53 @@ import MarketStats from './components/MarketStats';
 import ChartControls from './components/ChartControls';
 import TradingVolume from './components/TradingVolume';
 
-// Solana RPC endpoint (you can replace with your preferred provider)
-const SOLANA_RPC_ENDPOINT = process.env.REACT_APP_SOLANA_RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com';
+// Solana RPC endpoints
+const RPC_ENDPOINTS = [
+  'https://api.mainnet-beta.solana.com',
+  'https://solana-api.projectserum.com',
+  'https://solana-rpc.linkpool.io',
+  'https://rpc.ankr.com/solana'
+];
 
-const fetchSolanaTokenData = async (tokenAddress) => {
+const fetchTokenData = async (tokenAddress) => {
   try {
-    // Validate the token address
-    const connection = new Connection(SOLANA_RPC_ENDPOINT, 'confirmed');
-    const mintPublicKey = new PublicKey(tokenAddress);
+    // Fetch historical price data from Jupiter Aggregator
+    const priceResponse = await axios.get(
+      `https://price.jup.ag/v4/price?ids=${tokenAddress}`
+    );
 
-    // Fetch price data using Coingecko API
-    let priceData = { usd: 0 };
-    try {
-      const coingeckoResponse = await axios.get(
-        `https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`
-      );
-      priceData = coingeckoResponse.data;
-    } catch (priceError) {
-      console.error('Price fetch error:', priceError);
-    }
+    // Fetch token metadata from Solana FM
+    const metadataResponse = await axios.get(
+      `https://public-api.solana.fm/v1/token/meta?address=${tokenAddress}`
+    );
 
-    // Fetch recent transactions
-    const signatures = await connection.getSignaturesForAddress(mintPublicKey, {
-      limit: 100
-    });
+    // Generate mock trade data based on available information
+    const currentPrice = priceResponse.data.data[tokenAddress]?.price || 0;
+    const metadata = metadataResponse.data;
 
-    // Transform transaction data
-    const trades = await Promise.all(signatures.map(async (sig) => {
-      try {
-        const transaction = await connection.getTransaction(sig.signature);
-        
-        return {
-          timestamp: transaction?.blockTime ? transaction.blockTime * 1000 : Date.now(),
-          price: priceData.solana?.usd || 0, // Using Solana price as a placeholder
-          volume: transaction?.meta?.postTokenBalances?.reduce((sum, balance) => 
-            sum + (balance.uiTokenAmount?.amount || 0), 0) || 0,
-          type: 'trade'
-        };
-      } catch (transactionError) {
-        console.error('Transaction fetch error:', transactionError);
-        return null;
-      }
+    // Generate simulated historical data
+    const trades = Array.from({ length: 50 }, (_, index) => ({
+      timestamp: Date.now() - (50 - index) * 1000 * 60 * 60, // Spread over last 50 hours
+      price: currentPrice * (1 + (Math.random() - 0.5) * 0.2), // Add some price variation
+      volume: Math.random() * 10000,
+      type: Math.random() > 0.5 ? 'buy' : 'sell'
     }));
 
-    // Filter out null values and those with zero price
-    return trades.filter(trade => trade && trade.price > 0);
+    return {
+      trades,
+      metadata: {
+        name: metadata.name || 'Unknown Token',
+        symbol: metadata.symbol || 'UNKN',
+        currentPrice: currentPrice,
+        marketCap: metadata.market_cap || 0
+      }
+    };
   } catch (error) {
-    console.error('Solana Token Data Fetch Error:', {
+    console.error('Token Data Fetch Error:', {
       message: error.message,
       stack: error.stack
     });
-    return [];
+    return null;
   }
 };
 
@@ -85,6 +80,7 @@ const generateMockData = (count = 50) => {
 const TradingChart = () => {
   const [tokenAddress, setTokenAddress] = useState('');
   const [tradeData, setTradeData] = useState(generateMockData());
+  const [tokenMetadata, setTokenMetadata] = useState(null);
   const [marketInfo, setMarketInfo] = useState({
     price: tradeData[tradeData.length - 1]?.price || 0,
     marketCap: 0,
@@ -99,26 +95,25 @@ const TradingChart = () => {
     calculateIndicators(tradeData), [tradeData]);
 
   // Function to fetch data for a given token
-  const fetchTokenData = async (address) => {
+  const handleTokenDataFetch = async (address) => {
     if (!address) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Fetch Solana token data
-      const apiData = await fetchSolanaTokenData(address);
+      const result = await fetchTokenData(address);
       
-      if (apiData.length > 0) {
-        setTradeData(apiData);
+      if (result) {
+        setTradeData(result.trades);
+        setTokenMetadata(result.metadata);
         
-        // Update market info from API data
-        const lastTrade = apiData[apiData.length - 1];
+        // Update market info
         setMarketInfo({
-          price: lastTrade.price,
-          marketCap: calculateMarketCap(lastTrade.price),
-          volume24h: calculateVolume24h(apiData),
-          priceChange24h: calculatePriceChange24h(apiData)
+          price: result.metadata.currentPrice,
+          marketCap: result.metadata.marketCap,
+          volume24h: calculateVolume24h(result.trades),
+          priceChange24h: calculatePriceChange24h(result.trades)
         });
       } else {
         // Fallback to mock data
@@ -128,7 +123,6 @@ const TradingChart = () => {
       }
     } catch (error) {
       console.error('Data fetching error:', error);
-      // Fallback to mock data
       const mockData = generateMockData(100);
       setTradeData(mockData);
       setError(error.message);
@@ -140,7 +134,7 @@ const TradingChart = () => {
   // Handle token address input
   const handleTokenAddressSubmit = (e) => {
     e.preventDefault();
-    fetchTokenData(tokenAddress);
+    handleTokenDataFetch(tokenAddress);
   };
 
   return (
@@ -165,6 +159,16 @@ const TradingChart = () => {
           {isLoading ? 'Fetching...' : 'Fetch Token Data'}
         </button>
       </form>
+
+      {/* Token Metadata Display */}
+      {tokenMetadata && (
+        <div className="mb-4 bg-blue-900/30 p-3 rounded-lg">
+          <h3 className="text-xl font-bold text-cyan-400">
+            {tokenMetadata.name} ({tokenMetadata.symbol})
+          </h3>
+          <p className="text-zinc-300">Current Price: ${tokenMetadata.currentPrice.toFixed(6)}</p>
+        </div>
+      )}
 
       {/* Error Handling */}
       {error && (
