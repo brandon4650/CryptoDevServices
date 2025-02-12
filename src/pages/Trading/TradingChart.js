@@ -11,10 +11,14 @@ import MarketStats from './components/MarketStats';
 import ChartControls from './components/ChartControls';
 import TradingVolume from './components/TradingVolume';
 
-const BITQUERY_API_ENDPOINT = process.env.REACT_APP_BITQUERY_API_ENDPOINT || 'https://graphql.bitquery.io';
-const BITQUERY_API_KEY = process.env.REACT_APP_BITQUERY_API_KEY;
-
 const fetchBitqueryData = async (tokenAddress) => {
+  const apiKey = process.env.REACT_APP_BITQUERY_API_KEY?.trim();
+  
+  if (!apiKey) {
+    console.error('Bitquery API key is missing');
+    return [];
+  }
+
   const query = {
     query: `
       query ($network: Network!, $address: String!) {
@@ -34,6 +38,9 @@ const fetchBitqueryData = async (tokenAddress) => {
               amount
               side
             }
+            transaction {
+              hash
+            }
           }
         }
       }
@@ -45,28 +52,48 @@ const fetchBitqueryData = async (tokenAddress) => {
   };
 
   try {
-    const response = await fetch(BITQUERY_API_ENDPOINT, {
+    console.log('Fetching data for token:', tokenAddress);
+
+    const response = await fetch('https://graphql.bitquery.io', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': BITQUERY_API_KEY
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify(query)
     });
 
-    if (!response.ok) throw new Error('API fetch failed');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Bitquery API Response Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`API fetch failed: ${response.status}`);
+    }
     
     const result = await response.json();
     
+    // Check for GraphQL errors
+    if (result.errors) {
+      console.error('GraphQL Errors:', result.errors);
+      return [];
+    }
+
     // Transform Bitquery data to our expected format
     return result.data.ethereum.dexTrades.map(trade => ({
       timestamp: new Date(trade.block.timestamp.time).getTime(),
       price: trade.trade.price,
       volume: trade.trade.amount,
-      type: trade.trade.side.toLowerCase()
+      type: trade.trade.side.toLowerCase(),
+      txHash: trade.transaction.hash
     })).reverse(); // Reverse to get chronological order
   } catch (error) {
-    console.error('Bitquery API error:', error);
+    console.error('Detailed Bitquery API error:', {
+      message: error.message,
+      stack: error.stack
+    });
     return [];
   }
 };
