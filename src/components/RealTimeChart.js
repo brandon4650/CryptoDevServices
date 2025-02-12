@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { format } from 'date-fns';
 import _ from 'lodash';
 import {
@@ -14,109 +14,111 @@ import { formatNumber } from '../utils/formatters';
 
 const CANDLE_INTERVAL = 60000; // 1 minute in milliseconds
 
-const RealTimeCandlestickChart = ({ tokenAddress }) => {
-  const [trades, setTrades] = useState([]);
+const RealTimeChart = ({ tokenAddress }) => {
+  const [priceData, setPriceData] = useState([]);
   const [candles, setCandles] = useState([]);
-  const [marketCap, setMarketCap] = useState(0);
   const [currentPrice, setCurrentPrice] = useState(0);
   const [priceChange24h, setPriceChange24h] = useState(0);
   const [totalBuys, setTotalBuys] = useState(0);
   const [totalSells, setTotalSells] = useState(0);
-  const [chartRange, setChartRange] = useState({
-    start: Date.now() - 3600000, // 1 hour ago
-    end: Date.now()
-  });
-  const wsRef = useRef(null);
-  const dragStart = useRef(null);
+  const lastPriceRef = useRef(null);
+  const lastMarketCapRef = useRef(null);
 
-  // Aggregate trades into candles
-  const aggregateCandles = (tradesData) => {
-    const groupedTrades = _.groupBy(tradesData, trade => 
-      Math.floor(trade.timestamp / CANDLE_INTERVAL) * CANDLE_INTERVAL
+  // Function to determine if a trade is a buy or sell based on price and market cap changes
+  const determineTradeType = (price, marketCap) => {
+    if (!lastPriceRef.current || !lastMarketCapRef.current) {
+      lastPriceRef.current = price;
+      lastMarketCapRef.current = marketCap;
+      return { type: 'buy', volume: 0 }; // Default for first trade
+    }
+
+    const priceChange = price - lastPriceRef.current;
+    const marketCapChange = marketCap - lastMarketCapRef.current;
+    
+    // Calculate volume from market cap change
+    const volume = Math.abs(marketCapChange / price);
+    
+    // If price went up, it's likely a buy. If down, likely a sell
+    const type = priceChange >= 0 ? 'buy' : 'sell';
+
+    lastPriceRef.current = price;
+    lastMarketCapRef.current = marketCap;
+
+    return { type, volume };
+  };
+
+  // Process new price update
+  const processPrice = (price, marketCap, timestamp = Date.now()) => {
+    const { type, volume } = determineTradeType(price, marketCap);
+    
+    setPriceData(prev => {
+      const newData = [...prev, {
+        timestamp,
+        price,
+        marketCap,
+        volume,
+        type
+      }];
+
+      // Keep last 24 hours of data
+      return newData.filter(d => d.timestamp > Date.now() - 86400000);
+    });
+
+    setCurrentPrice(price);
+
+    // Update buy/sell counts
+    if (type === 'buy') {
+      setTotalBuys(prev => prev + 1);
+    } else {
+      setTotalSells(prev => prev + 1);
+    }
+  };
+
+  // Aggregate candles from price data
+  const aggregateCandles = (data) => {
+    const groupedData = _.groupBy(data, item => 
+      Math.floor(item.timestamp / CANDLE_INTERVAL) * CANDLE_INTERVAL
     );
 
-    return Object.entries(groupedTrades).map(([timestamp, periodTrades]) => {
+    return Object.entries(groupedData).map(([timestamp, trades]) => {
       const timestampNum = parseInt(timestamp);
-      const opens = periodTrades[0].price;
-      const closes = periodTrades[periodTrades.length - 1].price;
-      const highs = Math.max(...periodTrades.map(t => t.price));
-      const lows = Math.min(...periodTrades.map(t => t.price));
-      const volume = _.sumBy(periodTrades, 'volume');
+      const open = trades[0].price;
+      const close = trades[trades.length - 1].price;
+      const high = Math.max(...trades.map(t => t.price));
+      const low = Math.min(...trades.map(t => t.price));
       const buyVolume = _.sumBy(
-        periodTrades.filter(t => t.type === 'buy'),
+        trades.filter(t => t.type === 'buy'),
         'volume'
       );
       const sellVolume = _.sumBy(
-        periodTrades.filter(t => t.type === 'sell'),
+        trades.filter(t => t.type === 'sell'),
         'volume'
       );
 
       return {
         timestamp: timestampNum,
-        open: opens,
-        close: closes,
-        high: highs,
-        low: lows,
-        volume,
+        open,
+        high,
+        low,
+        close,
         buyVolume,
         sellVolume,
-        color: closes >= opens ? '#22c55e' : '#ef4444',
-        marketCap: periodTrades[periodTrades.length - 1].marketCap
+        color: close >= open ? '#22c55e' : '#ef4444'
       };
     });
   };
 
-  // Handle WebSocket updates
+  // Update candles when price data changes
   useEffect(() => {
-    const connectWebSocket = () => {
-      const ws = new WebSocket('YOUR_WEBSOCKET_ENDPOINT');
-      
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        const newTrade = {
-          timestamp: new Date(data.timestamp).getTime(),
-          price: data.price,
-          volume: data.volume,
-          type: data.type,
-          marketCap: data.marketCap
-        };
-
-        setTrades(prevTrades => {
-          const newTrades = [...prevTrades, newTrade];
-          // Keep last 24 hours of trades
-          const filteredTrades = newTrades.filter(t => 
-            t.timestamp > Date.now() - 86400000
-          );
-
-          // Update 24h stats
-          const oldestTrade = filteredTrades[0];
-          if (oldestTrade) {
-            setPriceChange24h(
-              ((newTrade.price - oldestTrade.price) / oldestTrade.price) * 100
-            );
-          }
-
-          setTotalBuys(filteredTrades.filter(t => t.type === 'buy').length);
-          setTotalSells(filteredTrades.filter(t => t.type === 'sell').length);
-
-          return filteredTrades;
-        });
-
-        setCurrentPrice(data.price);
-        setMarketCap(data.marketCap);
-      };
-
-      wsRef.current = ws;
-    };
-
-    connectWebSocket();
-    return () => wsRef.current?.close();
-  }, [tokenAddress]);
-
-  // Update candles when trades change
-  useEffect(() => {
-    setCandles(aggregateCandles(trades));
-  }, [trades]);
+    setCandles(aggregateCandles(priceData));
+    
+    // Calculate 24h price change
+    if (priceData.length >= 2) {
+      const oldestPrice = priceData[0].price;
+      const latestPrice = priceData[priceData.length - 1].price;
+      setPriceChange24h(((latestPrice - oldestPrice) / oldestPrice) * 100);
+    }
+  }, [priceData]);
 
   // Custom candlestick renderer
   const renderCandlestick = (props) => {
@@ -126,42 +128,55 @@ const RealTimeCandlestickChart = ({ tokenAddress }) => {
     } = props;
 
     const { open, close, high, low, color } = payload;
+    
+    // Calculate positions
     const candleY = Math.min(
-      y + height * (1 - open),
-      y + height * (1 - close)
+      y + height * (1 - (open / high)),
+      y + height * (1 - (close / high))
     );
     const candleHeight = Math.abs(
-      height * open - height * close
+      height * ((close - open) / high)
     );
-    const wickY1 = y + height * (1 - high);
-    const wickY2 = y + height * (1 - low);
 
     return (
       <g key={`candle-${x}`}>
         {/* Wick */}
         <line
           x1={x + width / 2}
-          y1={wickY1}
+          y1={y + height * (1 - (high / high))}
           x2={x + width / 2}
-          y2={wickY2}
+          y2={y + height * (1 - (low / high))}
           stroke={color}
           strokeWidth={1}
         />
         {/* Candle body */}
         <rect
-          x={x + width * 0.2}
+          x={x + width * 0.25}
           y={candleY}
-          width={width * 0.6}
+          width={width * 0.5}
           height={Math.max(candleHeight, 1)}
           fill={color}
-          stroke={color}
         />
       </g>
     );
   };
 
+  // Simulate price updates for testing
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const lastPrice = currentPrice || 0.0001;
+      const priceChange = (Math.random() - 0.5) * lastPrice * 0.02; // 2% max change
+      const newPrice = Math.max(lastPrice + priceChange, 0.00000001);
+      const newMarketCap = newPrice * 1000000000; // Assuming 1B supply
+      
+      processPrice(newPrice, newMarketCap);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentPrice]);
+
   return (
-    <div className="w-full bg-[#0a0a0a] rounded-lg p-4">
+    <div className="w-full bg-blue-950 rounded-lg p-4">
       {/* Stats Display */}
       <div className="grid grid-cols-4 gap-4 mb-4">
         <div>
@@ -195,16 +210,13 @@ const RealTimeCandlestickChart = ({ tokenAddress }) => {
       {/* Chart */}
       <div className="h-[500px]">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={candles}
-            margin={{ top: 10, right: 50, left: 10, bottom: 5 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="#2c2c2c"
+          <ComposedChart data={candles}>
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="#334155" 
               vertical={false}
             />
-
+            
             {/* Candlesticks */}
             <Bar
               dataKey="price"
@@ -233,24 +245,20 @@ const RealTimeCandlestickChart = ({ tokenAddress }) => {
             <XAxis
               dataKey="timestamp"
               tickFormatter={(ts) => format(new Date(ts), 'HH:mm:ss')}
-              stroke="#666"
-              tick={{ fill: '#666' }}
+              stroke="#64748b"
             />
 
             <YAxis
               domain={['auto', 'auto']}
               tickFormatter={(value) => value.toFixed(9)}
-              orientation="right"
-              stroke="#666"
-              tick={{ fill: '#666' }}
+              stroke="#64748b"
             />
 
             <YAxis
               yAxisId="volume"
-              orientation="left"
-              stroke="#666"
-              tick={{ fill: '#666' }}
-              tickFormatter={(value) => formatNumber(value)}
+              orientation="right"
+              stroke="#64748b"
+              tickFormatter={formatNumber}
             />
 
             <Tooltip
@@ -258,23 +266,15 @@ const RealTimeCandlestickChart = ({ tokenAddress }) => {
                 if (!active || !payload?.length) return null;
                 const data = payload[0].payload;
                 return (
-                  <div className="bg-[#1a1a1a] p-4 rounded-lg shadow-lg border border-gray-800">
-                    <p className="text-gray-400">
+                  <div className="bg-blue-900/80 p-4 rounded-lg shadow-lg">
+                    <p className="text-gray-300">
                       {format(new Date(data.timestamp), 'HH:mm:ss')}
                     </p>
-                    <p className="text-cyan-400">
-                      O: ${data.open.toFixed(9)}
-                    </p>
-                    <p className="text-cyan-400">
-                      H: ${data.high.toFixed(9)}
-                    </p>
-                    <p className="text-cyan-400">
-                      L: ${data.low.toFixed(9)}
-                    </p>
-                    <p className="text-cyan-400">
-                      C: ${data.close.toFixed(9)}
-                    </p>
-                    <div className="mt-2 border-t border-gray-800 pt-2">
+                    <p className="text-cyan-400">O: ${data.open.toFixed(9)}</p>
+                    <p className="text-cyan-400">H: ${data.high.toFixed(9)}</p>
+                    <p className="text-cyan-400">L: ${data.low.toFixed(9)}</p>
+                    <p className="text-cyan-400">C: ${data.close.toFixed(9)}</p>
+                    <div className="mt-2 border-t border-gray-700 pt-2">
                       <p className="text-green-500">
                         Buy Vol: ${formatNumber(data.buyVolume)}
                       </p>
@@ -293,4 +293,4 @@ const RealTimeCandlestickChart = ({ tokenAddress }) => {
   );
 };
 
-export default RealTimeCandlestickChart;
+export default RealTimeChart;
