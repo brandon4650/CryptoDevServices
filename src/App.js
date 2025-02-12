@@ -39,7 +39,7 @@ function App() {
 
   return (
     <Router>
-    <DigitalBackground />
+      <DigitalBackground />
       <Routes>
         <Route 
           path="/" 
@@ -54,8 +54,9 @@ function App() {
         <Route path="/chat" element={<LiveChat initialOpen={true} chatInitialized={chatInitialized} />} />
         <Route path="/builder" element={<BuilderPage />} />
       </Routes>
+      
       <GameModal isOpen={isGameOpen} onClose={() => setIsGameOpen(false)} />
-      {/* Render LiveChat globally */}
+      
       {!window.location.pathname.includes('/chat') && chatInitialized && <LiveChat />}
     </Router>
   );
