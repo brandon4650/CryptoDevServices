@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { 
   BarChart, Bar, LineChart, Line, XAxis, YAxis, 
-  Tooltip, ResponsiveContainer, CartesianGrid 
+  Tooltip, ResponsiveContainer, CartesianGrid, ComposedChart 
 } from 'recharts';
 
 // Utility function to format numbers
@@ -40,17 +40,56 @@ const fetchTokenData = async (tokenAddress) => {
       throw new Error('No token data found');
     }
 
+    // Fetch trades data
+    const tradesResponse = await axios.get(
+      `https://api.dexscreener.com/latest/dex/trades/${pairs[0].pairAddress}`,
+      {
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }
+    );
+
     // Find the main pair (typically the first one)
     const mainPair = pairs[0];
 
-    // Generate historical data
-    const historicalData = pairs.map((pair, index) => ({
-      time: pair.pairCreatedAt || Date.now() - index * 86400000,
-      price: parseFloat(pair.priceUsd || 0),
-      volume: parseFloat(pair.volume?.h24 || 0),
-      buys: pair.txns?.h24?.buys || 0,
-      sells: pair.txns?.h24?.sells || 0
+    // Process trades data
+    const trades = tradesResponse.data?.trades || [];
+    const processedTrades = trades.map(trade => ({
+      timestamp: new Date(trade.timestamp).getTime(),
+      price: parseFloat(trade.price),
+      volume: parseFloat(trade.volume),
+      type: trade.type.toLowerCase(),
+      amount: parseFloat(trade.amount)
     }));
+
+    // Group trades by type
+    const groupedTrades = processedTrades.reduce((acc, trade) => {
+      const time = new Date(trade.timestamp).toLocaleTimeString();
+      if (!acc[time]) {
+        acc[time] = { 
+          time: trade.timestamp, 
+          buyVolume: 0, 
+          sellVolume: 0,
+          buyAmount: 0,
+          sellAmount: 0
+        };
+      }
+
+      if (trade.type === 'buy') {
+        acc[time].buyVolume += trade.volume;
+        acc[time].buyAmount += trade.amount;
+      } else {
+        acc[time].sellVolume += trade.volume;
+        acc[time].sellAmount += trade.amount;
+      }
+
+      return acc;
+    }, {});
+
+    const historicalData = Object.values(groupedTrades)
+      .sort((a, b) => a.time - b.time);
 
     return {
       tokenInfo: {
@@ -63,12 +102,12 @@ const fetchTokenData = async (tokenAddress) => {
         marketCap: parseFloat(mainPair.marketCap || mainPair.fdv || 0),
         liquidity: parseFloat(mainPair.liquidity?.usd || 0),
         transactions: {
-          buys: mainPair.txns?.h24?.buys || 0,
-          sells: mainPair.txns?.h24?.sells || 0,
-          totalTxns: (mainPair.txns?.h24?.buys || 0) + (mainPair.txns?.h24?.sells || 0)
+          buys: processedTrades.filter(t => t.type === 'buy').length,
+          sells: processedTrades.filter(t => t.type === 'sell').length
         }
       },
-      historicalData
+      historicalData,
+      processedTrades
     };
   } catch (error) {
     console.error('DexScreener API Error:', error);
@@ -147,87 +186,46 @@ const TradingChart = () => {
               </div>
             </div>
             <div>
-              <div className="text-sm text-zinc-400">24h Volume</div>
-              <div className="text-xl font-bold text-cyan-400">
-                ${formatNumber(tokenData.volume24h)}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-zinc-400">Market Cap</div>
-              <div className="text-xl font-bold text-cyan-400">
-                ${formatNumber(tokenData.marketCap)}
-              </div>
-            </div>
-          </div>
-
-          {/* Transaction Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-4 bg-blue-900/30 p-4 rounded-lg">
-            <div>
-              <div className="text-sm text-zinc-400">Total Transactions</div>
-              <div className="text-xl font-bold text-cyan-400">
-                {tokenData.transactions.totalTxns}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-zinc-400">Buys</div>
+              <div className="text-sm text-zinc-400">Total Buys</div>
               <div className="text-xl font-bold text-green-500">
                 {tokenData.transactions.buys}
               </div>
             </div>
             <div>
-              <div className="text-sm text-zinc-400">Buy Ratio</div>
-              <div className="text-xl font-bold text-cyan-400">
-                {tokenData.transactions.totalTxns > 0 
-                  ? ((tokenData.transactions.buys / tokenData.transactions.totalTxns) * 100).toFixed(2) 
-                  : '0'}%
+              <div className="text-sm text-zinc-400">Total Sells</div>
+              <div className="text-xl font-bold text-red-500">
+                {tokenData.transactions.sells}
               </div>
             </div>
           </div>
         </>
       )}
 
-      {/* Price Chart */}
-      <div className="h-[300px] mb-4">
-        <ResponsiveContainer>
-          <LineChart data={historicalData}>
-            <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="time"
-              tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
-            />
-            <YAxis />
-            <Tooltip 
-              formatter={(value) => [`$${formatNumber(value)}`, 'Price']}
-              labelFormatter={(label) => new Date(label).toLocaleString()}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="price" 
-              stroke="#22d3ee" 
-              strokeWidth={2}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Volume Chart */}
-      <div className="h-[300px]">
+      {/* Buys and Sells Chart */}
+      <div className="h-[400px]">
         <ResponsiveContainer>
           <BarChart data={historicalData}>
             <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
             <XAxis 
               dataKey="time"
-              tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
+              tickFormatter={(timestamp) => new Date(timestamp).toLocaleTimeString()}
             />
             <YAxis />
             <Tooltip 
-              formatter={(value) => [`$${formatNumber(value)}`, 'Volume']}
+              formatter={(value, name) => [formatNumber(value), name]}
               labelFormatter={(label) => new Date(label).toLocaleString()}
             />
             <Bar 
-              dataKey="volume" 
-              fill="#22d3ee" 
+              dataKey="buyVolume" 
+              fill="#22c55e" // Green for buys
               opacity={0.7}
+              name="Buy Volume"
+            />
+            <Bar 
+              dataKey="sellVolume" 
+              fill="#ef4444" // Red for sells
+              opacity={0.7}
+              name="Sell Volume"
             />
           </BarChart>
         </ResponsiveContainer>
