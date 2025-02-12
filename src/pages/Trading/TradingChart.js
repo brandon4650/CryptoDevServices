@@ -5,6 +5,7 @@ import {
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 import { Connection, PublicKey } from '@solana/web3.js';
+import axios from 'axios'; // Make sure to install axios
 import { 
   calculateIndicators 
 } from '../../utils/indicators';
@@ -26,29 +27,42 @@ const fetchSolanaTokenData = async (tokenAddress) => {
     const connection = new Connection(SOLANA_RPC_ENDPOINT, 'confirmed');
     const mintPublicKey = new PublicKey(tokenAddress);
 
-    // Fetch token data from Jupiter Aggregator
-    const jupiterResponse = await fetch(`https://price.jup.ag/v4/price?ids=${tokenAddress}`);
-    const priceData = await jupiterResponse.json();
+    // Fetch price data using Coingecko API
+    let priceData = { usd: 0 };
+    try {
+      const coingeckoResponse = await axios.get(
+        `https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd`
+      );
+      priceData = coingeckoResponse.data;
+    } catch (priceError) {
+      console.error('Price fetch error:', priceError);
+    }
 
-    // Fetch recent transactions (simplified example)
+    // Fetch recent transactions
     const signatures = await connection.getSignaturesForAddress(mintPublicKey, {
       limit: 100
     });
 
     // Transform transaction data
     const trades = await Promise.all(signatures.map(async (sig) => {
-      const transaction = await connection.getTransaction(sig.signature);
-      
-      return {
-        timestamp: transaction?.blockTime ? transaction.blockTime * 1000 : Date.now(),
-        price: priceData.data[tokenAddress]?.price || 0,
-        volume: transaction?.meta?.postTokenBalances?.reduce((sum, balance) => 
-          sum + (balance.uiTokenAmount?.amount || 0), 0) || 0,
-        type: 'trade' // Simplified, actual type detection would be more complex
-      };
+      try {
+        const transaction = await connection.getTransaction(sig.signature);
+        
+        return {
+          timestamp: transaction?.blockTime ? transaction.blockTime * 1000 : Date.now(),
+          price: priceData.solana?.usd || 0, // Using Solana price as a placeholder
+          volume: transaction?.meta?.postTokenBalances?.reduce((sum, balance) => 
+            sum + (balance.uiTokenAmount?.amount || 0), 0) || 0,
+          type: 'trade'
+        };
+      } catch (transactionError) {
+        console.error('Transaction fetch error:', transactionError);
+        return null;
+      }
     }));
 
-    return trades.filter(trade => trade.price > 0);
+    // Filter out null values and those with zero price
+    return trades.filter(trade => trade && trade.price > 0);
   } catch (error) {
     console.error('Solana Token Data Fetch Error:', {
       message: error.message,
@@ -77,6 +91,8 @@ const TradingChart = () => {
     volume24h: 0,
     priceChange24h: 0
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Memoize calculations
   const indicators = useMemo(() => 
@@ -85,6 +101,9 @@ const TradingChart = () => {
   // Function to fetch data for a given token
   const fetchTokenData = async (address) => {
     if (!address) return;
+
+    setIsLoading(true);
+    setError(null);
 
     try {
       // Fetch Solana token data
@@ -105,12 +124,16 @@ const TradingChart = () => {
         // Fallback to mock data
         const mockData = generateMockData(100);
         setTradeData(mockData);
+        setError('No data found for this token');
       }
     } catch (error) {
       console.error('Data fetching error:', error);
       // Fallback to mock data
       const mockData = generateMockData(100);
       setTradeData(mockData);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -136,11 +159,19 @@ const TradingChart = () => {
         />
         <button 
           type="submit" 
-          className="bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-white transition-colors"
+          disabled={isLoading}
+          className="bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50"
         >
-          Fetch Token Data
+          {isLoading ? 'Fetching...' : 'Fetch Token Data'}
         </button>
       </form>
+
+      {/* Error Handling */}
+      {error && (
+        <div className="bg-red-900/30 text-red-300 p-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
 
       <MarketStats stats={marketInfo} />
       <ChartControls />
