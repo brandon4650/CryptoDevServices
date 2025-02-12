@@ -6,7 +6,7 @@ import {
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 
-// Utility function to format numbers (similar to your bot's implementation)
+// Utility function to format numbers
 const formatNumber = (num) => {
   if (!num || num === "N/A") return 'N/A';
   
@@ -25,8 +25,8 @@ const formatNumber = (num) => {
 const fetchTokenData = async (tokenAddress) => {
   try {
     // Fetch token pairs data
-    const tokenResponse = await axios.get(
-      `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`,
+    const pairsResponse = await axios.get(
+      `https://api.dexscreener.com/token-pairs/v1/solana/${tokenAddress}`,
       {
         headers: {
           'Accept': 'application/json, text/plain, */*',
@@ -35,16 +35,28 @@ const fetchTokenData = async (tokenAddress) => {
       }
     );
 
-    const pairs = tokenResponse.data.pairs || [];
+    const pairs = pairsResponse.data || [];
     if (pairs.length === 0) {
       throw new Error('No token data found');
     }
 
+    // Find the main pair (typically the first one)
     const mainPair = pairs[0];
 
-    // Fetch trades data
-    const tradesResponse = await axios.get(
-      `https://api.dexscreener.com/latest/dex/trades/${mainPair.pairAddress}`,
+    // Fetch token profile for additional info
+    const profileResponse = await axios.get(
+      `https://api.dexscreener.com/token-profiles/latest/v1?chainId=solana&tokenAddress=${tokenAddress}`,
+      {
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0'
+        }
+      }
+    );
+
+    // Fetch token boost status
+    const boostResponse = await axios.get(
+      `https://api.dexscreener.com/token-boosts/top/v1`,
       {
         headers: {
           'Accept': 'application/json, text/plain, */*',
@@ -56,47 +68,42 @@ const fetchTokenData = async (tokenAddress) => {
     // Process candlestick data
     const candlestickData = pairs.map(pair => ({
       time: pair.pairCreatedAt,
-      open: parseFloat(pair.priceChange.m5),
+      open: parseFloat(pair.priceChange?.m5 || pair.priceNative),
       high: parseFloat(pair.priceUsd) * 1.05,
       low: parseFloat(pair.priceUsd) * 0.95,
       close: parseFloat(pair.priceUsd),
-      volume: parseFloat(pair.volume.h24)
+      volume: parseFloat(pair.volume?.h24 || 0)
     }));
 
-    // Extract transaction data
-    const trades = tradesResponse.data?.trades || [];
-    const last24Hours = Date.now() - (24 * 60 * 60 * 1000);
-    const recentTrades = trades.filter(trade => 
-      new Date(trade.timestamp).getTime() > last24Hours
+    // Find boost information
+    const boostInfo = boostResponse.data.find(
+      boost => boost.tokenAddress === tokenAddress
     );
-
-    const buys = recentTrades.filter(trade => 
-      trade.type.toLowerCase() === 'buy'
-    ).length;
-    
-    const sells = recentTrades.filter(trade => 
-      trade.type.toLowerCase() === 'sell'
-    ).length;
 
     return {
       tokenInfo: {
         name: mainPair.baseToken.name,
         symbol: mainPair.baseToken.symbol,
         address: tokenAddress,
-        currentPrice: parseFloat(mainPair.priceUsd),
-        priceChange24h: parseFloat(mainPair.priceChange.h24),
-        volume24h: parseFloat(mainPair.volume.h24),
-        marketCap: parseFloat(mainPair.fdv),
-        liquidity: parseFloat(mainPair.liquidity.usd),
+        currentPrice: parseFloat(mainPair.priceUsd || 0),
+        priceChange24h: parseFloat(mainPair.priceChange?.h24 || 0),
+        volume24h: parseFloat(mainPair.volume?.h24 || 0),
+        marketCap: parseFloat(mainPair.marketCap || mainPair.fdv || 0),
+        liquidity: parseFloat(mainPair.liquidity?.usd || 0),
         transactions: {
-          buys,
-          sells,
-          totalTxns: buys + sells,
-          buyRatio: ((buys / (buys + sells)) * 100).toFixed(2)
-        }
+          buys: mainPair.txns?.h24?.buys || 0,
+          sells: mainPair.txns?.h24?.sells || 0,
+          totalTxns: (mainPair.txns?.h24?.buys || 0) + (mainPair.txns?.h24?.sells || 0)
+        },
+        boostStatus: boostInfo ? {
+          isActive: boostInfo.amount > 0,
+          boostAmount: boostInfo.amount,
+          totalBoostAmount: boostInfo.totalAmount
+        } : null,
+        profileInfo: profileResponse.data?.[0] || null
       },
       candlestickData,
-      recentTrades: trades.slice(0, 5)
+      pairs
     };
   } catch (error) {
     console.error('DexScreener API Error:', error);
@@ -158,58 +165,60 @@ const TradingChart = () => {
 
       {/* Token Information */}
       {tokenData && (
-        <div className="grid grid-cols-4 gap-4 mb-4">
-          <div>
-            <div className="text-sm text-zinc-400">Price</div>
-            <div className="text-xl font-bold text-cyan-400">
-              ${formatNumber(tokenData.currentPrice)}
+        <>
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <div>
+              <div className="text-sm text-zinc-400">Price</div>
+              <div className="text-xl font-bold text-cyan-400">
+                ${formatNumber(tokenData.currentPrice)}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-zinc-400">24h Change</div>
+              <div className={`text-xl font-bold ${
+                tokenData.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
+              }`}>
+                {tokenData.priceChange24h.toFixed(2)}%
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-zinc-400">24h Volume</div>
+              <div className="text-xl font-bold text-cyan-400">
+                ${formatNumber(tokenData.volume24h)}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-zinc-400">Market Cap</div>
+              <div className="text-xl font-bold text-cyan-400">
+                ${formatNumber(tokenData.marketCap)}
+              </div>
             </div>
           </div>
-          <div>
-            <div className="text-sm text-zinc-400">24h Change</div>
-            <div className={`text-xl font-bold ${
-              tokenData.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500'
-            }`}>
-              {tokenData.priceChange24h.toFixed(2)}%
-            </div>
-          </div>
-          <div>
-            <div className="text-sm text-zinc-400">24h Volume</div>
-            <div className="text-xl font-bold text-cyan-400">
-              ${formatNumber(tokenData.volume24h)}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm text-zinc-400">Market Cap</div>
-            <div className="text-xl font-bold text-cyan-400">
-              ${formatNumber(tokenData.marketCap)}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Transaction Stats */}
-      {tokenData?.transactions && (
-        <div className="grid grid-cols-3 gap-4 mb-4 bg-blue-900/30 p-4 rounded-lg">
-          <div>
-            <div className="text-sm text-zinc-400">Total Transactions</div>
-            <div className="text-xl font-bold text-cyan-400">
-              {tokenData.transactions.totalTxns}
+          {/* Transaction Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-4 bg-blue-900/30 p-4 rounded-lg">
+            <div>
+              <div className="text-sm text-zinc-400">Total Transactions</div>
+              <div className="text-xl font-bold text-cyan-400">
+                {tokenData.transactions.totalTxns}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-zinc-400">Buys</div>
+              <div className="text-xl font-bold text-green-500">
+                {tokenData.transactions.buys}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-zinc-400">Buy Ratio</div>
+              <div className="text-xl font-bold text-cyan-400">
+                {tokenData.transactions.totalTxns > 0 
+                  ? ((tokenData.transactions.buys / tokenData.transactions.totalTxns) * 100).toFixed(2) 
+                  : '0'}%
+              </div>
             </div>
           </div>
-          <div>
-            <div className="text-sm text-zinc-400">Buys</div>
-            <div className="text-xl font-bold text-green-500">
-              {tokenData.transactions.buys}
-            </div>
-          </div>
-          <div>
-            <div className="text-sm text-zinc-400">Buy Ratio</div>
-            <div className="text-xl font-bold text-cyan-400">
-              {tokenData.transactions.buyRatio}%
-            </div>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Candlestick Chart */}
