@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { 
-  ComposedChart, Area, Bar, Line, XAxis, YAxis, 
-  Tooltip, ResponsiveContainer, CartesianGrid, Candlestick
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, 
+  Tooltip, ResponsiveContainer, CartesianGrid 
 } from 'recharts';
 
 // Utility function to format numbers
@@ -43,42 +43,14 @@ const fetchTokenData = async (tokenAddress) => {
     // Find the main pair (typically the first one)
     const mainPair = pairs[0];
 
-    // Fetch token profile for additional info
-    const profileResponse = await axios.get(
-      `https://api.dexscreener.com/token-profiles/latest/v1?chainId=solana&tokenAddress=${tokenAddress}`,
-      {
-        headers: {
-          'Accept': 'application/json, text/plain, */*',
-          'User-Agent': 'Mozilla/5.0'
-        }
-      }
-    );
-
-    // Fetch token boost status
-    const boostResponse = await axios.get(
-      `https://api.dexscreener.com/token-boosts/top/v1`,
-      {
-        headers: {
-          'Accept': 'application/json, text/plain, */*',
-          'User-Agent': 'Mozilla/5.0'
-        }
-      }
-    );
-
-    // Process candlestick data
-    const candlestickData = pairs.map(pair => ({
-      time: pair.pairCreatedAt,
-      open: parseFloat(pair.priceChange?.m5 || pair.priceNative),
-      high: parseFloat(pair.priceUsd) * 1.05,
-      low: parseFloat(pair.priceUsd) * 0.95,
-      close: parseFloat(pair.priceUsd),
-      volume: parseFloat(pair.volume?.h24 || 0)
+    // Generate historical data
+    const historicalData = pairs.map((pair, index) => ({
+      time: pair.pairCreatedAt || Date.now() - index * 86400000,
+      price: parseFloat(pair.priceUsd || 0),
+      volume: parseFloat(pair.volume?.h24 || 0),
+      buys: pair.txns?.h24?.buys || 0,
+      sells: pair.txns?.h24?.sells || 0
     }));
-
-    // Find boost information
-    const boostInfo = boostResponse.data.find(
-      boost => boost.tokenAddress === tokenAddress
-    );
 
     return {
       tokenInfo: {
@@ -94,16 +66,9 @@ const fetchTokenData = async (tokenAddress) => {
           buys: mainPair.txns?.h24?.buys || 0,
           sells: mainPair.txns?.h24?.sells || 0,
           totalTxns: (mainPair.txns?.h24?.buys || 0) + (mainPair.txns?.h24?.sells || 0)
-        },
-        boostStatus: boostInfo ? {
-          isActive: boostInfo.amount > 0,
-          boostAmount: boostInfo.amount,
-          totalBoostAmount: boostInfo.totalAmount
-        } : null,
-        profileInfo: profileResponse.data?.[0] || null
+        }
       },
-      candlestickData,
-      pairs
+      historicalData
     };
   } catch (error) {
     console.error('DexScreener API Error:', error);
@@ -114,7 +79,7 @@ const fetchTokenData = async (tokenAddress) => {
 const TradingChart = () => {
   const [tokenAddress, setTokenAddress] = useState('');
   const [tokenData, setTokenData] = useState(null);
-  const [candlestickData, setCandlestickData] = useState([]);
+  const [historicalData, setHistoricalData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -126,11 +91,11 @@ const TradingChart = () => {
     try {
       const data = await fetchTokenData(tokenAddress);
       setTokenData(data.tokenInfo);
-      setCandlestickData(data.candlestickData);
+      setHistoricalData(data.historicalData);
     } catch (err) {
       setError(err.message);
       setTokenData(null);
-      setCandlestickData([]);
+      setHistoricalData([]);
     } finally {
       setIsLoading(false);
     }
@@ -221,40 +186,52 @@ const TradingChart = () => {
         </>
       )}
 
-      {/* Candlestick Chart */}
-<div className="h-[600px]">
-  <ResponsiveContainer>
-    <ComposedChart data={candlestickData}>
-      <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
-      <XAxis 
-        dataKey="time"
-        tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
-      />
-      <YAxis />
-      <Tooltip 
-        content={({ payload }) => {
-          if (payload && payload.length) {
-            const candle = payload[0].payload;
-            return (
-              <div className="bg-blue-900/80 p-4 rounded-lg">
-                <p>Open: ${candle.open.toFixed(6)}</p>
-                <p>High: ${candle.high.toFixed(6)}</p>
-                <p>Low: ${candle.low.toFixed(6)}</p>
-                <p>Close: ${candle.close.toFixed(6)}</p>
-                <p>Volume: ${formatNumber(candle.volume)}</p>
-              </div>
-            );
-          }
-          return null;
-        }}
-      />
-      <Candlestick 
-        wickStroke={(d) => d.close > d.open ? 'green' : 'red'}
-        fill={(d) => d.close > d.open ? 'green' : 'red'}
-      />
-    </ComposedChart>
-  </ResponsiveContainer>
-</div>
+      {/* Price Chart */}
+      <div className="h-[300px] mb-4">
+        <ResponsiveContainer>
+          <LineChart data={historicalData}>
+            <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
+            <XAxis 
+              dataKey="time"
+              tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
+            />
+            <YAxis />
+            <Tooltip 
+              formatter={(value) => [`$${formatNumber(value)}`, 'Price']}
+              labelFormatter={(label) => new Date(label).toLocaleString()}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="price" 
+              stroke="#22d3ee" 
+              strokeWidth={2}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Volume Chart */}
+      <div className="h-[300px]">
+        <ResponsiveContainer>
+          <BarChart data={historicalData}>
+            <CartesianGrid stroke="#323232" strokeDasharray="3 3" />
+            <XAxis 
+              dataKey="time"
+              tickFormatter={(timestamp) => new Date(timestamp).toLocaleDateString()}
+            />
+            <YAxis />
+            <Tooltip 
+              formatter={(value) => [`$${formatNumber(value)}`, 'Volume']}
+              labelFormatter={(label) => new Date(label).toLocaleString()}
+            />
+            <Bar 
+              dataKey="volume" 
+              fill="#22d3ee" 
+              opacity={0.7}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };
