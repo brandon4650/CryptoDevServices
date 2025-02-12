@@ -4,7 +4,6 @@ import {
   ComposedChart, Area, Bar, Line, XAxis, YAxis, 
   Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
-import axios from 'axios';
 import { 
   calculateIndicators 
 } from '../../utils/indicators';
@@ -17,29 +16,28 @@ import MarketStats from './components/MarketStats';
 import ChartControls from './components/ChartControls';
 import TradingVolume from './components/TradingVolume';
 
-// Solana RPC endpoints
-const RPC_ENDPOINTS = [
-  'https://api.mainnet-beta.solana.com',
-  'https://solana-api.projectserum.com',
-  'https://solana-rpc.linkpool.io',
-  'https://rpc.ankr.com/solana'
-];
-
 const fetchTokenData = async (tokenAddress) => {
   try {
-    // Fetch historical price data from Jupiter Aggregator
-    const priceResponse = await axios.get(
-      `https://price.jup.ag/v4/price?ids=${tokenAddress}`
-    );
+    // Fetch token price from Jupiter's new price API
+    let currentPrice = 0;
+    let tokenInfo = null;
 
-    // Fetch token metadata from Solana FM
-    const metadataResponse = await axios.get(
-      `https://public-api.solana.fm/v1/token/meta?address=${tokenAddress}`
-    );
+    try {
+      // Fetch price
+      const priceResponse = await fetch(
+        `https://api.jup.ag/price/v2?ids=${tokenAddress}`
+      );
+      const priceData = await priceResponse.json();
+      currentPrice = priceData[tokenAddress]?.price || 0;
 
-    // Generate mock trade data based on available information
-    const currentPrice = priceResponse.data.data[tokenAddress]?.price || 0;
-    const metadata = metadataResponse.data;
+      // Fetch token metadata
+      const metadataResponse = await fetch(
+        `https://api.jup.ag/tokens/v1/token/${tokenAddress}`
+      );
+      tokenInfo = await metadataResponse.json();
+    } catch (error) {
+      console.warn('Jupiter API fetch failed:', error);
+    }
 
     // Generate simulated historical data
     const trades = Array.from({ length: 50 }, (_, index) => ({
@@ -52,10 +50,10 @@ const fetchTokenData = async (tokenAddress) => {
     return {
       trades,
       metadata: {
-        name: metadata.name || 'Unknown Token',
-        symbol: metadata.symbol || 'UNKN',
+        name: tokenInfo?.name || 'Unknown Token',
+        symbol: tokenInfo?.symbol || tokenAddress.substring(0, 6),
         currentPrice: currentPrice,
-        marketCap: metadata.market_cap || 0
+        marketCap: tokenInfo?.market_cap || 0
       }
     };
   } catch (error) {
