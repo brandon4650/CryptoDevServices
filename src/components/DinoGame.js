@@ -18,7 +18,9 @@ const DinoGame = () => {
       gravity: 0.8
     },
     cactuses: [],
-    gameSpeed: 5,
+    baseSpeed: 5,        // Base starting speed
+    gameSpeed: 5,        // Current speed that will increase
+    speedMultiplier: 1,  // Will increase with score
     groundY: 250,
     nextCactusIn: 50
   });
@@ -43,7 +45,7 @@ const DinoGame = () => {
     };
 
     const drawDino = () => {
-      ctx.fillStyle = '#22d3ee'; // Cyan color
+      ctx.fillStyle = '#22d3ee'; // Cyan color to match theme
       ctx.fillRect(
         gameState.current.dino.x,
         gameState.current.dino.y,
@@ -93,7 +95,11 @@ const DinoGame = () => {
         }
       }
 
-      // Update cactuses
+      // Update speed based on score - increase speed by 0.2% every 10 points
+      const newSpeedMultiplier = 1 + (score / 500);
+      gameState.current.gameSpeed = gameState.current.baseSpeed * newSpeedMultiplier;
+
+      // Update cactuses with current speed
       gameState.current.cactuses.forEach(cactus => {
         cactus.x -= gameState.current.gameSpeed;
       });
@@ -101,11 +107,11 @@ const DinoGame = () => {
       // Remove off-screen cactuses
       gameState.current.cactuses = gameState.current.cactuses.filter(cactus => cactus.x > -20);
 
-      // Spawn new cactus
+      // Spawn new cactus with dynamic timing based on speed
       gameState.current.nextCactusIn--;
       if (gameState.current.nextCactusIn <= 0) {
         spawnCactus();
-        gameState.current.nextCactusIn = Math.random() * 100 + 50;
+        gameState.current.nextCactusIn = Math.random() * (120 - gameState.current.gameSpeed * 3) + 60;
       }
 
       // Check collisions
@@ -120,9 +126,9 @@ const DinoGame = () => {
       drawDino();
       drawCactuses();
 
-      // Update score
+      // Update score faster for more engagement
       frameCount++;
-      if (frameCount % 10 === 0) {
+      if (frameCount % 5 === 0) {
         setScore(prev => prev + 1);
       }
 
@@ -130,13 +136,14 @@ const DinoGame = () => {
       if (!gameOver) {
         animationId = requestAnimationFrame(updateGame);
       } else {
-        // Draw game over text
+        // Draw game over text with theme colors
         ctx.fillStyle = '#22d3ee';
-        ctx.font = '30px Arial';
+        ctx.font = 'bold 30px Arial';
         ctx.textAlign = 'center';
         ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2);
         ctx.font = '20px Arial';
-        ctx.fillText('Press Space to restart', canvas.width / 2, canvas.height / 2 + 40);
+        ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2 + 40);
+        ctx.fillText('Press Space to restart', canvas.width / 2, canvas.height / 2 + 80);
       }
     };
 
@@ -153,6 +160,7 @@ const DinoGame = () => {
         gameState.current.cactuses = [];
         gameState.current.dino.y = 200;
         gameState.current.dino.velocity = 0;
+        gameState.current.gameSpeed = gameState.current.baseSpeed; // Reset speed
         setScore(0);
         setGameOver(false);
         updateGame();
@@ -170,7 +178,7 @@ const DinoGame = () => {
       canvas.removeEventListener('click', handleClick);
       cancelAnimationFrame(animationId);
     };
-  }, [gameOver, isJumping]);
+  }, [gameOver, isJumping, score]);
 
   return (
     <div className="flex flex-col items-center p-4 bg-blue-950/95 rounded-lg">
@@ -184,6 +192,11 @@ const DinoGame = () => {
       <div className="mt-4 text-sm text-zinc-400">
         Press Space/Up or Click to jump
       </div>
+      {!gameOver && score > 0 && (
+        <div className="mt-2 text-sm text-cyan-400">
+          Speed: {Math.round(gameState.current.gameSpeed * 10) / 10}x
+        </div>
+      )}
     </div>
   );
 };
