@@ -8,7 +8,7 @@ import { initializeChat, chatClient } from './utils/DiscordChatClient';
 import BuilderPage from './components/builder/BuilderPage';
 import GameModal from './components/GameModal';
 import { Gamepad2 } from 'lucide-react';
-import TradingPage from '../pages/Trading';
+import TradingPage from './pages/Trading';
 
 function App() {
   const [chatInitialized, setChatInitialized] = useState(false);
