@@ -16,7 +16,7 @@ const GameModal = ({ isOpen, onClose }) => {
         </button>
         
         <h3 className="text-2xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent text-center">
-          Dino Runner
+          StickMan Runner
         </h3>
         
         <DinoGame />
