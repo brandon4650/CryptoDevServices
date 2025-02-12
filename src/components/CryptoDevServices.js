@@ -17,7 +17,7 @@ import {
   FileText, 
   Menu, 
   X, 
-  GameController
+  Gamepad2
 } from 'lucide-react';
 import PortfolioPricingSection from './PortfolioPricingSection';
 import GameModal from './GameModal';
