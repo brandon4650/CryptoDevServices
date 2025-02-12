@@ -1,5 +1,5 @@
-// utils/marketCalculations.js
-export const calculateMarketCap = (price, supply) => {
+// src/utils/marketCalculations.js
+export const calculateMarketCap = (price, supply = 1) => {
   return price * supply;
 };
 
@@ -11,5 +11,10 @@ export const calculateVolume24h = (trades) => {
 };
 
 export const calculatePriceChange24h = (trades) => {
-  // Calculate 24h price change
+  if (trades.length < 2) return 0;
+  
+  const firstPrice = trades[0].price;
+  const lastPrice = trades[trades.length - 1].price;
+  
+  return ((lastPrice - firstPrice) / firstPrice) * 100;
 };
