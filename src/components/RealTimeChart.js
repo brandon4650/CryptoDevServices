@@ -177,6 +177,12 @@ const RealTimeChart = ({ tokenAddress }) => {
 
   return (
     <div className="w-full bg-blue-950 rounded-lg p-4">
+      {/* Disclaimer Banner */}
+      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+        <p className="text-yellow-400 text-sm">
+          ⚠️ This chart is for demonstration purposes only and not intended for real trading use. Price and volume data shown are simulated.
+        </p>
+      </div>
       {/* Stats Display */}
       <div className="grid grid-cols-4 gap-4 mb-4">
         <div>
